@@ -15,9 +15,9 @@ class ExtractWorkflows:
     def __init__( self ):
         """ Init method. """
         self.workflow_directory = 'data/workflows/'
-        self.tool_data_filename = 'workflows_raw.csv'
-        self.tools_filename = "all_tools.csv"
-        self.workflows_filename = "processed_workflows.csv"
+        self.tool_data_filename = 'data/workflows_raw.csv'
+        self.tools_filename = "data/all_tools.csv"
+        self.workflows_filename = "data/processed_workflows.csv"
 
     @classmethod
     def read_workflow_file( self, workflow_file_path, file_id ):
@@ -84,6 +84,18 @@ class ExtractWorkflows:
         # write all the workflows to a tabular file
         all_workflows_dataframe = pd.DataFrame( workflow_json )
         all_workflows_dataframe.to_csv( self.workflows_filename, encoding='utf-8' )
+        
+        wf_steps_sentences = ""
+        for item in workflow_json:
+            steps = item[ "steps" ]
+            steps = steps.split( "," )
+            steps = " ".join( steps )
+            if wf_steps_sentences == "":
+                wf_steps_sentences = steps
+            else:
+                wf_steps_sentences += ". " + steps
+        with open( "data/workflow_steps.txt", "w" ) as steps_txt:
+            steps_txt.write( wf_steps_sentences )
 
     @classmethod
     def extract_tool_id( self, tool_link ):
