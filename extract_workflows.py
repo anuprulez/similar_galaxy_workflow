@@ -33,24 +33,37 @@ class ExtractWorkflows:
                 if "err_msg" not in file_json:
                     all_steps = file_json[ "steps" ]
                     tool_steps = list()
+                    tool_internal_ids = list()
                     steps = list()
+                    immediate_parents = dict()
                     for step in all_steps:
                         wf_step = all_steps[ step ]
-                        steps.append( { "id": wf_step[ "id" ], "tool_id": wf_step[ "tool_id" ] } )
+                        steps.append( { "id": wf_step[ "id" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ] } )
                     steps = sorted( steps, key=operator.itemgetter( "id" ) )
                     for step in steps:
                         # take a workflow if there is at least one step
                         tool_id_orig = step[ "tool_id" ]
                         if tool_id_orig:
+                            parent_ids = list()
                             tool_id = self.extract_tool_id( tool_id_orig )
+                            tool_internal_id = step[ "id" ]
+                            tool_internal_ids.append( tool_internal_id )
                             tool_steps.append( tool_id )
                             workflow_tools.append( tool_id_orig )
+                            parents = step[ "input_connections" ]
+                            for item in parents:
+                                parent_id = parents[ item ][ "id" ]
+                                # take only those parents whose tool id is not null
+                                if steps[ parent_id ][ "tool_id" ] is not None:
+                                    parent_ids.append( parent_id )
+                            immediate_parents[ tool_internal_id ] = list( set( parent_ids ) )
                     if len( tool_steps ) > 0:
-                        workflow_json[ "steps" ] = ",".join( tool_steps )
+                        workflow_json[ "steps" ] = tool_steps
                         workflow_json[ "id" ] = file_id
                         workflow_json[ "name" ] = file_json[ "name" ]
                         workflow_json[ "tags" ] = ",".join( file_json[ "tags" ] )
                         workflow_json[ "annotation" ] = file_json[ "annotation" ]
+                        workflow_json[ "parents" ] = immediate_parents
             except Exception:
                 pass
         return workflow_json, workflow_tools
