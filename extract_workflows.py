@@ -100,15 +100,47 @@ class ExtractWorkflows:
         
         wf_steps_sentences = ""
         for item in workflow_json:
+            parents_graph = item[ "parents" ] 
             steps = item[ "steps" ]
-            steps = steps.split( "," )
             steps = " ".join( steps )
             if wf_steps_sentences == "":
                 wf_steps_sentences = steps
             else:
                 wf_steps_sentences += ". " + steps
+            roots, leaves = self.get_roots_leaves( parents_graph )
         with open( "data/workflow_steps.txt", "w" ) as steps_txt:
             steps_txt.write( wf_steps_sentences )
+
+    @classmethod
+    def find_all_paths(graph, start, end, path=[]):
+        path = path + [ start ]
+        if start == end:
+            return [ path ]
+        if not graph.has_key( start ):
+            return []
+        paths = []
+        for node in graph[ start ]:
+            if node not in path:
+                newpaths = find_all_paths( graph, node, end, path )
+                for newpath in newpaths:
+                    paths.append( newpath )
+        return paths
+
+    @classmethod
+    def get_roots_leaves( self, graph ):
+        roots = list()
+        leaves = list()
+        all_parents = list()
+        for item in graph:
+            all_parents.extend( graph[ item ] )
+        all_parents = list( set( all_parents ) )
+
+        for item in graph:
+            if len( graph[ item ] ) == 0 and item in all_parents:
+                roots.append( item )
+            if item not in all_parents and len( graph[ item ] ) > 0:
+                leaves.append( item )
+        return roots, leaves
 
     @classmethod
     def extract_tool_id( self, tool_link ):
