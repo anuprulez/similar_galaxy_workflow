@@ -131,7 +131,7 @@ class ExtractWorkflows:
                     tool_seq = tool_dict[ tool ]
                 else:
                     tool_seq += " " + tool_dict[ tool ]
-            tool_seq += ". "
+            tool_seq += " . "
         return tool_seq
 
     @classmethod
@@ -166,7 +166,9 @@ class ExtractWorkflows:
     @classmethod
     def extract_tool_id( self, tool_link ):
         tool_id_split = tool_link.split( "/" )
-        return tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+        tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+        tool_id_split = tool_id.split( "." )
+        return tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
 
 
 if __name__ == "__main__":
