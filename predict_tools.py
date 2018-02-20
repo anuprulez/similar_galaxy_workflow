@@ -19,7 +19,7 @@ class PredictTool:
         self.n_input = 2
         # number of units in RNN cell
         self.n_hidden = 512
-        self.display_step = 500
+        self.display_step = 1000
         self.training_iters = 50000
         self.raw_paths = list()
 
@@ -68,7 +68,7 @@ class PredictTool:
 
     @classmethod
     def select_random_path( self ):
-        random_number = random.randint( 0, len( self.raw_paths ) )
+        random_number = random.randint( 0, len( self.raw_paths ) - 1 )
         path = self.raw_paths[ random_number ].split(" ")
         if len( path ) > self.n_input + 1:
             return path
