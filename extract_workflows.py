@@ -112,7 +112,8 @@ class ExtractWorkflows:
                     paths = self.find_tool_paths_workflow( parents_graph, str( root ), str( leaf ) )
                     # reverse the paths as they are computed from leaves to roots
                     paths = [ list( reversed( tool_path ) ) for tool_path in paths ]
-                    flow_paths.extend( paths )
+                    if len( paths ) > 0:
+                        flow_paths.extend( paths )
             all_tool_paths = self.tool_seq_toolnames( steps, flow_paths )
             if wf_steps_sentences == "":
                 wf_steps_sentences = all_tool_paths
@@ -123,15 +124,30 @@ class ExtractWorkflows:
             steps_txt.write( wf_steps_sentences )
 
     @classmethod
+    def process_tool_names( self, tool_name ):
+        if " " in tool_name:
+            tool_name = tool_name.replace( " ", "_" )
+        return tool_name.lower()
+
+    @classmethod
     def tool_seq_toolnames( self, tool_dict, paths ):
         tool_seq = ""
         for path in paths:
+            # create tool paths
+            sequence = ""
             for tool in path:
-                if tool_seq == "":
-                    tool_seq = tool_dict[ tool ]
+                tool_name = self.process_tool_names( tool_dict[ tool ] )
+                if sequence == "":
+                    sequence = tool_name
                 else:
-                    tool_seq += " " + tool_dict[ tool ]
-            tool_seq += " . "
+                    sequence += " " + tool_name
+            sequence += " . "
+            # exclude the duplicate tool paths
+            if sequence not in tool_seq:
+                if tool_seq == "":
+                    tool_seq = sequence
+                else:
+                    tool_seq += sequence
         return tool_seq
 
     @classmethod
