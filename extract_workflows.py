@@ -141,7 +141,7 @@ class ExtractWorkflows:
                     sequence = tool_name
                 else:
                     sequence += " " + tool_name
-            sequence += " . "
+            sequence += "\n"
             # exclude the duplicate tool paths
             if sequence not in tool_seq:
                 if tool_seq == "":
