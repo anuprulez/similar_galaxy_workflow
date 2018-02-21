@@ -18,6 +18,9 @@ class PredictNextTool:
 
     @classmethod
     def process_processed_data( self, fname ):
+        """
+        Get all the tools and complete set of individual paths for each workflow
+        """
         tokens = list()
         raw_paths = list()
         with open( fname ) as f:
@@ -34,6 +37,9 @@ class PredictNextTool:
 
     @classmethod
     def create_data_dictionary( self, words ):
+        """
+        Create two dictionaries having tools names and their indexes
+        """
         count = collections.Counter( words ).most_common()
         dictionary = dict()
         for word, _ in count:
@@ -43,7 +49,9 @@ class PredictNextTool:
     
     @classmethod
     def create_train_test_data( self, dictionary, raw_paths ):
-        
+        """
+        Create training data with its labels with varying window sizes
+        """
         test_data = list()
         len_dict = len( dictionary )
         train_data = list()
@@ -54,17 +62,22 @@ class PredictNextTool:
             max_window_size = len( tools ) - 1
             for window in range( 1, max_window_size ):
                 for j in range( 0, len( tools ) - window ):
-                    workflow_hot_vector_train = np.zeros( [ len_dict ] )
-                    workflow_hot_vector_test = np.zeros( [ len_dict ] )
                     training_sequence = tools[ j: j + window ]
                     label = tools[ j + window: j + window + 1 ]
-                    for tool_item in training_sequence:
-                        workflow_hot_vector_train[ dictionary[ str( tool_item ) ] ] = 1.0
-                    train_data.append( workflow_hot_vector_train )
-                    workflow_hot_vector_test[ dictionary[ str( label[ 0 ] ) ] ] = 1.0
-                    train_label.append( workflow_hot_vector_test )
-        print len( train_label )
-            
+                    workflow_hot_vector_train = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
+                    workflow_hot_vector_train = ",".join( workflow_hot_vector_train )
+                    if workflow_hot_vector_train not in train_data:
+                        train_data.append( workflow_hot_vector_train )
+                        train_label.append( str( dictionary[ str( label[ 0 ] ) ] ) )
+            print "Path %d processed" % ( index + 1 ) 
+        with open( "data/train_data.txt", "w" ) as train_file:
+            for item in train_data:
+                train_file.write( "%s\n" % item )
+        with open( "data/train_label.txt", "w" ) as label_file:
+            for item in train_label:
+                label_file.write( "%s\n" % item ) 
+        print "Training data and labels files written"
+
     @classmethod
     def define_network( self ):
         print "create network"
@@ -75,9 +88,8 @@ class PredictNextTool:
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         # all the nodes/tools are classes as well
         num_classes = len( dictionary )
-        print num_classes
         self.create_train_test_data( dictionary, raw_paths )
-   
+
 
 if __name__ == "__main__":
 
