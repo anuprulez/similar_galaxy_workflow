@@ -1,6 +1,6 @@
 $(document).ready(function() {
     var workflowsData = null,
-        path = "data/workflows.json";
+        path = "https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/viz/data/workflows.json";
     if ( path === "" ) {
         console.error( "Error in loading JSON file" );
         return;
