@@ -59,9 +59,10 @@ class PredictNextTool:
         print "preparing downstream data..."
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
-            max_window_size = len( tools ) - 1
+            max_window_size = len( tools )
             for window in range( 1, max_window_size ):
-                for j in range( 0, len( tools ) - window ):
+                slide_window_time = ( max_window_size - 1 ) // window
+                for j in range( 0, slide_window_time ):
                     training_sequence = tools[ j: j + window ]
                     label = tools[ j + window: j + window + 1 ]
                     workflow_hot_vector_train = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
@@ -69,7 +70,7 @@ class PredictNextTool:
                     if workflow_hot_vector_train not in train_data:
                         train_data.append( workflow_hot_vector_train )
                         train_label.append( str( dictionary[ str( label[ 0 ] ) ] ) )
-            print "Path %d processed" % ( index + 1 ) 
+            print "Path %d processed" % ( index + 1 )
         with open( "data/train_data.txt", "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )

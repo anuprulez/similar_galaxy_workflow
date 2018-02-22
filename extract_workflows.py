@@ -38,7 +38,7 @@ class ExtractWorkflows:
                     immediate_parents = dict()
                     for step in all_steps:
                         wf_step = all_steps[ step ]
-                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "type": wf_step[ "type" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ] } )
+                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "type": wf_step[ "type" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ] } )
                     steps = sorted( steps, key=operator.itemgetter( "id" ) )
                     for step in steps:
                         # take a workflow if there is at least one step
