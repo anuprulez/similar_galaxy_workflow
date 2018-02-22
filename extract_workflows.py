@@ -38,7 +38,7 @@ class ExtractWorkflows:
                     immediate_parents = dict()
                     for step in all_steps:
                         wf_step = all_steps[ step ]
-                        steps.append( { "id": wf_step[ "id" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ] } )
+                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "type": wf_step[ "type" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ] } )
                     steps = sorted( steps, key=operator.itemgetter( "id" ) )
                     for step in steps:
                         # take a workflow if there is at least one step
@@ -64,6 +64,7 @@ class ExtractWorkflows:
                         workflow_json[ "tags" ] = ",".join( file_json[ "tags" ] )
                         workflow_json[ "annotation" ] = file_json[ "annotation" ]
                         workflow_json[ "parents" ] = immediate_parents
+                        workflow_json[ "original_steps" ] = steps
             except Exception:
                 pass
         return workflow_json, workflow_tools
@@ -119,9 +120,19 @@ class ExtractWorkflows:
                 wf_steps_sentences = all_tool_paths
             else:
                 wf_steps_sentences += all_tool_paths
+
+        workflows_to_json = dict()
+        for item in workflow_json:
+            workflows_to_json[ item[ "id" ] ] = item
+
+        with open( "data/workflows.json", "w" ) as workflows_as_json:
+            workflows_as_json.write( json.dumps( workflows_to_json ) )
+            workflows_as_json.close()
+
         # write all the paths from all the workflow to a text file
         with open( "data/workflow_steps.txt", "w" ) as steps_txt:
             steps_txt.write( wf_steps_sentences )
+            steps_txt.close()
 
     @classmethod
     def process_tool_names( self, tool_name ):

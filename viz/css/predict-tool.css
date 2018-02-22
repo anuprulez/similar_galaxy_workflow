@@ -1,0 +1,23 @@
+.main-container {
+    margin-left: 1%;
+}
+
+.table-header-text {
+    margin: 1% 0 1% 0;
+}
+
+.workflow-details {
+    margin: 1% 0 1% 0;
+}
+
+.table-steps {
+    width: 95%;
+}
+
+#workflow-graph {
+    width: 95%;
+    height: 90%;
+    position: relative;
+}
+
+
