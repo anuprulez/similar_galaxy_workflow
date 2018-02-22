@@ -17,7 +17,7 @@ $(document).ready(function() {
         $( ".workflow-ids" ).append( workflowTemplate );
     });
 
-    // Fire on change of a tool to show similar tools and plot cost vs iteration
+    // Fire on change of a workflow to show all the steps for the workflow and its directed graph
     $( ".workflow-ids" ).on( 'change', function( e ) {
         e.preventDefault();
         let selectedWorkflowId = e.target.value,
@@ -33,8 +33,8 @@ $(document).ready(function() {
     var createHTML = function( workflowDetails ) {
         let template = "",
             workflowSteps = workflowDetails[ "original_steps" ];
-        template = "<div class='table-header-text'>Workflow id: " + workflowDetails[ "id" ] + "</div>";
-        template += "<div class='table-header-text'>Workflow name: " + workflowDetails[ "name" ] + "</div>";
+        template = "<div class='table-header-text'>Workflow id: <b>" + workflowDetails[ "id" ] + "</b></div>";
+        template += "<div class='table-header-text'>Workflow name: <b>" + workflowDetails[ "name" ] + "</b></div>";
         template += "<div class='table-responsive'><table class='table table-bordered table-striped thead-dark table-steps'><thead>";
         template += "<th>Step no. </th>";
         template += "<th>Name</th>";
@@ -43,21 +43,20 @@ $(document).ready(function() {
         template += "<th> Input connections </th>";
         template += "</thead><tbody>";
 
-        for( let counter = 0, len = workflowSteps.length; counter < len; counter++ ) {
-            let step = workflowSteps[ counter ],
-                inputConnections = step[ "input_connections" ],
+        _.each( workflowSteps, function( step ) {
+            let inputConnections = step[ "input_connections" ],
                 stepInputs = [];
-            for( var ic in inputConnections ) {
+            for( let ic in inputConnections ) {
                 stepInputs.push( inputConnections[ ic ].id );
             }
             template += "<tr>";
             template += "<td>" + step.id + "</td>";
             template += "<td>" + step.name + "</td>";
             template += "<td>" + step.type + "</td>";
-            template += "<td>" + step.tool_id + "</td>";
+            template += "<td>" + ( step.tool_id ? step.tool_id : "" ) + "</td>";
             template += "<td>" + stepInputs.join( "," ) + "</td>";
             template += "</tr>";
-        }
+        })
         template += "</tbody></table></div>";
         return template;
     };
@@ -86,7 +85,7 @@ $(document).ready(function() {
             }
             inputConnections = step[ "input_connections" ];
             stepNodes.push( { data: { id: targetNode, weight: 0.25, name: step[ "id" ] + ", " + name } } );
-            for( var ic in inputConnections ) {
+            for( let ic in inputConnections ) {
                 stepInputs.push( inputConnections[ ic ].id );
             }
             if( stepInputs.length > 0 ) {
