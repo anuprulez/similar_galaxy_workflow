@@ -1,12 +1,13 @@
 $(document).ready(function() {
     var workflowsData = null,
-        path = "https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/viz/data/workflows.json";
-    if ( path === "" ) {
+        pathOnline = "https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/viz/data/workflows.json",
+        pathLocal = "data/workflows.json";
+    if ( pathOnline === "" ) {
         console.error( "Error in loading JSON file" );
         return;
     }
 
-    $.getJSON( path, function( data ) {
+    $.getJSON( pathOnline, function( data ) {
         let workflowTemplate = "";
         workflowsData = data;
         for( let id in workflowsData ) {
@@ -45,15 +46,28 @@ $(document).ready(function() {
 
         _.each( workflowSteps, function( step ) {
             let inputConnections = step[ "input_connections" ],
+                toolInfo = "",
                 stepInputs = [];
             for( let ic in inputConnections ) {
                 stepInputs.push( inputConnections[ ic ].id );
+            }
+            if( !step.tool_id ) {
+                if( step[ "label" ] ) {
+                    toolInfo = step[ "label" ]
+                }
+                else if( step[ "tool_state" ] ) {
+                    toolInfo =  step[ "tool_state" ];
+                    toolInfo = toolInfo[ "name" ]
+                }
+            }
+            else {
+                toolInfo = step.tool_id;
             }
             template += "<tr>";
             template += "<td>" + step.id + "</td>";
             template += "<td>" + step.name + "</td>";
             template += "<td>" + step.type + "</td>";
-            template += "<td>" + ( step.tool_id ? step.tool_id : "" ) + "</td>";
+            template += "<td>" + toolInfo + "</td>";
             template += "<td>" + stepInputs.join( "," ) + "</td>";
             template += "</tr>";
         })
