@@ -34,6 +34,8 @@ class PredictNextTool:
         """
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary = data.read_data()
+        complete_data = complete_data[ :len( complete_data ) - 1 ]
+        labels = labels[ :len( labels ) - 1 ]
         len_data = len( complete_data )
         len_test_data = int( self.test_data_share * len_data )
         dimensions = len( complete_data[ 0 ] )
@@ -43,17 +45,14 @@ class PredictNextTool:
         test_positions = data_indices[ :len_test_data ]
         train_positions = data_indices[ len_test_data: ]
         # create test and train data and labels
-        train_data = [ complete_data[ train_positions[ j ] ] for j in range( len( train_positions ) ) ]
-        train_data = np.reshape(train_data, (len_data - len_test_data - 1, dimensions))
-
-        train_labels = [ labels[ train_positions[ i ] ] for i in range( len( train_positions ) ) ]
-        train_labels = np.reshape(train_labels, (len_data - len_test_data - 1, dimensions))
-
-        test_data = [ complete_data[ test_positions[ i ] ] for i in range( len( test_positions ) ) ]
-        test_data = np.reshape( test_data, ( len_test_data, dimensions ) )
-
-        test_labels = [ labels[ test_positions[ i ] ] for i in range( len( test_positions ) ) ]
-        test_labels = np.reshape( test_labels, ( len_test_data, dimensions ) )
+        train_data = train_labels = np.zeros([ len_data - len_test_data, dimensions ])
+        test_data = test_labels = np.zeros([ len_test_data, dimensions ])
+        for train_pos in range( len( train_positions ) ):
+            train_data[ train_pos ] = complete_data[ train_positions[ train_pos ] ]
+            train_labels[ train_pos ] = labels[ train_positions[ train_pos ] ]
+        for test_pos in range( len( test_positions ) ):
+            test_data[ test_pos ] = complete_data[ test_positions[ test_pos ] ]
+            test_labels[ test_pos ] = labels[ test_positions[ test_pos ] ]
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
@@ -91,8 +90,9 @@ class PredictNextTool:
         Use trained model to predict next tool
         """
         # predict random input sequences
-        num_predict = 10
+        num_predict = 100
         num_predictions = 5
+        prediction_accuracy = 0
         print "Get top 5 predictions for each test input..."
         for i in range( num_predict ):
             input_tools = []
@@ -100,7 +100,7 @@ class PredictNextTool:
             tool_pos = np.where( input_seq > 0.0 )[ 0 ]
             for item in tool_pos:
                 input_tools.append( reverse_dictionary[ item ] )
-            input_tools_text = ",".join( input_tools )
+            input_tools_text = " ".join( input_tools )
             print "Input sequence: %s " % input_tools_text
             label = test_labels[ i ][ 0 ]
             label_pos = np.where( label > 0.0 )[ 0 ]
@@ -118,15 +118,20 @@ class PredictNextTool:
             for pred_pos in prediction_pos:
                 tool_text = reverse_dictionary[ pred_pos ]
                 top_predictions.append( tool_text )
-            top_predicted_tools_text = ",".join( top_predictions )
+            top_predicted_tools_text = " ".join( top_predictions )
+            if label_text in top_predictions:
+                prediction_accuracy += 1
             print "Predicted next tools: %s" % top_predicted_tools_text
             print "=========================================="
-
+        print "Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict )
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 1:
         print( "Usage: python predict_next_tool.py" )
         exit( 1 )
+    start_time = time.time()
     predict_tool = PredictNextTool()
     predict_tool.evaluate_LSTM_network()
+    end_time = time.time()
+    print "Program finished in %s seconds" % str( end_time - start_time  )
