@@ -57,6 +57,8 @@ class PrepareData:
         len_dict = len( dictionary )
         train_data = list()
         train_label = list()
+        train_data_sequence = list()
+        train_label_sequence = list()
         print "preparing downstream data..."
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
@@ -66,18 +68,32 @@ class PrepareData:
                 for j in range( 0, slide_window_time ):
                     training_sequence = tools[ j: j + window ]
                     label = tools[ j + window: j + window + 1 ]
+                    data_seq = " ".join( training_sequence )
+                    label_seq = " ".join( label )
                     workflow_hot_vector_train = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
                     workflow_hot_vector_train = ",".join( workflow_hot_vector_train )
                     if workflow_hot_vector_train not in train_data:
                         train_data.append( workflow_hot_vector_train )
                         train_label.append( str( dictionary[ str( label[ 0 ] ) ] ) )
+                    if data_seq not in train_data_sequence:
+                        train_data_sequence.append( data_seq )
+                        train_label_sequence.append( label_seq )
             print "Path %d processed" % ( index + 1 )
+
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )
-        with open( self.train_label, "w" ) as label_file:
+        with open( self.label_file, "w" ) as label_file:
             for item in train_label:
-                label_file.write( "%s\n" % item ) 
+                label_file.write( "%s\n" % item )
+
+        with open( "data/train_data_sequence.txt", "w" ) as train_seq:
+            for item in train_data_sequence:
+                train_seq.write( "%s\n" % item )
+        with open( "data/train_label_sequence.txt", "w" ) as label_seq:
+            for item in train_label_sequence:
+                label_seq.write( "%s\n" % item )
+
         print "Training data and labels files written"
 
     @classmethod
@@ -121,4 +137,4 @@ class PrepareData:
            pos_label = train_labels[ index ]
            if pos_label:
                train_label_array[ index ][ int( pos_label ) ] = 1.0
-        return train_data_array, train_label_array
+        return train_data_array, train_label_array, dictionary, reverse_dictionary
