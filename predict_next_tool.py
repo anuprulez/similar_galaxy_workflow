@@ -76,7 +76,8 @@ class PredictNextTool:
         """
         print "Dividing data..."
         n_epochs = 500
-        batch_size = 1000
+        batch_size = 500
+        dropout = 0.4
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
         train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
@@ -88,12 +89,12 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True ) )
-        model.add( Dropout( 0.3 ) )
+        #model.add( Dropout( dropout ) )
         model.add( LSTM( 512, return_sequences=True ) )
-        model.add( Dropout( 0.3 ) )
+        #model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True) )
         model.add( Dense( 256 ) )
-        model.add( Dropout( 0.3 ) )
+        #model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='rmsprop', metrics=[ 'accuracy' ] )
@@ -184,7 +185,7 @@ class PredictNextTool:
         train_data, train_labels = self.get_raw_paths()
         base_path = 'data/weights/weights-epoch-'
         for i in range( n_epochs ):
-            ite = '0' + str( i + 1 ) if i < 10 else str( i + 1  )
+            ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = base_path + ite + '.hdf5'
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
             accuracy = self.get_top_predictions( num_predictions, test_data, train_labels, dimensions, loaded_model, reverse_dictionary )
