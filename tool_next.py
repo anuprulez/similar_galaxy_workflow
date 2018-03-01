@@ -30,11 +30,11 @@ class PredictNextTool:
         self.test_data_share = 0.3
         self.test_positions = list()
         self.sequence_file = "data/train_data_sequence.txt"
-        self.network_config_json_path = "data/model.json"
-        self.weights_path = "data/weights/trained_model.h5"
-        self.loss_path = "data/loss_history.txt"
-        self.accuracy_path = "data/accuracy_history.txt"
-        self.epoch_weights_path = "data/weights/weights-epoch-{epoch:02d}.hdf5"
+        self.network_config_json_path = "data/model2.json"
+        self.weights_path = "data/weights/trained_model2.h5"
+        self.loss_path = "data/loss_history2.txt"
+        self.accuracy_path = "data/accuracy_history2.txt"
+        self.epoch_weights_path = "data/weights/weights2-epoch-{epoch:02d}.hdf5"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -75,8 +75,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 500
-        batch_size = 1000
+        n_epochs = 10
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
         train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
@@ -103,7 +102,7 @@ class PredictNextTool:
         callbacks_list = [ checkpoint ]     
         
         print "Start training..."
-        model_fit_callbacks = model.fit( train_data, train_labels, epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list )
+        model_fit_callbacks = model.fit( train_data, train_labels, epochs=n_epochs, batch_size=500, callbacks=callbacks_list )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "acc" ]
         np_loss_values = np.array( loss_values )
@@ -182,7 +181,7 @@ class PredictNextTool:
         """
         topn_accuracy = list()
         train_data, train_labels = self.get_raw_paths()
-        base_path = 'data/weights/weights-epoch-'
+        base_path = 'data/weights/weights2-epoch-'
         for i in range( n_epochs ):
             ite = '0' + str( i + 1 ) if i < 10 else str( i + 1  )
             file_path = base_path + ite + '.hdf5'
