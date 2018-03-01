@@ -17,6 +17,8 @@ from keras.layers import LSTM
 from keras.layers import Activation
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
+from keras.callbacks import ModelCheckpoint
+from keras.models import model_from_json
 
 import prepare_data
 
@@ -28,6 +30,11 @@ class PredictNextTool:
         self.test_data_share = 0.3
         self.test_positions = list()
         self.sequence_file = "data/train_data_sequence.txt"
+        self.network_config_json_path = "data/model.json"
+        self.weights_path = "data/weights/trained_model.h5"
+        self.loss_path = "data/loss_history.txt"
+        self.accuracy_path = "data/accuracy_history.txt"
+        self.epoch_weights_path = "data/weights/weights-epoch-{epoch:02d}.hdf5"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -79,21 +86,59 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True ) )
-        #model.add( Embedding( train_data_shape[ 0 ], dimensions, input_length_max=dimensions ) )
-        #model.add( LSTM( 100 ) )
-        model.add( Dropout( 0.2 ) )
-        #model.add(LSTM(256))
-        #model.add(Dropout(0.2))
+        model.add( Dropout( 0.3 ) )
+        model.add( LSTM( 512, return_sequences=True ) )
+        model.add( Dropout( 0.3 ) )
+        model.add( LSTM( 256, return_sequences=True) )
+        model.add( Dense( 256 ) )
+        model.add( Dropout( 0.3 ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer='adam' )
+        model.compile( loss='categorical_crossentropy', optimizer='rmsprop', metrics=[ 'accuracy' ] )
+
+        # create checkpoint after each epoch - save the weights to h5 file
+        checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
+        callbacks_list = [ checkpoint ]     
         
         print "Start training..."
-        model.fit( train_data, train_labels, epochs=50, batch_size=20 )
+        model_fit_callbacks = model.fit( train_data, train_labels, epochs=500, batch_size=500, callbacks=callbacks_list )
+        loss_values = model_fit_callbacks.history[ "loss" ]
+        accuracy_values = model_fit_callbacks.history[ "acc" ]
+        np_loss_values = np.array( loss_values )
+        np_accuracy_values = np.array( accuracy_values )
+        np.savetxt( self.loss_path, np_loss_values, delimiter="," )
+        np.savetxt( self.accuracy_path, np_accuracy_values, delimiter="," )
+
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write(model_json)
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
+
         print "Start predicting..."
         accuracy = model.evaluate( test_data, test_labels, verbose=0 )
-        print accuracy
+        print "Loss: %.2f " % accuracy[ 0 ]
+        print "Top-1 accuracy: %.2f " % accuracy[ 1 ]
+
+        # get top n accuracy
+        print "Evaluating top n accuracy..."
         self.see_predicted_tools( model, dictionary, reverse_dictionary, test_data, test_labels, dimensions )
+        print "==============================="
+        self.see_predicted_tools( self.load_saved_model(), dictionary, reverse_dictionary, test_data, test_labels, dimensions )
+
+    @classmethod
+    def load_saved_model( self ):
+        """
+        Load the saved trained model using the saved network and its weights
+        """
+        with open( self.network_config_json_path, 'r' ) as network_config_file:
+            loaded_model = network_config_file.read()
+        # load the network
+        loaded_model = model_from_json(loaded_model)
+        # load the saved weights into the model
+        loaded_model.load_weights( self.weights_path )
+        return loaded_model
 
     @classmethod
     def get_raw_paths( self ):
@@ -118,7 +163,7 @@ class PredictNextTool:
         Use trained model to predict next tool
         """
         # predict random input sequences
-        num_predict = 50
+        num_predict = len( test_data )
         num_predictions = 5
         prediction_accuracy = 0
         train_data, train_labels = self.get_raw_paths()
@@ -139,12 +184,12 @@ class PredictNextTool:
             top_predicted_tools_text = " ".join( top_predictions )
             if label_text in top_predictions:
                 prediction_accuracy += 1
-            print self.test_positions[ i ]
-            print "Ordered input sequence: %s" % train_data[ self.test_positions[ i ] ]
-            print "Actual next tool: %s" % label_text
-            print "Predicted top %d next tools: %s" % ( num_predictions, top_predicted_tools_text )
-            print "=========================================="
-        print "No. correct predicted: %d" % prediction_accuracy
+            #print "Ordered input sequence: %s" % train_data[ self.test_positions[ i ] ]
+            #print "Actual next tool: %s" % label_text
+            #print "Predicted top %d next tools: %s" % ( num_predictions, top_predicted_tools_text )
+            #print "=========================================="
+        print "No. total test inputs: %d" % num_predict
+        print "No. correctly predicted: %d" % prediction_accuracy
         print "Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict )
 
 if __name__ == "__main__":
