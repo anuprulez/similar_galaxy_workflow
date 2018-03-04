@@ -7,6 +7,7 @@ import random
 import collections
 import time
 import math
+import os
 from random import shuffle
 
 # machine learning library
@@ -21,6 +22,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 
 import prepare_data
+import evaluate_top_results
 
 class PredictNextTool:
 
@@ -29,12 +31,13 @@ class PredictNextTool:
         """ Init method. """
         self.test_data_share = 0.3
         self.test_positions = list()
-        self.sequence_file = "data/train_data_sequence.txt"
-        self.network_config_json_path = "data/model.json"
-        self.weights_path = "data/weights/trained_model.h5"
-        self.loss_path = "data/loss_history.txt"
-        self.accuracy_path = "data/accuracy_history.txt"
-        self.epoch_weights_path = "data/weights/weights-epoch-{epoch:02d}.hdf5"
+        self.current_working_dir = os.getcwd()
+        self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
+        self.network_config_json_path = self.current_working_dir + "/data/model.json"
+        self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
+        self.loss_path = self.current_working_dir + "/data/loss_history.txt"
+        self.accuracy_path = self.current_working_dir + "/data/accuracy_history.txt"
+        self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -55,7 +58,7 @@ class PredictNextTool:
         train_positions = data_indices[ len_test_data: ]
 
         # create test and train data and labels
-        train_data = np.zeros( [ len_data - len_test_data, dimensions ] ) 
+        train_data = np.zeros( [ len_data - len_test_data, dimensions ] )
         train_labels = np.zeros( [ len_data - len_test_data, dimensions ] )
         test_data = np.zeros( [ len_test_data, dimensions ] )
         test_labels = np.zeros( [ len_test_data, dimensions ] )
@@ -75,9 +78,10 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 500
+        n_epochs = 5
+        num_predictions = 5
         batch_size = 500
-        dropout = 0.4
+        dropout = 0.3
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
         train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
@@ -89,20 +93,20 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True ) )
-        #model.add( Dropout( dropout ) )
+        model.add( Dropout( dropout ) )
         model.add( LSTM( 512, return_sequences=True ) )
-        #model.add( Dropout( dropout ) )
+        model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True) )
         model.add( Dense( 256 ) )
-        #model.add( Dropout( dropout ) )
+        model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='rmsprop', metrics=[ 'accuracy' ] )
 
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
-        callbacks_list = [ checkpoint ]     
-        
+        callbacks_list = [ checkpoint ]
+
         print "Start training..."
         model_fit_callbacks = model.fit( train_data, train_labels, epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list )
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -125,12 +129,8 @@ class PredictNextTool:
         print "Top-1 accuracy: %.2f " % accuracy[ 1 ]
 
         # get top n accuracy
-        '''print "Evaluating top n accuracy..."
-        self.see_predicted_tools( model, test_data, dictionary, reverse_dictionary, dimensions )
-        print "==============================="
-        self.see_predicted_tools( self.load_saved_model( self.network_config_json_path, self.weights_path ), test_data, dictionary, reverse_dictionary, dimensions )
-        print "================================="'''
-        self.evaluate_topn_epochs( n_epochs, 5, dimensions, test_data, reverse_dictionary )
+        predict_tool = evaluate_top_results.EvaluateTopResults()
+        predict_tool.evaluate_topn_epochs( n_epochs, num_predictions, dimensions, reverse_dictionary, test_data, test_labels )
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -175,52 +175,7 @@ class PredictNextTool:
         print "No. total test inputs: %d" % num_predict
         print "No. correctly predicted: %d" % prediction_accuracy
         print "Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict )
-
-    @classmethod
-    def evaluate_topn_epochs( self, n_epochs, num_predictions, dimensions, test_data, reverse_dictionary ):
-        """
-        Get topn accuracy over training epochs
-        """
-        topn_accuracy = list()
-        train_data, train_labels = self.get_raw_paths()
-        base_path = 'data/weights/weights-epoch-'
-        for i in range( n_epochs ):
-            ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
-            file_path = base_path + ite + '.hdf5'
-            loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
-            accuracy = self.get_top_predictions( num_predictions, test_data, train_labels, dimensions, loaded_model, reverse_dictionary )
-            topn_accuracy.append( accuracy )
-        print topn_accuracy
-
-    @classmethod
-    def get_top_predictions( self, topn, test_data, train_labels, dimensions, trained_model, reverse_dictionary ):
-        """
-        Compute top n predictions with a trained model
-        """
-        print "Get top %d predictions for each test input..." % topn
-        num_predict = len( self.test_positions )
-        prediction_accuracy = 0
-        for i in range( num_predict ):
-            input_seq = test_data[ i ][ 0 ]
-            label_text = train_labels[ self.test_positions[ i ] ]
-            input_seq_reshaped = np.reshape( input_seq, ( 1, 1, dimensions ) )
-            # predict the next tool using the trained model
-            prediction = trained_model.predict( input_seq_reshaped, verbose=0 )
-            prediction = np.reshape( prediction, ( dimensions ) )
-            # take prediction in reverse order, best ones first
-            prediction_pos = np.argsort( prediction, axis=0 )
-            # get top n predictions
-            top_prediction_pos = prediction_pos[ -topn: ]
-            # get tool names for the predicted positions
-            top_predictions = [ reverse_dictionary[ pred_pos ] for pred_pos in top_prediction_pos ]
-            top_predicted_tools_text = " ".join( top_predictions )
-            if label_text in top_predictions:
-                prediction_accuracy += 1
-            #print "Ordered input sequence: %s" % train_data[ self.test_positions[ i ] ]
-            #print "Actual next tool: %s" % label_text
-            #print "Predicted top %d next tools: %s" % ( num_predictions, top_predicted_tools_text )
-            #print "=========================================="
-        return float( prediction_accuracy ) / num_predict
+  
 
 if __name__ == "__main__":
 
