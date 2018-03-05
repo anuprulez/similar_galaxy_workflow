@@ -78,10 +78,10 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 5
+        n_epochs = 100
         num_predictions = 5
-        batch_size = 500
-        dropout = 0.3
+        batch_size = 10
+        dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
         train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
@@ -94,14 +94,15 @@ class PredictNextTool:
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True ) )
         model.add( Dropout( dropout ) )
+        '''model.add( Dropout( dropout ) )
         model.add( LSTM( 512, return_sequences=True ) )
         model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True) )
         model.add( Dense( 256 ) )
-        model.add( Dropout( dropout ) )
+        model.add( Dropout( dropout ) )'''
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer='rmsprop', metrics=[ 'accuracy' ] )
+        model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
 
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
