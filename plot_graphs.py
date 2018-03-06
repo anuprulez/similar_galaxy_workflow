@@ -23,5 +23,5 @@ def plot_accuracy( file_path ):
     plt.xlabel('Epochs')
     plt.show()
 
-plot_loss( "data/loss_history.txt" )
-plot_accuracy( "data/accuracy_history.txt" )
+plot_loss( "data/loss_history1.txt" )
+plot_accuracy( "data/accuracy_history1.txt" )

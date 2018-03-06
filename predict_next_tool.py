@@ -22,6 +22,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from keras.callbacks import LambdaCallback
+from sklearn.model_selection import train_test_split
 
 import prepare_data
 import evaluate_top_results
@@ -31,14 +32,14 @@ class PredictNextTool:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.test_data_share = 0.3
-        self.test_positions = list()
         self.current_working_dir = os.getcwd()
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
         self.loss_path = self.current_working_dir + "/data/loss_history.txt"
         self.accuracy_path = self.current_working_dir + "/data/accuracy_history.txt"
+        self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
+        self.val_accuracy_path = self.current_working_dir + "/data/val_accuracy_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
 
     @classmethod
@@ -46,32 +47,13 @@ class PredictNextTool:
         """
         Divide data into train and test sets in a random way
         """
+        test_data_share = 0.33
+        seed = 0
         data = prepare_data.PrepareData()
-        complete_data, labels, dictionary, reverse_dictionary = data.read_data()
-        complete_data = complete_data[ :len( complete_data ) - 1 ]
-        labels = labels[ :len( labels ) - 1 ]
-        len_data = len( complete_data )
-        len_test_data = int( self.test_data_share * len_data )
+        complete_data, labels, dictionary, reverse_dictionary = data.read_data()      
+        np.random.seed( seed )
         dimensions = len( complete_data[ 0 ] )
-        # take random positions from the complete data to create test data
-        data_indices = range( len_data )
-        shuffle( data_indices )
-        self.test_positions = data_indices[ :len_test_data ]
-        train_positions = data_indices[ len_test_data: ]
-
-        # create test and train data and labels
-        train_data = np.zeros( [ len_data - len_test_data, dimensions ] )
-        train_labels = np.zeros( [ len_data - len_test_data, dimensions ] )
-        test_data = np.zeros( [ len_test_data, dimensions ] )
-        test_labels = np.zeros( [ len_test_data, dimensions ] )
-
-        for i, item in enumerate( train_positions ):
-            train_data[ i ] = complete_data[ item ]
-            train_labels[ i ] = labels[ item ]
-
-        for i, item in enumerate( self.test_positions ):
-            test_data[ i ] = complete_data[ item ]
-            test_labels[ i ] = labels[ item ]
+        train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
@@ -80,11 +62,11 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 30
+        n_epochs = 5
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
+        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()        
         # reshape train and test data
         train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
         train_labels = np.reshape(train_labels, (train_labels.shape[0], 1, train_labels.shape[1]))
@@ -111,13 +93,16 @@ class PredictNextTool:
         callbacks_list = [ checkpoint ]
 
         print "Start training..."
-        model_fit_callbacks = model.fit( train_data, train_labels, epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "acc" ]
-        np_loss_values = np.array( loss_values )
-        np_accuracy_values = np.array( accuracy_values )
-        np.savetxt( self.loss_path, np_loss_values, delimiter="," )
-        np.savetxt( self.accuracy_path, np_accuracy_values, delimiter="," )
+        validation_loss = model_fit_callbacks.history[ "val_loss" ]
+        validation_acc = model_fit_callbacks.history[ "val_acc" ]
+
+        np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
+        np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
+        np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
+        np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
 
         # save the network as json
         model_json = model.to_json()

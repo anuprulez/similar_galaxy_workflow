@@ -133,4 +133,6 @@ class PrepareData:
            pos_label = train_labels[ index ]
            if pos_label:
                train_label_array[ index ][ int( pos_label ) ] = 1.0
+        train_data_array = train_data_array[ :len( train_data_array ) - 1 ]
+        train_label_array = train_label_array[ :len( train_label_array ) - 1 ]    
         return train_data_array, train_label_array, dictionary, reverse_dictionary
