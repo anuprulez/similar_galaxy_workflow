@@ -25,6 +25,7 @@ from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
 from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
+import gensim
 
 import prepare_data
 import evaluate_top_results
@@ -47,6 +48,22 @@ class PredictNextTool:
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
 
     @classmethod
+    def learn_graph_vector( self, tagged_documents ):
+        """
+        Learn a vector representation for each graph
+        """   
+        training_epochs = 2
+        fix_graph_dimension = 200
+        len_graphs = len( tagged_documents )
+        input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
+        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=400, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
+        for epoch in range( training_epochs ):
+            print ( 'Training epoch %s' % epoch )
+            shuffle( tagged_documents )
+            model.train( tagged_documents, total_examples=model.corpus_count, epochs=model.iter )
+        print model.docvecs
+
+    @classmethod
     def divide_train_test_data( self ):
         """
         Divide data into train and test sets in a random way
@@ -54,7 +71,10 @@ class PredictNextTool:
         test_data_share = 0.33
         seed = 0
         data = prepare_data.PrepareData()
-        complete_data, labels, dictionary, reverse_dictionary = data.read_data()      
+        complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
+        print "Learning vector representation of graphs..."
+        print tagged_documents
+        input_vector = self.learn_graph_vector( tagged_documents )   
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )

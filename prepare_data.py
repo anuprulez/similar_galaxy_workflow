@@ -7,6 +7,8 @@ import collections
 import time
 import numpy as np
 import json
+import gensim
+from gensim.models.doc2vec import TaggedDocument
 
 
 class PrepareData:
@@ -92,7 +94,6 @@ class PrepareData:
         with open( self.sequence_file, "w" ) as train_seq:
             for item in train_data_sequence:
                 train_seq.write( "%s\n" % item )
-        
         print "Training data and labels files written"
 
     @classmethod
@@ -129,6 +130,7 @@ class PrepareData:
         """
         Convert the data into corresponding arrays
         """
+        tagged_documents = list()
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         #self.create_train_labels_file( dictionary, raw_paths )
@@ -140,10 +142,15 @@ class PrepareData:
         train_label_array = np.zeros( [ len( train_data ), num_classes ] )
         for index, item in enumerate( train_data ):
            positions = item.split( "," )
+           nodes = list()
            for id_pos, pos in enumerate( positions ):
                if pos:
                    train_data_array[ index ][ id_pos ] = int( pos )
+                   nodes.append( reverse_dictionary[ int( pos ) ] )
+           # tagged documents
+           td = TaggedDocument( gensim.utils.to_unicode( " ".join( nodes ) ), [ index ] )
+           tagged_documents.append( td )
            pos_label = train_labels[ index ]
            if pos_label:
                train_label_array[ index ][ int( pos_label ) ] = 1.0  
-        return train_data_array, train_label_array, dictionary, reverse_dictionary
+        return train_data_array, train_label_array, dictionary, reverse_dictionary, tagged_documents
