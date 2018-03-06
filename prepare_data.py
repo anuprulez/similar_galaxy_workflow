@@ -104,6 +104,7 @@ class PrepareData:
         training_labels = list()
         train_file = open( self.train_file, "r" )
         train_file = train_file.read().split( "\n" )
+        seq_len = list()
         data_distribution = dict()
         for item in train_file:
             tools = item.split( "," )
@@ -115,12 +116,13 @@ class PrepareData:
                     data_distribution[ label ] += 1
                 else:
                     data_distribution[ label ] = 1
+                seq_len.append( len( train_tools ) )
                 training_labels.append( tools[ -1 ] )
                 training_samples.append( train_tools )
         # save the data distribution - count the number of samples with same class
         with open( self.distribution_file, 'w' ) as distribution_file:
             distribution_file.write( json.dumps( data_distribution ) )
-        return training_samples, training_labels
+        return training_samples, training_labels, max( seq_len )
 
     @classmethod
     def read_data( self ):
@@ -132,10 +134,9 @@ class PrepareData:
         #self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well
         num_classes = len( dictionary )
-        train_data_array = np.zeros([num_classes])
-        train_data, train_labels = self.prepare_train_test_data()
+        train_data, train_labels, max_seq_len = self.prepare_train_test_data()
         # initialize the training data matrix
-        train_data_array = np.zeros( [ len( train_data ), num_classes ] )
+        train_data_array = np.zeros( [ len( train_data ), max_seq_len ] )
         train_label_array = np.zeros( [ len( train_data ), num_classes ] )
         for index, item in enumerate( train_data ):
            positions = item.split( "," )

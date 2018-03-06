@@ -8,6 +8,7 @@ import collections
 import time
 import math
 import os
+import h5py as h5
 from random import shuffle
 
 # machine learning library
@@ -21,7 +22,6 @@ from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
-from keras.callbacks import LambdaCallback
 from sklearn.model_selection import train_test_split
 
 import prepare_data
@@ -41,6 +41,8 @@ class PredictNextTool:
         self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
         self.val_accuracy_path = self.current_working_dir + "/data/val_accuracy_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
+        self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
+        self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -52,8 +54,15 @@ class PredictNextTool:
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary = data.read_data()      
         np.random.seed( seed )
-        dimensions = len( complete_data[ 0 ] )
+        dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
+        # write the test data and labels to files for further evaluation
+        with h5.File( self.test_data_path, "w" ) as test_data_file:
+            test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
+
+        with h5.File( self.test_labels_path, "w" ) as test_labels_file:
+            test_labels_file.create_dataset( "testlabels", test_labels.shape, data=test_labels )
+
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
@@ -62,27 +71,27 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 100
+        n_epochs = 50
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()        
+        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
-        train_data = np.reshape(train_data, (train_data.shape[0], 1, train_data.shape[1]))
-        train_labels = np.reshape(train_labels, (train_labels.shape[0], 1, train_labels.shape[1]))
-        test_data = np.reshape(test_data, (test_data.shape[0], 1, test_data.shape[1]))
-        test_labels = np.reshape(test_labels, (test_labels.shape[0], 1, test_labels.shape[1]))
+        train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
+        train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
+        test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
+        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )
         train_data_shape = train_data.shape
-        optimizer = Adam(lr=0.0001)
+        optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True ) )
+        model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dropout( dropout ) )
         #model.add( LSTM( 512, return_sequences=True ) )
         #model.add( Dropout( dropout ) )
-        model.add( LSTM( 256, return_sequences=True ) )
-        model.add( Dropout( dropout ) )
-        model.add( LSTM( 256, return_sequences=True ) )
+        #model.add( LSTM( 256, return_sequences=True ) )
+        #model.add( Dropout( dropout ) )
+        model.add( LSTM( 256, return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
@@ -91,7 +100,6 @@ class PredictNextTool:
 
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
-        #evaluate_each_epoch = LambdaCallback( on_epoch_end=evaluate_after_epoch )
         callbacks_list = [ checkpoint ]
 
         print "Start training..."
@@ -112,15 +120,7 @@ class PredictNextTool:
             json_file.write(model_json)
         # save the learned weights to h5 file
         model.save_weights( self.weights_path )
-
-        print "Start predicting..."
-        accuracy = model.evaluate( test_data, test_labels, verbose=0 )
-        print "Loss: %.2f " % accuracy[ 0 ]
-        print "Top-1 accuracy: %.2f " % accuracy[ 1 ]
-
-        # get top n accuracy
-        predict_tool = evaluate_top_results.EvaluateTopResults()
-        predict_tool.evaluate_topn_epochs( n_epochs, num_predictions, dimensions, reverse_dictionary, test_data, test_labels )
+        print "Training finished"
         
     @classmethod
     def evaluate_after_epoch( self, epoch, logs ):
