@@ -54,7 +54,7 @@ def plot_top_prediction( file_path ):
     plt.show()
 
 
-plot_data_distribution( "data/data_distribution.txt" )
+#plot_data_distribution( "data/data_distribution.txt" )
 plot_loss( "data/loss_history.txt" )
 plot_accuracy( "data/accuracy_history.txt" )
-plot_top_prediction( "data/top_pred.txt" )
+#plot_top_prediction( "data/top_pred.txt" )

@@ -23,6 +23,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
+from keras.layers.convolutional import Conv1D
+from keras.layers.convolutional import MaxPooling1D
 
 import prepare_data
 import evaluate_top_results
@@ -73,7 +75,7 @@ class PredictNextTool:
         print "Dividing data..."
         n_epochs = 50
         num_predictions = 5
-        batch_size = 40
+        batch_size = 32
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
@@ -87,12 +89,10 @@ class PredictNextTool:
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dropout( dropout ) )
-        #model.add( LSTM( 512, return_sequences=True ) )
-        #model.add( Dropout( dropout ) )
-        #model.add( LSTM( 256, return_sequences=True ) )
+        #model.add( LSTM( 512, return_sequences=True, recurrent_dropout=dropout ) )
         #model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( Dense( 256 ) )
+        #model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
