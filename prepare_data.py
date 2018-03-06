@@ -6,6 +6,7 @@ import random
 import collections
 import time
 import numpy as np
+import json
 
 
 class PrepareData:
@@ -16,6 +17,7 @@ class PrepareData:
         self.raw_file = "data/workflow_steps.txt"
         self.train_file = "data/train_data.txt"
         self.sequence_file = "data/train_data_sequence.txt"
+        self.distribution_file = "data/data_distribution.txt"
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -102,12 +104,22 @@ class PrepareData:
         training_labels = list()
         train_file = open( self.train_file, "r" )
         train_file = train_file.read().split( "\n" )
+        data_distribution = dict()
         for item in train_file:
             tools = item.split( "," )
             train_tools = tools[ :len( tools) - 1 ]
             train_tools = ",".join( train_tools )
-            training_samples.append( train_tools )
-            training_labels.append( tools[ -1 ] )
+            label = tools[ -1 ]
+            if label:
+                if label in data_distribution:
+                    data_distribution[ label ] += 1
+                else:
+                    data_distribution[ label ] = 1
+                training_labels.append( tools[ -1 ] )
+                training_samples.append( train_tools )
+        # save the data distribution - count the number of samples with same class
+        with open( self.distribution_file, 'w' ) as distribution_file:
+            distribution_file.write( json.dumps( data_distribution ) )
         return training_samples, training_labels
 
     @classmethod
@@ -132,7 +144,5 @@ class PrepareData:
                    train_data_array[ index ][ id_pos ] = int( pos )
            pos_label = train_labels[ index ]
            if pos_label:
-               train_label_array[ index ][ int( pos_label ) ] = 1.0
-        train_data_array = train_data_array[ :len( train_data_array ) - 1 ]
-        train_label_array = train_label_array[ :len( train_label_array ) - 1 ]    
+               train_label_array[ index ][ int( pos_label ) ] = 1.0  
         return train_data_array, train_label_array, dictionary, reverse_dictionary

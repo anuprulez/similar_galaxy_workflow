@@ -62,7 +62,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print "Dividing data..."
-        n_epochs = 5
+        n_epochs = 100
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
@@ -80,6 +80,8 @@ class PredictNextTool:
         model.add( Dropout( dropout ) )
         #model.add( LSTM( 512, return_sequences=True ) )
         #model.add( Dropout( dropout ) )
+        model.add( LSTM( 256, return_sequences=True ) )
+        model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True ) )
         model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
