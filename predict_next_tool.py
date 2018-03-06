@@ -53,7 +53,7 @@ class PredictNextTool:
         Learn a vector representation for each graph
         """   
         training_epochs = 2
-        fix_graph_dimension = 200
+        fix_graph_dimension = 100
         len_graphs = len( tagged_documents )
         input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
         model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=400, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
