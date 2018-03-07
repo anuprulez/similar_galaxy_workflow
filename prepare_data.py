@@ -63,7 +63,6 @@ class PrepareData:
         train_label = list()
         train_data_sequence = list()
         train_label_sequence = list()
-        print "preparing downstream data..."
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
             max_window_size = len( tools )
@@ -85,7 +84,7 @@ class PrepareData:
                     if data_seq not in train_data_sequence:
                         train_data_sequence.append( data_seq )
 
-            print "Path %d processed" % ( index + 1 )
+            print ( "Path %d processed" % ( index + 1 ) )
 
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
@@ -94,7 +93,6 @@ class PrepareData:
         with open( self.sequence_file, "w" ) as train_seq:
             for item in train_data_sequence:
                 train_seq.write( "%s\n" % item )
-        print "Training data and labels files written"
 
     @classmethod
     def prepare_train_test_data( self ):

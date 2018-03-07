@@ -52,11 +52,11 @@ class PredictNextTool:
         """
         Learn a vector representation for each graph
         """   
-        training_epochs = 20
+        training_epochs = 5
         fix_graph_dimension = 100
         len_graphs = len( tagged_documents )
         input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
-        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=100, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
+        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=1, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
         for epoch in range( training_epochs ):
             print ( 'Learning vector repr. epoch %s' % epoch )
             shuffle( tagged_documents )
@@ -74,7 +74,7 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        print "Learning vector representations of graphs..."
+        print ("Learning vector representations of graphs...")
         complete_data_vector = self.learn_graph_vector( tagged_documents )
         np.random.seed( seed )
         dimensions = len( dictionary )
@@ -93,8 +93,8 @@ class PredictNextTool:
         """
         Create LSTM network and evaluate performance
         """
-        print "Dividing data..."
-        n_epochs = 50
+        print ("Dividing data...")
+        n_epochs = 3
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
@@ -123,7 +123,7 @@ class PredictNextTool:
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
         callbacks_list = [ checkpoint ]
 
-        print "Start training..."
+        print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "acc" ]
@@ -141,14 +141,7 @@ class PredictNextTool:
             json_file.write(model_json)
         # save the learned weights to h5 file
         model.save_weights( self.weights_path )
-        print "Training finished"
-        
-    @classmethod
-    def evaluate_after_epoch( self, epoch, logs ):
-        """
-        Evaluate performance after each epoch
-        """
-        print "Epoch evaluated..."
+        print ("Training finished")
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -190,9 +183,9 @@ class PredictNextTool:
         num_predictions = 5
         train_data, train_labels = self.get_raw_paths()
         prediction_accuracy = self.get_top_predictions( num_predictions, test_data, train_labels, dimensions, trained_model, reverse_dictionary )
-        print "No. total test inputs: %d" % num_predict
-        print "No. correctly predicted: %d" % prediction_accuracy
-        print "Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict )
+        print ("No. total test inputs: %d" % num_predict)
+        print ("No. correctly predicted: %d" % prediction_accuracy)
+        print ("Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict ))
   
 
 if __name__ == "__main__":
@@ -204,4 +197,4 @@ if __name__ == "__main__":
     predict_tool = PredictNextTool()
     predict_tool.evaluate_LSTM_network()
     end_time = time.time()
-    print "Program finished in %s seconds" % str( end_time - start_time  )
+    print ("Program finished in %s seconds" % str( end_time - start_time ))

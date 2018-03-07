@@ -55,11 +55,11 @@ class EvaluateTopResults:
         for i in range( n_epochs ):
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
-            print file_path
+            print ( file_path )
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
             accuracy = self.get_top_prediction_accuracy( num_predictions, dimensions, loaded_model, test_data, test_labels )
             topn_accuracy.append( accuracy )
-            print accuracy
+            print ( accuracy )
         np.savetxt( self.top_pred_path, np.array( topn_accuracy ), delimiter="," )
 
     @classmethod
@@ -67,7 +67,7 @@ class EvaluateTopResults:
         """
         Compute top n predictions with a trained model
         """
-        print "Get top %d predictions for each test input..." % topn
+        print ( "Get top %d predictions for each test input..." % topn )
         num_predict = len( test_data )
         prediction_accuracy = 0
         for i in range( num_predict ):
@@ -99,4 +99,4 @@ if __name__ == "__main__":
     evaluate_perf = EvaluateTopResults()
     evaluate_perf.evaluate_topn_epochs()
     end_time = time.time()
-    print "Program finished in %s seconds" % str( end_time - start_time  )
+    print ("Program finished in %s seconds" % str( end_time - start_time ) )
