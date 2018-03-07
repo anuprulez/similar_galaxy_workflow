@@ -78,12 +78,8 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        try:
-            doc2vector = h5.File( self.doc2vec_model_path, 'r' )
-            complete_data_vector = doc2vector[ "doc2vector" ]
-        except Exception:
-            print ("Learning vector representations of graphs...")
-            complete_data_vector = self.learn_graph_vector( tagged_documents )
+        print ("Learning vector representations of graphs...")
+        complete_data_vector = self.learn_graph_vector( tagged_documents )
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data_vector, labels, test_size=test_data_share, random_state=seed )
@@ -100,7 +96,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 200
+        n_epochs = 700
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
@@ -126,7 +122,7 @@ class PredictNextTool:
         model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ 'accuracy' ] )
 
         # create checkpoint after each epoch - save the weights to h5 file
-        checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=1, mode='max' )
+        checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
 
         print ("Start training...")
