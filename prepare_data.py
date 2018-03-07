@@ -1,6 +1,8 @@
 """
 Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
 """
+
+import os
 import sys
 import random
 import collections
@@ -16,10 +18,11 @@ class PrepareData:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.raw_file = "data/workflow_steps.txt"
-        self.train_file = "data/train_data.txt"
-        self.sequence_file = "data/train_data_sequence.txt"
-        self.distribution_file = "data/data_distribution.txt"
+        self.current_working_dir = '/home/fr/fr_fr/fr_ak548/thesis/code/workflows/doc2vec_tools_sequences/similar_galaxy_workflow'
+        self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
+        self.train_file = self.current_working_dir + "/data/train_data.txt"
+        self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
+        self.distribution_file = self.current_working_dir + "/data/data_distribution.txt"
 
     @classmethod
     def process_processed_data( self, fname ):

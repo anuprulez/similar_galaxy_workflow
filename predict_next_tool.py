@@ -35,7 +35,7 @@ class PredictNextTool:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd()
+        self.current_working_dir = '/home/fr/fr_fr/fr_ak548/thesis/code/workflows/doc2vec_tools_sequences/similar_galaxy_workflow'
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
@@ -46,23 +46,27 @@ class PredictNextTool:
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
+        self.doc2vec_model_path = self.current_working_dir + "/data/doc2vec_model.hdf5"
 
     @classmethod
     def learn_graph_vector( self, tagged_documents ):
         """
         Learn a vector representation for each graph
         """   
-        training_epochs = 5
+        training_epochs = 20
         fix_graph_dimension = 100
         len_graphs = len( tagged_documents )
+        print ('Learning doc2vectors...')
         input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
-        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=1, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
+        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=200, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
         for epoch in range( training_epochs ):
             print ( 'Learning vector repr. epoch %s' % epoch )
             shuffle( tagged_documents )
             model.train( tagged_documents, total_examples=model.corpus_count, epochs=model.iter )
         for i in range( len( model.docvecs ) ):
            input_vector[ i ][ : ] = model.docvecs[ i ]
+        with h5.File( self.doc2vec_model_path, "w" ) as model_file:
+            model_file.create_dataset( "doc2vector", input_vector.shape, data=input_vector, dtype='float64' )
         return input_vector
 
     @classmethod
@@ -74,18 +78,20 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        print ("Learning vector representations of graphs...")
-        complete_data_vector = self.learn_graph_vector( tagged_documents )
+        try:
+            doc2vector = h5.File( self.doc2vec_model_path, 'r' )
+            complete_data_vector = doc2vector[ "doc2vector" ]
+        except Exception:
+            print ("Learning vector representations of graphs...")
+            complete_data_vector = self.learn_graph_vector( tagged_documents )
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data_vector, labels, test_size=test_data_share, random_state=seed )
         # write the test data and labels to files for further evaluation
         with h5.File( self.test_data_path, "w" ) as test_data_file:
             test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
-
         with h5.File( self.test_labels_path, "w" ) as test_labels_file:
             test_labels_file.create_dataset( "testlabels", test_labels.shape, data=test_labels )
-
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
@@ -94,7 +100,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 3
+        n_epochs = 200
         num_predictions = 5
         batch_size = 40
         dropout = 0.2
