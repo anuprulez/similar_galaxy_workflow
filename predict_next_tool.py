@@ -52,16 +52,18 @@ class PredictNextTool:
         """
         Learn a vector representation for each graph
         """   
-        training_epochs = 2
+        training_epochs = 20
         fix_graph_dimension = 100
         len_graphs = len( tagged_documents )
         input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
-        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=400, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
+        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=100, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
         for epoch in range( training_epochs ):
-            print ( 'Training epoch %s' % epoch )
+            print ( 'Learning vector repr. epoch %s' % epoch )
             shuffle( tagged_documents )
             model.train( tagged_documents, total_examples=model.corpus_count, epochs=model.iter )
-        print model.docvecs
+        for i in range( len( model.docvecs ) ):
+           input_vector[ i ][ : ] = model.docvecs[ i ]
+        return input_vector
 
     @classmethod
     def divide_train_test_data( self ):
@@ -72,12 +74,11 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        print "Learning vector representation of graphs..."
-        print tagged_documents
-        input_vector = self.learn_graph_vector( tagged_documents )   
+        print "Learning vector representations of graphs..."
+        complete_data_vector = self.learn_graph_vector( tagged_documents )
         np.random.seed( seed )
         dimensions = len( dictionary )
-        train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
+        train_data, test_data, train_labels, test_labels = train_test_split( complete_data_vector, labels, test_size=test_data_share, random_state=seed )
         # write the test data and labels to files for further evaluation
         with h5.File( self.test_data_path, "w" ) as test_data_file:
             test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
@@ -95,7 +96,7 @@ class PredictNextTool:
         print "Dividing data..."
         n_epochs = 50
         num_predictions = 5
-        batch_size = 32
+        batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # reshape train and test data
@@ -112,7 +113,7 @@ class PredictNextTool:
         #model.add( LSTM( 512, return_sequences=True, recurrent_dropout=dropout ) )
         #model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True, recurrent_dropout=dropout ) )
-        #model.add( Dense( 256 ) )
+        model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )

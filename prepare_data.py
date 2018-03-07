@@ -152,5 +152,5 @@ class PrepareData:
            tagged_documents.append( td )
            pos_label = train_labels[ index ]
            if pos_label:
-               train_label_array[ index ][ int( pos_label ) ] = 1.0  
+               train_label_array[ index ][ int( pos_label ) ] = 1.0
         return train_data_array, train_label_array, dictionary, reverse_dictionary, tagged_documents
