@@ -23,8 +23,6 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
-from keras.layers.convolutional import Conv1D
-from keras.layers.convolutional import MaxPooling1D
 import gensim
 
 import prepare_data
@@ -35,7 +33,7 @@ class PredictNextTool:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = '/home/fr/fr_fr/fr_ak548/thesis/code/workflows/doc2vec_tools_sequences/similar_galaxy_workflow'
+        self.current_working_dir = os.getcwd()
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"

@@ -18,11 +18,13 @@ class PrepareData:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = '/home/fr/fr_fr/fr_ak548/thesis/code/workflows/doc2vec_tools_sequences/similar_galaxy_workflow'
+        self.current_working_dir = os.getcwd()
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.distribution_file = self.current_working_dir + "/data/data_distribution.txt"
+        self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
+        self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -53,6 +55,10 @@ class PrepareData:
         for word, _ in count:
             dictionary[word] = len( dictionary )  
         reverse_dictionary = dict(zip( dictionary.values(), dictionary.keys() ) )
+        with open( self.data_dictionary, 'w' ) as distribution_file:
+            distribution_file.write( json.dumps( dictionary ) )
+        with open( self.data_rev_dict, 'w' ) as data_rev_dict:
+            data_rev_dict.write( json.dumps( reverse_dictionary ) )
         return dictionary, reverse_dictionary
     
     @classmethod

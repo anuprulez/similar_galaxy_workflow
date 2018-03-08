@@ -8,7 +8,6 @@ import os
 import h5py as h5
 
 # machine learning library
-from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 
 
@@ -19,7 +18,6 @@ class EvaluateTopResults:
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
         self.base_epochs_weights_path = self.current_working_dir + "/data/weights/weights-epoch-"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
@@ -43,7 +41,7 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 50
+        n_epochs = 200
         num_predictions = 5
         
         test_data = h5.File( self.test_data_path, 'r' )

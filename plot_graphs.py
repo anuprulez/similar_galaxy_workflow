@@ -58,4 +58,4 @@ def plot_top_prediction( file_path ):
 plot_loss( "data/loss_history.txt" )
 plot_accuracy( "data/accuracy_history.txt" )
 plot_accuracy( "data/validation_accuracy.txt" )
-#plot_top_prediction( "data/top_pred.txt" )
+plot_top_prediction( "data/top_pred.txt" )
