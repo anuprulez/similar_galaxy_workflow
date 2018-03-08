@@ -21,7 +21,7 @@ class PredictNextNode:
         self.raw_file = "../data/workflow_steps.txt"
         self.raw_paths = "../data/complete_data_sequence.txt"
         self.network_config_json_path = "../data/model.json"
-        self.trained_model_path = "../data/weights-epoch-700.hdf5"
+        self.trained_model_path = "../data/trained_model.hdf5"
         self.graph_vectors_path = "../data/doc2vec_model.hdf5"
         self.data_dictionary = "../data/data_dictionary.txt"
         self.data_rev_dict = "../data/data_rev_dict.txt"
