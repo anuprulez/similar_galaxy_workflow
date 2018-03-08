@@ -18,13 +18,14 @@ class PredictNextNode:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.raw_file = "../data/workflow_steps.txt"
-        self.raw_paths = "../data/complete_data_sequence.txt"
-        self.network_config_json_path = "../data/model.json"
-        self.trained_model_path = "../data/trained_model.hdf5"
-        self.graph_vectors_path = "../data/doc2vec_model.hdf5"
-        self.data_dictionary = "../data/data_dictionary.txt"
-        self.data_rev_dict = "../data/data_rev_dict.txt"
+        self.raw_file = "data/workflow_steps.txt"
+        self.raw_paths = "data/complete_data_sequence.txt"
+        self.network_config_json_path = "data/model.json"
+        self.trained_model_path = "data/trained_model.hdf5"
+        self.graph_vectors_path = "data/doc2vec_model.hdf5"
+        self.data_dictionary = "data/data_dictionary.txt"
+        self.data_rev_dict = "data/data_rev_dict.txt"
+        self.vec_dimension = 100
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -54,46 +55,49 @@ class PredictNextNode:
         top_prediction_pos = prediction_pos[ -top_n: ]
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in top_prediction_pos ]
-        print ("Predicted nodes for the input sequence...")
-        print predicted_nodes
+        return ",".join( predicted_nodes )
 
     @classmethod
-    def find_next_nodes( self ):
+    def get_file_dictionary( self, file_name ):
+        """
+        Get a dictionary for tools
+        """
+        with open( file_name, 'r' ) as data_dict:
+            nodes_dict = json.loads( data_dict.read() )
+        return nodes_dict
+
+    @classmethod
+    def find_next_nodes( self, input_sequence="" ):
         """
         Find a set of possible next nodes
         """
+        input_seq_paths = dict()
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
         # read paths, nodes dictionary from files
         with open( self.raw_paths, 'r' ) as load_all_paths:
             all_paths = load_all_paths.read().split( "\n" )
-        with open( self.data_dictionary, 'r' ) as data_dict:
-            nodes_dict = json.loads( data_dict.read() )
-        with open( self.data_rev_dict, 'r' ) as data_rev_dict:
-            nodes_rev_dict = json.loads( data_rev_dict.read() )
+
+        nodes_dict = self.get_file_dictionary( self.data_dictionary )
+        nodes_rev_dict = self.get_file_dictionary( self.data_rev_dict )
+        
         # collect paths and their corresponding vectors
         all_paths = all_paths[ :len( all_paths ) -1 ]
         graph_vectors = h5.File( self.graph_vectors_path, 'r' )
         graph_vectors = graph_vectors[ "doc2vector" ]
-        random_sample_pos = random.randint( 0, len( all_paths ) )
-        input_seq = all_paths[ random_sample_pos ]
-        input_seq_vec = graph_vectors[ random_sample_pos ]
-        # print all the paths containing this input sequence
-        print("All the paths containing the input sequence: %s", input_seq)
-        for item in all_paths:
-            if input_seq in item:
-                print item
-        # predict next node for random vectors
-        self.predict_node( loaded_model, input_seq_vec, nodes_dict, nodes_rev_dict )
-            
-
-if __name__ == "__main__":
-
-    if len(sys.argv) != 1:
-        print( "Usage: python predict_next_node.py" )
-        exit( 1 )
-    start_time = time.time()
-    evaluate_perf = PredictNextNode()
-    evaluate_perf.find_next_nodes()
-    end_time = time.time()
-    print ("Program finished in %s seconds" % str( end_time - start_time ) )
+        all_paths_train = list()
+        input_seq_vec = np.zeros( [ 1, self.vec_dimension ] )
+        for index, item in enumerate( all_paths ):
+            item = item.split(",")
+            item = item[ :len( item ) -1 ]
+            all_paths_train.append( ",".join( item ) )
+        
+        for index, item in enumerate( all_paths_train ):
+            if item == input_sequence:
+                input_seq_vec = graph_vectors[ index ]
+                break
+        try:
+            predicted_nodes = self.predict_node( loaded_model, input_seq_vec, nodes_dict, nodes_rev_dict )
+        except:
+            predicted_nodes = {}
+        return { "predicted_nodes": predicted_nodes }

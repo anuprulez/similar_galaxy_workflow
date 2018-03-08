@@ -76,8 +76,17 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        print ("Learning vector representations of graphs...")
-        complete_data_vector = self.learn_graph_vector( tagged_documents )
+        print complete_data.shape
+        try:
+            print("Loading the saved doc2vec...")
+            doc2vec = h5.File( self.doc2vec_model_path, 'r' )[ "doc2vector" ]
+            doc2vec_shape = doc2vec.shape
+            complete_data_vector = np.zeros( [ doc2vec_shape[ 0 ], doc2vec_shape[ 1 ] ] )
+            for i in range( doc2vec_shape[ 0 ] ):
+                complete_data_vector[ i ][ : ] = doc2vec[ i ]
+        except Exception as exp:
+            print ("Learning vector representations of graphs...")
+            complete_data_vector = self.learn_graph_vector( tagged_documents )
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data_vector, labels, test_size=test_data_share, random_state=seed )
@@ -89,6 +98,60 @@ class PredictNextTool:
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
+    def evaluate_Dense_classifier( self ):
+        """
+        Create keras classifier and evaluate performance
+        """
+        print ("Dividing data...")
+        n_epochs = 700
+        num_predictions = 5
+        batch_size = 40
+        dropout = 0.2
+        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
+        # reshape train and test data
+        train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
+        train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
+        test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
+        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )
+        train_data_shape = train_data.shape
+
+        # define network and related terms
+        model = Sequential()
+        optimizer = Adam( lr=0.0001 )
+        model.add(Dense(256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), activation='relu'))
+        model.add( Dropout( dropout ) )
+        model.add( Dense( 256 ) )
+        model.add( Dropout( dropout ) )
+        model.add( Dense( dimensions ) )
+        model.add( Activation( 'softmax' ) )
+        model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ 'accuracy' ] )
+
+        # create checkpoint after each epoch - save the weights to h5 file
+        checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
+        callbacks_list = [ checkpoint ]
+         
+        print ("Start training...")
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
+
+        loss_values = model_fit_callbacks.history[ "loss" ]
+        accuracy_values = model_fit_callbacks.history[ "acc" ]
+        validation_loss = model_fit_callbacks.history[ "val_loss" ]
+        validation_acc = model_fit_callbacks.history[ "val_acc" ]
+
+        np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
+        np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
+        np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
+        np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
+
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write(model_json)
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
+        print ("Training finished")
+
+    '''@classmethod
     def evaluate_LSTM_network( self ):
         """
         Create LSTM network and evaluate performance
@@ -110,8 +173,6 @@ class PredictNextTool:
         model = Sequential()
         model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dropout( dropout ) )
-        #model.add( LSTM( 512, return_sequences=True, recurrent_dropout=dropout ) )
-        #model.add( Dropout( dropout ) )
         model.add( LSTM( 256, return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
@@ -141,7 +202,7 @@ class PredictNextTool:
             json_file.write(model_json)
         # save the learned weights to h5 file
         model.save_weights( self.weights_path )
-        print ("Training finished")
+        print ("Training finished")'''
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -195,6 +256,6 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     predict_tool = PredictNextTool()
-    predict_tool.evaluate_LSTM_network()
+    predict_tool.evaluate_Dense_classifier()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
