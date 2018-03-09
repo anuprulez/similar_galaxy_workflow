@@ -103,7 +103,6 @@ class PredictNextTool:
         """
         print ("Dividing data...")
         n_epochs = 700
-        num_predictions = 5
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
@@ -232,21 +231,7 @@ class PredictNextTool:
             training_samples.append( train_tools )
             training_labels.append( tools[ -1 ] )
         return training_samples, training_labels
- 
-    @classmethod
-    def see_predicted_tools( self, trained_model, test_data, dictionary, reverse_dictionary, dimensions ):
-        """
-        Use trained model to predict next tool
-        """
-        # predict random input sequences
-        num_predict = len( test_data )
-        num_predictions = 5
-        train_data, train_labels = self.get_raw_paths()
-        prediction_accuracy = self.get_top_predictions( num_predictions, test_data, train_labels, dimensions, trained_model, reverse_dictionary )
-        print ("No. total test inputs: %d" % num_predict)
-        print ("No. correctly predicted: %d" % prediction_accuracy)
-        print ("Prediction accuracy: %s" % str( float( prediction_accuracy ) / num_predict ))
-  
+
 
 if __name__ == "__main__":
 
