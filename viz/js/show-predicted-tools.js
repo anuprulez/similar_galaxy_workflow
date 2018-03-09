@@ -63,7 +63,7 @@ $(document).ready(function() {
                 toolsTemplate += "</ul>";
             }
             else {
-                toolsTemplate = "No predicted tools"
+                toolsTemplate = "No predicted tools";
             }
 
             if( Object.keys( allInputPaths ).length > 0 ) {
