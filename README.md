@@ -1,5 +1,32 @@
-# Galaxy workflows as graphs
-The workflows of Galaxy are directed graphs in which each node is represented by a Galaxy tool. It is a data processing pipeline through which datasets undergo some transformation at each node. These transformations include text manipulation, sorting on a column, deletion or addition of a column and so on.
+# Predict next tool in Galaxy workflows
 
-# See workflow as graphs
+
+## Galaxy workflows as directed graphs
+The workflows of Galaxy are directed graphs in which each node is represented by a Galaxy tool. It is a data processing pipeline through which datasets undergo some transformation at each node. These transformations include text manipulation, sorting on a column, deletion or addition of a column and so on.
 Each workflow consists of a certain number of tools arranged as a directed graph. Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its graph.
+
+## Predict next tool
+If a user can see a list of possible next tool(s) at any stage of creating workflows, it would be convenient and time-saving. This work tries to achieve it by training a neural network (deep learning) on the existing set of workflows from multiple users. It learns patterns/connections from the workflows among tools following a classification approach. The approach is explained below:
+
+Suppose we have a workflow:
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/3022518/37175617-5382eec8-231a-11e8-98b2-d5988dce3bb4.png">
+</p>
+
+This workflow can be broken down into following smaller sequences (or training samples):
+
+- pileometh > Remove beginning 1 (label)
+- pileometh > Remove beginning 1 > Add_a_column1 (label)
+- Add_a_column1 > cut1 > addValue (label)
+- so on ...
+
+The last item in each such paths is the label (or category) of the previous sequence (of tools). For example, "pileometh > Remove beginning 1" is a training sample and its label is "Add_a_column1". Following this way, each path is divided into training samples (a tool or a sequence of tools) and their labels. The logic behind this breking up of a workflow is to make the classifier learn that if we are at a stage "pileometh > Remove beginning 1" of creating a workflow, the next tool would be "Add_a_column1". A similar approach is used for predicting next word in sentences.
+
+To feed the input training samples (smaller parts of workflows) into the neural network, we need to convert them into vectors. Here, we draw an analogy between our smaller sequences from workflows and smaller parts of sentences (in English for example). They are similar - sentences in a language like in English and our smaller sequences as both make sense only when components (tools in our case and words in sentences) are arranged in a particular order. Following it, we translate our training sequences as vectors. Each training sample becomes a vector after training them on another neural network ([doc2vec](https://cs.stanford.edu/%7Equocle/paragraph_vector.pdf)). These vectors are fed into a dense neural network while the labels are embedded as one-hot vector.
+
+## Accuracy measure
+In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label is present in the top 5 predicted labels for a training sequence.
+
+
+
+
