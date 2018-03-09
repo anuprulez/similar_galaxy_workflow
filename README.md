@@ -1,6 +1,5 @@
 # Predict next tool in Galaxy workflows
 
-
 ## Galaxy workflows as directed graphs
 The workflows of Galaxy are directed graphs in which each node is represented by a Galaxy tool. It is a data processing pipeline through which datasets undergo some transformation at each node. These transformations include text manipulation, sorting on a column, deletion or addition of a column and so on.
 Each workflow consists of a certain number of tools arranged as a directed graph. Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its graph.
@@ -10,7 +9,7 @@ If a user can see a list of possible next tool(s) at any stage of creating workf
 
 Suppose we have a workflow:
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflows/doc2vec_tools_sequences/images/workflow1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/workflow1.png">
 </p>
 
 This workflow can be broken down into following smaller sequences (or training samples):
@@ -29,9 +28,8 @@ In our set of training samples, each one can have many labels (or categories) wh
 
 ## Vizualizer
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflows/doc2vec_tools_sequences/images/predict-next-tools.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/predict-next-tools.png">
 </p>
-
 The above image shows possible next tools for a sequence. All the paths containing this sequence of tools are also shown.
 In order to run the visualizer, please follow these steps:
 
