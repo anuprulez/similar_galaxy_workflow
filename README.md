@@ -10,7 +10,7 @@ If a user can see a list of possible next tool(s) at any stage of creating workf
 
 Suppose we have a workflow:
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/3022518/37175617-5382eec8-231a-11e8-98b2-d5988dce3bb4.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflows/doc2vec_tools_sequences/images/workflow1.png">
 </p>
 
 This workflow can be broken down into following smaller sequences (or training samples):
@@ -26,6 +26,23 @@ To feed the input training samples (smaller parts of workflows) into the neural 
 
 ## Accuracy measure
 In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label is present in the top 5 predicted labels for a training sequence.
+
+## Vizualizer
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflows/doc2vec_tools_sequences/images/predict-next-tools.png">
+</p>
+
+The above image shows possible next tools for a sequence. All the paths containing this sequence of tools are also shown.
+In order to run the visualizer, please follow these steps:
+
+1. Download the repository
+2. Move to the "viz" folder
+3. Install the dependencies (like Keras, Tensorflow, Numpy and h5py)
+4. Run the python server: `python viz_server.py 8001`
+5. Browse the URL: "http://localhost:8001/"
+6. Choose a tool and see the next possible tools
+7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools. 
+8. If the given combination is not present, no tools or paths are shown.
 
 
 
