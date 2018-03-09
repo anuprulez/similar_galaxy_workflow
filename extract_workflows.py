@@ -207,4 +207,4 @@ if __name__ == "__main__":
     extract_workflow = ExtractWorkflows()
     extract_workflow.read_workflow_directory()
     end_time = time.time()
-    print "Program finished in %d seconds" % int( end_time - start_time )
+    print ("Program finished in %d seconds" % int( end_time - start_time ) )
