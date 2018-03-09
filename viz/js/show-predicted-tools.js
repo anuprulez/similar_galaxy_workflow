@@ -25,11 +25,12 @@ $(document).ready(function() {
             toolsSeq = toolsData[ selectedTool ];
         }
         else {
-            toolsSeqTemplate = " > " + toolsData[ selectedTool ];
+            toolsSeqTemplate = " &rarr; " + toolsData[ selectedTool ];
             toolsSeq += "," + toolsData[ selectedTool ];
         }
         getPredictedTools( toolsSeq );
         $( ".workflow-so-far" ).append( toolsSeqTemplate );
+        $( ".tool-ids" ).prop( 'selectedIndex', 0 );
     });
 
     function sortDictionary( dictionary ) {
@@ -41,10 +42,18 @@ $(document).ready(function() {
     }
 
     function getPredictedTools( toolSeq ) {
-        let predictUrl =  "http://" + host + "/?predict_tool=true&tool_seq=" + toolSeq;
+        let predictUrl =  "http://" + host + "/?predict_tool=true&tool_seq=" + toolSeq,
+            $elLoading = $( ".loading-image" ),
+            $elPredictedTools = $( ".predicted-tools" ),
+            $elAllPaths = $( ".all-included-paths" );
+        $elLoading.show();
+        $elPredictedTools.empty();
+        $elAllPaths.empty();
         $.getJSON( predictUrl, function( data ) {
             let predictedNodes = data[ "predicted_nodes" ],
-                toolsTemplate = "";
+                allInputPaths = data[ "all_input_paths" ],
+                toolsTemplate = "",
+                pathsTemplate = "";
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ul>";
@@ -56,8 +65,32 @@ $(document).ready(function() {
             else {
                 toolsTemplate = "No predicted tools"
             }
-            $( ".predicted-tools" ).empty().append( toolsTemplate );
+
+            if( Object.keys( allInputPaths ).length > 0 ) {
+                pathsTemplate = "<ul>";
+                for( var index in allInputPaths ) {
+                    let toolsPath = allInputPaths[ index ],
+                        toolItems = toolsPath.split( "," );
+                    if( toolItems.length > 1 ) {
+                        toolsPath = toolsPath.split( "," ).join( " &rarr; " );
+                        pathsTemplate += "<li>" + toolsPath + "</li>";
+                    }
+                }
+                pathsTemplate += "</ul>";
+            }
+            else {
+                pathsTemplate = "No paths involving this sequence in the complete data"
+            }
+            $elLoading.hide();
+            $elPredictedTools.append( toolsTemplate );
+            $elAllPaths.append( pathsTemplate );
         });
     }
+    function clearDataEvent() {
+        $( ".clear-data" ).on( "click", function( e ) {
+            document.location.reload();
+        });
+    }
+    clearDataEvent();
 });
 

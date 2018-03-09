@@ -20,4 +20,10 @@
     position: relative;
 }
 
+.top-margin{
+    margin-top: 1%;
+}
 
+.loading-image {
+    display: none;
+}

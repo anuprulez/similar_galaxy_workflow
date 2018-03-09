@@ -76,7 +76,6 @@ class PredictNextTool:
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
-        print complete_data.shape
         try:
             print("Loading the saved doc2vec...")
             doc2vec = h5.File( self.doc2vec_model_path, 'r' )[ "doc2vector" ]

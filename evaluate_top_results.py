@@ -41,9 +41,8 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 200
+        n_epochs = 700
         num_predictions = 5
-        
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
         test_labels = h5.File( self.test_labels_path, 'r' )

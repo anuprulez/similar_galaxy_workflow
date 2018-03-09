@@ -86,6 +86,7 @@ class PredictNextNode:
         graph_vectors = h5.File( self.graph_vectors_path, 'r' )
         graph_vectors = graph_vectors[ "doc2vector" ]
         all_paths_train = list()
+        all_input_seq_paths = dict()
         input_seq_vec = np.zeros( [ 1, self.vec_dimension ] )
         for index, item in enumerate( all_paths ):
             item = item.split(",")
@@ -96,8 +97,12 @@ class PredictNextNode:
             if item == input_sequence:
                 input_seq_vec = graph_vectors[ index ]
                 break
+        for index, item in enumerate( all_paths_train ):
+            if input_sequence in item: 
+                all_input_seq_paths[ index ] = item
         try:
             predicted_nodes = self.predict_node( loaded_model, input_seq_vec, nodes_dict, nodes_rev_dict )
         except:
             predicted_nodes = {}
-        return { "predicted_nodes": predicted_nodes }
+            all_input_seq_paths = {}
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths }
