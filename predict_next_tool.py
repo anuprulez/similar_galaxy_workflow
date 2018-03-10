@@ -1,12 +1,10 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Machine Learning
+Predict nodes in graphichal data (tools in Galaxy workflows) using Machine Learning
 """
+
 import sys
 import numpy as np
-import random
-import collections
 import time
-import math
 import os
 import h5py as h5
 from random import shuffle
@@ -15,18 +13,15 @@ from random import shuffle
 from keras.models import Sequential
 from keras.layers import Dropout
 from keras.layers import Dense
-from keras.layers import LSTM
 from keras.layers import Activation
-from keras.layers.embeddings import Embedding
-from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
-from keras.optimizers import RMSprop, Adam
+from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 import gensim
 
 import prepare_data
-import evaluate_top_results
+
 
 class PredictNextTool:
 
@@ -49,8 +44,8 @@ class PredictNextTool:
     @classmethod
     def learn_graph_vector( self, tagged_documents ):
         """
-        Learn a vector representation for each graph
-        """   
+        Learn a vector representation for each path
+        """
         training_epochs = 20
         fix_graph_dimension = 100
         len_graphs = len( tagged_documents )
@@ -106,6 +101,7 @@ class PredictNextTool:
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
+
         # reshape train and test data
         train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
         train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
@@ -116,7 +112,7 @@ class PredictNextTool:
         # define network and related terms
         model = Sequential()
         optimizer = Adam( lr=0.0001 )
-        model.add(Dense(256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), activation='relu'))
+        model.add(Dense( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), activation='relu' ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( 256 ) )
         model.add( Dropout( dropout ) )
@@ -127,7 +123,7 @@ class PredictNextTool:
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
-         
+
         print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
 
@@ -148,59 +144,6 @@ class PredictNextTool:
         # save the learned weights to h5 file
         model.save_weights( self.weights_path )
         print ("Training finished")
-
-    '''@classmethod
-    def evaluate_LSTM_network( self ):
-        """
-        Create LSTM network and evaluate performance
-        """
-        print ("Dividing data...")
-        n_epochs = 700
-        num_predictions = 5
-        batch_size = 40
-        dropout = 0.2
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        # reshape train and test data
-        train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
-        train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
-        test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
-        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )
-        train_data_shape = train_data.shape
-        optimizer = Adam( lr=0.0001 )
-        # define recurrent network
-        model = Sequential()
-        model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( Dropout( dropout ) )
-        model.add( LSTM( 256, return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( Dense( 256 ) )
-        model.add( Dropout( dropout ) )
-        model.add( Dense( dimensions ) )
-        model.add( Activation( 'softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ 'accuracy' ] )
-
-        # create checkpoint after each epoch - save the weights to h5 file
-        checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        callbacks_list = [ checkpoint ]
-
-        print ("Start training...")
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
-        loss_values = model_fit_callbacks.history[ "loss" ]
-        accuracy_values = model_fit_callbacks.history[ "acc" ]
-        validation_loss = model_fit_callbacks.history[ "val_loss" ]
-        validation_acc = model_fit_callbacks.history[ "val_acc" ]
-
-        np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
-        np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
-        np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-
-        # save the network as json
-        model_json = model.to_json()
-        with open( self.network_config_json_path, "w" ) as json_file:
-            json_file.write(model_json)
-        # save the learned weights to h5 file
-        model.save_weights( self.weights_path )
-        print ("Training finished")'''
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
