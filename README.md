@@ -35,7 +35,7 @@ In order to run the visualizer, please follow these steps:
 
 1. Download the repository
 2. Move to the "viz" folder
-3. Install the dependencies (like Keras, Tensorflow, Numpy and h5py)
+3. Install the dependencies (like [Keras](https://keras.io/), [Tensorflow](https://www.tensorflow.org/), Numpy and [h5py](https://www.h5py.org/)). Please install if there are more dependencies. 
 4. Run the python server: `python viz_server.py 8001`
 5. Browse the URL: "http://localhost:8001/"
 6. Choose a tool and see the next possible tools
@@ -49,6 +49,19 @@ In order to run the visualizer, please follow these steps:
 4. It is time for evaluating our learned model. Execute `python evaluate_top_results.py` to learn the top-5 accuracy (by default). Please change a variable `num_predictions` to have top-n accuracy.
 5. To plot graphs for loss drop or accuracy increase, run `python plot_graphs.py`.
 
+## Citations:
 
-
-
+@inproceedings{rehurek_lrec,
+      title = {{Software Framework for Topic Modelling with Large Corpora}},
+      author = {Radim {\v R}eh{\r u}{\v r}ek and Petr Sojka},
+      booktitle = {{Proceedings of the LREC 2010 Workshop on New
+           Challenges for NLP Frameworks}},
+      pages = {45--50},
+      year = 2010,
+      month = May,
+      day = 22,
+      publisher = {ELRA},
+      address = {Valletta, Malta},
+      note={\url{http://is.muni.cz/publication/884893/en}},
+      language={English}
+}
