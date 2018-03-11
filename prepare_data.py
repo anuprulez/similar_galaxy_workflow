@@ -18,7 +18,7 @@ class PrepareData:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow" #os.getcwd()
+        self.current_working_dir = os.getcwd() # "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
@@ -53,7 +53,7 @@ class PrepareData:
         count = collections.Counter( words ).most_common()
         dictionary = dict()
         for word, _ in count:
-            dictionary[word] = len( dictionary )  
+            dictionary[word] = len( dictionary ) + 1
         reverse_dictionary = dict(zip( dictionary.values(), dictionary.keys() ) )
         with open( self.data_dictionary, 'w' ) as distribution_file:
             distribution_file.write( json.dumps( dictionary ) )
@@ -154,7 +154,7 @@ class PrepareData:
            for id_pos, pos in enumerate( positions ):
                if pos:
                    train_data_array[ index ][ start_pos + id_pos ] = int( pos )
-                   nodes.append( reverse_dictionary[ int( pos ) ] )
+                   nodes.append( reverse_dictionary[ int( pos ) + 1 ] )
            # tagged documents
            td = TaggedDocument( gensim.utils.to_unicode( " ".join( nodes ) ), [ index ] )
            tagged_documents.append( td )

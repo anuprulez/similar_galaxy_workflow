@@ -33,7 +33,7 @@ class PredictNextTool:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow" #os.getcwd()
+        self.current_working_dir = os.getcwd() #"/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
@@ -71,29 +71,30 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 30
-        batch_size = 40
+        n_epochs = 100
+        batch_size = 64
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
+        # reshape the data and labels
+        '''train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
         train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
         test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
-        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )
-        #max_seq_length = len( train_data[ 0 ] )
+        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )'''
+        max_seq_length = len( train_data[ 0 ] )
         train_data_shape = train_data.shape
         optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        #model.add(Embedding( dimensions, 10, input_length=max_seq_length ) )
+        model.add(Embedding( dimensions, 10, mask_zero=True ) ) #input_length=max_seq_length
         #model.add( LSTM( 256, recurrent_dropout=dropout, return_sequences=True ) )
-        model.add( LSTM( 512, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, activation='selu' ) )
+        model.add( LSTM( 100 ) ) # , dropout=dropout, recurrent_dropout=dropout
+        #model.add( LSTM( 512, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, activation='selu' ) )
         #model.add( Dropout( dropout ) )
         #model.add( LSTM( 128, return_sequences=True, recurrent_dropout=dropout ) )
         #model.add( Dense( 256 ) )
-        model.add( Dropout( dropout ) )
-        model.add( Dense( dimensions ) )
-        model.add( Activation( 'softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ 'accuracy' ] )
+        #model.add( Dropout( dropout ) )
+        model.add( Dense( dimensions, activation='softmax' ) )
+        model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
 
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
