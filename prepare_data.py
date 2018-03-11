@@ -145,14 +145,15 @@ class PrepareData:
         num_classes = len( dictionary )
         train_data, train_labels, max_seq_len = self.prepare_train_test_data()
         # initialize the training data matrix
-        train_data_array = np.zeros( [ len( train_data ), max_seq_len ] )
+        train_data_array = np.zeros( [ len( train_data ), num_classes ] )
         train_label_array = np.zeros( [ len( train_data ), num_classes ] )
         for index, item in enumerate( train_data ):
            positions = item.split( "," )
            nodes = list()
+           start_pos = num_classes - len( positions )
            for id_pos, pos in enumerate( positions ):
                if pos:
-                   train_data_array[ index ][ id_pos ] = int( pos )
+                   train_data_array[ index ][ start_pos + id_pos ] = int( pos )
                    nodes.append( reverse_dictionary[ int( pos ) ] )
            # tagged documents
            td = TaggedDocument( gensim.utils.to_unicode( " ".join( nodes ) ), [ index ] )

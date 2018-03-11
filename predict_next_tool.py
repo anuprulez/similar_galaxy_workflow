@@ -73,7 +73,7 @@ class PredictNextTool:
         print ("Dividing data...")
         n_epochs = 20
         num_predictions = 5
-        batch_size = 40
+        batch_size = 50
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         train_data_shape = train_data.shape
@@ -81,7 +81,7 @@ class PredictNextTool:
         #optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        model.add(Embedding( dimensions, 100, input_length=max_seq_length ) )
+        model.add(Embedding( dimensions, 10, input_length=max_seq_length ) )
         model.add( LSTM( 100, recurrent_dropout=dropout ) )
         #model.add( LSTM( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, recurrent_dropout=dropout ) )
         model.add( Dropout( dropout ) )
@@ -97,7 +97,7 @@ class PredictNextTool:
         callbacks_list = [ checkpoint ]
 
         print ("Start training...")
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "acc" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
