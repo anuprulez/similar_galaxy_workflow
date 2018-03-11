@@ -18,7 +18,7 @@ class PrepareData:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd()
+        self.current_working_dir = "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow" #os.getcwd()
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
