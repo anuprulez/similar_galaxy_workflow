@@ -27,6 +27,7 @@ if __name__ == "__main__":
     server.listen( 5 )
     # Server loop.
     while True:
+        print("Server running at: %s" % ( 'http://localhost:' + str( port ) ))
         print("\x1b[1m Waiting for requests on port %d ... \x1b[0m" % port)
         (client, address) = server.accept()
         print(client)
