@@ -2,12 +2,8 @@
 Predict a set of next nodes in graphichal data (Galaxy workflows) using the trained model
 """
 
-import sys
 import numpy as np
-import time
 import os
-import h5py as h5
-import random
 import json
 from keras.models import model_from_json
 
@@ -38,9 +34,9 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_dict, nodes_rev_dict, top_n=5 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, top_n=5 ):
         """
-        Predict next nodes for a path using a trained model 
+        Predict next nodes for a path using a trained model
         """
         dimensions = len( path_vec )
         path_vec_reshaped = np.reshape( path_vec, ( 1, dimensions ) )
@@ -50,10 +46,9 @@ class PredictNextNode:
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         # get top n predictions
-        top_prediction_pos = prediction_pos[ :top_n ]
+        top_prediction_pos = prediction_pos[ -top_n: ]
         # get tool names for the predicted positions
-        print top_prediction_pos
-        predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in top_prediction_pos ]
+        predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in top_prediction_pos ]
         return ",".join( predicted_nodes )
 
     @classmethod
@@ -70,7 +65,6 @@ class PredictNextNode:
         """
         Find a set of possible next nodes
         """
-        input_seq_paths = dict()
         all_paths_train = list()
         all_input_seq_paths = dict()
         with open( self.raw_paths, 'r' ) as load_all_paths:
@@ -78,25 +72,23 @@ class PredictNextNode:
         all_paths = all_paths[ :len( all_paths ) -1 ]
         for index, item in enumerate( all_paths ):
             item = item.split(",")
-            item = item[ :len( item ) -1 ]
+            item = item[ :len( item ) - 1 ]
             all_paths_train.append( ",".join( item ) )
         for index, item in enumerate( all_paths_train ):
             if input_sequence in item: 
                 all_input_seq_paths[ index ] = item
-
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
         nodes_dict = self.get_file_dictionary( self.data_dictionary )
         nodes_rev_dict = self.get_file_dictionary( self.data_rev_dict )
+
         input_seq_padded = np.zeros( [ len( nodes_dict ) ] )
         input_seq_split = input_sequence.split( "," )
-        print input_sequence
         start_pos = len( nodes_dict ) - len( input_seq_split )
         for index, item in enumerate( input_seq_split ):
-            input_seq_padded[ start_pos + index ] = nodes_dict[ item ]
-        print input_seq_padded
+            input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
         try:
-            predicted_nodes = self.predict_node( loaded_model, input_seq_padded, nodes_dict, nodes_rev_dict )
+            predicted_nodes = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict )
         except Exception as exception:
             print exception
             predicted_nodes = {}

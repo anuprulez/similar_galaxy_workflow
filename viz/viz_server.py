@@ -1,3 +1,7 @@
+"""
+Serve the predictions of future nodes to the client
+"""
+
 import socket
 import sys
 import re
@@ -5,6 +9,7 @@ import json
 import urlparse
 
 import predict_next_node
+
 
 class ToolPredictionServer:
     """ A script to predict next tool for a sequence """
@@ -27,6 +32,7 @@ if __name__ == "__main__":
     server.listen( 5 )
     # Server loop.
     while True:
+        print("Server running at: %s" % ( 'http://localhost:' + str( port ) ))
         print("\x1b[1m Waiting for requests on port %d ... \x1b[0m" % port)
         (client, address) = server.accept()
         print(client)

@@ -41,7 +41,7 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 50
+        n_epochs = 5
         num_predictions = 5
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
@@ -65,13 +65,15 @@ class EvaluateTopResults:
         Compute top n predictions with a trained model
         """
         print ( "Get top %d predictions for each test input..." % topn )
-        num_predict = 500 #len( test_data )
+        num_predict = 2 #len( test_data )
         prediction_accuracy = 0
         for i in range( num_predict ):
             input_seq = test_data[ i ]
             label = test_labels[ i ]
             label_pos = np.where( label > 0 )[ 0 ]
             label_pos = label_pos[ 0 ]
+            print input_seq
+            print label_pos
             input_seq_reshaped = np.reshape( input_seq, ( 1, len( input_seq ) ) )
             # predict the next tool using the trained model
             prediction = trained_model.predict( input_seq_reshaped, verbose=0 )

@@ -3,37 +3,29 @@ Predict nodes in graphichal data (Galaxy workflows) using Machine Learning
 """
 import sys
 import numpy as np
-import random
-import collections
 import time
-import math
 import os
 import h5py as h5
-from random import shuffle
 
 # machine learning library
 from keras.models import Sequential
-from keras.layers import Dropout
 from keras.layers import Dense
 from keras.layers import LSTM
-from keras.layers import Activation
 from keras.layers.embeddings import Embedding
-from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
-import gensim
 
 import prepare_data
-import evaluate_top_results
+
 
 class PredictNextTool:
 
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd() #"/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
+        self.current_working_dir = os.getcwd() #  "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
@@ -54,7 +46,7 @@ class PredictNextTool:
         test_data_share = 0.33
         seed = 0
         data = prepare_data.PrepareData()
-        complete_data, labels, dictionary, reverse_dictionary = data.read_data()  
+        complete_data, labels, dictionary, reverse_dictionary = data.read_data()
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
@@ -71,20 +63,17 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 2
+        n_epochs = 1
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        max_seq_length = len( train_data[ 0 ] )
-        train_data_shape = train_data.shape
         optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, 10, mask_zero=True ) )
-        model.add( LSTM( 50 ) )
+        model.add( LSTM( 256, dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
-
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]

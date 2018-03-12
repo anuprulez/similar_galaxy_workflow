@@ -1,15 +1,11 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
+Prepare the downstream data using graphical workflows to predict future nodes
 """
 
 import os
-import sys
-import random
 import collections
-import time
 import numpy as np
 import json
-import gensim
 
 
 class PrepareData:
@@ -17,7 +13,7 @@ class PrepareData:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd() # "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
+        self.current_working_dir = os.getcwd() #  "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
@@ -40,7 +36,7 @@ class PrepareData:
             for token in split_items:
                 if token not in tokens:
                     tokens.append( token )
-        tokens = np.array( tokens ) 
+        tokens = np.array( tokens )
         tokens = np.reshape( tokens, [ -1, ] )
         return tokens, raw_paths
 
@@ -59,18 +55,14 @@ class PrepareData:
         with open( self.data_rev_dict, 'w' ) as data_rev_dict:
             data_rev_dict.write( json.dumps( reverse_dictionary ) )
         return dictionary, reverse_dictionary
-    
+
     @classmethod
     def create_train_labels_file( self, dictionary, raw_paths ):
         """
         Create training data with its labels with varying window sizes
         """
-        test_data = list()
-        len_dict = len( dictionary )
         train_data = list()
-        train_label = list()
         train_data_sequence = list()
-        train_label_sequence = list()
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
             max_window_size = len( tools )
@@ -132,23 +124,22 @@ class PrepareData:
         """
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
-        self.create_train_labels_file( dictionary, raw_paths )
+        #self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well
         num_classes = len( dictionary )
         train_data, train_labels, max_seq_len = self.prepare_train_test_data()
-        
         # initialize the training data matrix
         train_data_array = np.zeros( [ len( train_data ), num_classes ] )
         train_label_array = np.zeros( [ len( train_data ), num_classes ] )
         for index, item in enumerate( train_data ):
-           positions = item.split( "," )
-           nodes = list()
-           start_pos = num_classes - len( positions )
-           for id_pos, pos in enumerate( positions ):
-               if pos:
-                   train_data_array[ index ][ start_pos + id_pos ] = int( pos ) - 1
-                   nodes.append( reverse_dictionary[ int( pos ) ] )
-           pos_label = train_labels[ index ]
-           if pos_label:
-               train_label_array[ index ][ int( pos_label ) - 1 ] = 1.0
+            positions = item.split( "," )
+            nodes = list()
+            start_pos = num_classes - len( positions )
+            for id_pos, pos in enumerate( positions ):
+                if pos:
+                    train_data_array[ index ][ start_pos + id_pos ] = int( pos ) - 1
+                    nodes.append( reverse_dictionary[ int( pos ) ] )
+            pos_label = train_labels[ index ]
+            if pos_label:
+                train_label_array[ index ][ int( pos_label ) - 1 ] = 1.0
         return train_data_array, train_label_array, dictionary, reverse_dictionary
