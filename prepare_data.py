@@ -53,10 +53,10 @@ class PrepareData:
         count = collections.Counter( words ).most_common()
         dictionary = dict()
         for word, _ in count:
-            dictionary[word] = len( dictionary ) + 1
+            dictionary[ word ] = len( dictionary ) + 1
         reverse_dictionary = dict(zip( dictionary.values(), dictionary.keys() ) )
-        with open( self.data_dictionary, 'w' ) as distribution_file:
-            distribution_file.write( json.dumps( dictionary ) )
+        with open( self.data_dictionary, 'w' ) as data_dict:
+            data_dict.write( json.dumps( dictionary ) )
         with open( self.data_rev_dict, 'w' ) as data_rev_dict:
             data_rev_dict.write( json.dumps( reverse_dictionary ) )
         return dictionary, reverse_dictionary
@@ -82,23 +82,17 @@ class PrepareData:
                     label = tools[ j + window: j + window + 1 ]
                     data_seq = ",".join( training_sequence )
                     data_seq += "," + label[ 0 ]
-
                     tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
                     tools_pos = ",".join( tools_pos )
                     tools_pos = tools_pos + "," + str( dictionary[ str( label[ 0 ] ) ] )
-
                     if tools_pos not in train_data:
                         train_data.append( tools_pos )
-
                     if data_seq not in train_data_sequence:
                         train_data_sequence.append( data_seq )
-
             print ( "Path %d processed" % ( index + 1 ) )
-
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )
-        
         with open( self.sequence_file, "w" ) as train_seq:
             for item in train_data_sequence:
                 train_seq.write( "%s\n" % item )
@@ -137,13 +131,13 @@ class PrepareData:
         """
         Convert the data into corresponding arrays
         """
-        tagged_documents = list()
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         #self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well
         num_classes = len( dictionary )
         train_data, train_labels, max_seq_len = self.prepare_train_test_data()
+        
         # initialize the training data matrix
         train_data_array = np.zeros( [ len( train_data ), num_classes ] )
         train_label_array = np.zeros( [ len( train_data ), num_classes ] )
@@ -154,11 +148,8 @@ class PrepareData:
            for id_pos, pos in enumerate( positions ):
                if pos:
                    train_data_array[ index ][ start_pos + id_pos ] = int( pos )
-                   nodes.append( reverse_dictionary[ int( pos ) + 1 ] )
-           # tagged documents
-           td = TaggedDocument( gensim.utils.to_unicode( " ".join( nodes ) ), [ index ] )
-           tagged_documents.append( td )
+                   nodes.append( reverse_dictionary[ int( pos ) ] )
            pos_label = train_labels[ index ]
            if pos_label:
-               train_label_array[ index ][ int( pos_label ) ] = 1.0
-        return train_data_array, train_label_array, dictionary, reverse_dictionary, tagged_documents
+               train_label_array[ index ][ int( pos_label ) - 1 ] = 1.0
+        return train_data_array, train_label_array, dictionary, reverse_dictionary

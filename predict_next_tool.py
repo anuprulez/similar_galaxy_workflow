@@ -54,7 +54,7 @@ class PredictNextTool:
         test_data_share = 0.33
         seed = 0
         data = prepare_data.PrepareData()
-        complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()  
+        complete_data, labels, dictionary, reverse_dictionary = data.read_data()  
         np.random.seed( seed )
         dimensions = len( dictionary )
         train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
@@ -71,28 +71,17 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 1
-        batch_size = 64
+        n_epochs = 30
+        batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        # reshape the data and labels
-        '''train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
-        train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
-        test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
-        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )'''
         max_seq_length = len( train_data[ 0 ] )
         train_data_shape = train_data.shape
         optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        model.add(Embedding( dimensions, 10, mask_zero=True ) ) #input_length=max_seq_length
-        #model.add( LSTM( 256, recurrent_dropout=dropout, return_sequences=True ) )
-        model.add( LSTM( 100 ) ) # , dropout=dropout, recurrent_dropout=dropout
-        #model.add( LSTM( 512, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), return_sequences=True, activation='selu' ) )
-        #model.add( Dropout( dropout ) )
-        #model.add( LSTM( 128, return_sequences=True, recurrent_dropout=dropout ) )
-        #model.add( Dense( 256 ) )
-        #model.add( Dropout( dropout ) )
+        model.add( Embedding( dimensions, 10, mask_zero=True ) )
+        model.add( LSTM( 256 ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
 
