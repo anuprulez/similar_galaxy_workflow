@@ -146,7 +146,7 @@ class PrepareData:
            start_pos = num_classes - len( positions )
            for id_pos, pos in enumerate( positions ):
                if pos:
-                   train_data_array[ index ][ start_pos + id_pos ] = int( pos )
+                   train_data_array[ index ][ start_pos + id_pos ] = int( pos ) - 1
                    nodes.append( reverse_dictionary[ int( pos ) ] )
            pos_label = train_labels[ index ]
            if pos_label:

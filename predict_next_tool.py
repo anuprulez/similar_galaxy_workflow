@@ -71,7 +71,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 30
+        n_epochs = 2
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
@@ -81,7 +81,7 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, 10, mask_zero=True ) )
-        model.add( LSTM( 256 ) )
+        model.add( LSTM( 50 ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
 
