@@ -6,6 +6,7 @@ import numpy as np
 import time
 import os
 import h5py as h5
+import random
 
 # machine learning library
 from keras.models import model_from_json
@@ -41,7 +42,7 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 1
+        n_epochs = 200
         num_predictions = 5
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
@@ -65,9 +66,10 @@ class EvaluateTopResults:
         Compute top n predictions with a trained model
         """
         print ( "Get top %d predictions for each test input..." % topn )
-        num_predict = len( test_data )
+        num_predict = 500 #len( test_data )
         prediction_accuracy = 0
         for i in range( num_predict ):
+            random_idx = random.randint( 0, len( test_data ) )
             input_seq = test_data[ i ]
             label = test_labels[ i ]
             label_pos = np.where( label > 0 )[ 0 ]

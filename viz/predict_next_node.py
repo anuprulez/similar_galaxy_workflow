@@ -18,14 +18,11 @@ class PredictNextNode:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.raw_file = "data/workflow_steps.txt"
         self.raw_paths = "data/complete_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
         self.trained_model_path = "data/trained_model.hdf5"
-        self.graph_vectors_path = "data/doc2vec_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
-        self.vec_dimension = 100
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -45,15 +42,17 @@ class PredictNextNode:
         """
         Predict next nodes for a path using a trained model 
         """
-        path_vec_reshaped = np.reshape( path_vec, ( 1, 1, len( path_vec ) ) )
+        dimensions = len( path_vec )
+        path_vec_reshaped = np.reshape( path_vec, ( 1, dimensions ) )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
-        prediction = np.reshape( prediction, ( len( nodes_dict ) ) )
+        prediction = np.reshape( prediction, ( dimensions, ) )
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         # get top n predictions
-        top_prediction_pos = prediction_pos[ -top_n: ]
+        top_prediction_pos = prediction_pos[ :top_n ]
         # get tool names for the predicted positions
+        print top_prediction_pos
         predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in top_prediction_pos ]
         return ",".join( predicted_nodes )
 
@@ -72,37 +71,34 @@ class PredictNextNode:
         Find a set of possible next nodes
         """
         input_seq_paths = dict()
-        # load the trained model
-        loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
-        # read paths, nodes dictionary from files
-        with open( self.raw_paths, 'r' ) as load_all_paths:
-            all_paths = load_all_paths.read().split( "\n" )
-
-        nodes_dict = self.get_file_dictionary( self.data_dictionary )
-        nodes_rev_dict = self.get_file_dictionary( self.data_rev_dict )
-        
-        # collect paths and their corresponding vectors
-        all_paths = all_paths[ :len( all_paths ) -1 ]
-        graph_vectors = h5.File( self.graph_vectors_path, 'r' )
-        graph_vectors = graph_vectors[ "doc2vector" ]
         all_paths_train = list()
         all_input_seq_paths = dict()
-        input_seq_vec = np.zeros( [ 1, self.vec_dimension ] )
+        with open( self.raw_paths, 'r' ) as load_all_paths:
+            all_paths = load_all_paths.read().split( "\n" )
+        all_paths = all_paths[ :len( all_paths ) -1 ]
         for index, item in enumerate( all_paths ):
             item = item.split(",")
             item = item[ :len( item ) -1 ]
             all_paths_train.append( ",".join( item ) )
-        
-        for index, item in enumerate( all_paths_train ):
-            if item == input_sequence:
-                input_seq_vec = graph_vectors[ index ]
-                break
         for index, item in enumerate( all_paths_train ):
             if input_sequence in item: 
                 all_input_seq_paths[ index ] = item
+
+        # load the trained model
+        loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
+        nodes_dict = self.get_file_dictionary( self.data_dictionary )
+        nodes_rev_dict = self.get_file_dictionary( self.data_rev_dict )
+        input_seq_padded = np.zeros( [ len( nodes_dict ) ] )
+        input_seq_split = input_sequence.split( "," )
+        print input_sequence
+        start_pos = len( nodes_dict ) - len( input_seq_split )
+        for index, item in enumerate( input_seq_split ):
+            input_seq_padded[ start_pos + index ] = nodes_dict[ item ]
+        print input_seq_padded
         try:
-            predicted_nodes = self.predict_node( loaded_model, input_seq_vec, nodes_dict, nodes_rev_dict )
-        except:
+            predicted_nodes = self.predict_node( loaded_model, input_seq_padded, nodes_dict, nodes_rev_dict )
+        except Exception as exception:
+            print exception
             predicted_nodes = {}
             all_input_seq_paths = {}
         return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths }
