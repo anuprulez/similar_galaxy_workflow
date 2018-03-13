@@ -52,13 +52,16 @@ $(document).ready(function() {
         $.getJSON( predictUrl, function( data ) {
             let predictedNodes = data[ "predicted_nodes" ],
                 allInputPaths = data[ "all_input_paths" ],
+                predictedProb = data[ "predicted_prob" ],
                 toolsTemplate = "",
                 pathsTemplate = "";
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ul>";
                 for( let counter = 0; counter < predictedNodeList.length; counter++ ) {
-                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + "</li>";
+                    let prob = predictedProb[ counter ] * 100;
+                    prob = prob.toPrecision( 4 );
+                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + " (" + prob + "%) " + "</li>";
                 }
                 toolsTemplate += "</ul>";
             }

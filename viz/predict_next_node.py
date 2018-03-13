@@ -38,6 +38,7 @@ class PredictNextNode:
         """
         Predict next nodes for a path using a trained model
         """
+        top_prediction_prob = dict()
         dimensions = len( path_vec )
         path_vec_reshaped = np.reshape( path_vec, ( 1, dimensions ) )
         # predict the next tool using the trained model
@@ -47,9 +48,12 @@ class PredictNextNode:
         prediction_pos = np.argsort( prediction, axis=0 )
         # get top n predictions
         top_prediction_pos = prediction_pos[ -top_n: ]
+        for index, item in enumerate( reversed( top_prediction_pos ) ):
+            top_prediction_prob[ index ] = str( prediction[ item ] )
         # get tool names for the predicted positions
-        predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in top_prediction_pos ]
-        return ",".join( predicted_nodes )
+        predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in reversed( top_prediction_pos ) ]
+        predicted_nodes = ",".join( predicted_nodes )
+        return predicted_nodes, top_prediction_prob
 
     @classmethod
     def get_file_dictionary( self, file_name ):
@@ -88,9 +92,9 @@ class PredictNextNode:
         for index, item in enumerate( input_seq_split ):
             input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
         try:
-            predicted_nodes = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict )
+            predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict )
         except Exception as exception:
-            print exception
             predicted_nodes = {}
             all_input_seq_paths = {}
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths }
+            predicted_prob = {}
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob }
