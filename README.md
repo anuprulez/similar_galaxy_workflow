@@ -28,9 +28,21 @@ In our set of training samples, each one can have many labels (or categories) wh
 
 ## Visualizer
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/predict-next-tools.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/1.png">
 </p>
-The above image shows possible next tools for a sequence. All the paths containing this sequence of tools are also shown.
+<hr/>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/2.png">
+</p>
+<hr/>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/3.png">
+</p>
+<hr/>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/4.png">
+</p>
+The above images show possible next tools for a sequence at each step of choosing a tool. All the paths containing this sequence of tools are also shown.
 In order to run the visualizer, please follow these steps:
 
 1. Download the repository
