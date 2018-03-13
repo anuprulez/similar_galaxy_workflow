@@ -50,15 +50,19 @@ $(document).ready(function() {
         $elPredictedTools.empty();
         $elAllPaths.empty();
         $.getJSON( predictUrl, function( data ) {
+            console.log(data);
             let predictedNodes = data[ "predicted_nodes" ],
                 allInputPaths = data[ "all_input_paths" ],
+                predictedProb = data[ "predicted_prob" ],
                 toolsTemplate = "",
                 pathsTemplate = "";
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ul>";
                 for( let counter = 0; counter < predictedNodeList.length; counter++ ) {
-                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + "</li>";
+                    prob = predictedProb[ counter ] * 100;
+                    prob = prob.toPrecision( 4 );
+                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + " (" + prob + "%) " + "</li>";
                 }
                 toolsTemplate += "</ul>";
             }
