@@ -63,15 +63,16 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 1
+        n_epochs = 2
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        optimizer = Adam( lr=0.0001 )
+        #optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        model.add( Embedding( dimensions, 10, mask_zero=True ) )
-        model.add( LSTM( 256, dropout=dropout ) )
+        model.add( Embedding( dimensions, 32, mask_zero=True ) )
+        model.add( LSTM( 512, dropout=dropout, return_sequences=True ) )
+        model.add( LSTM( 512, dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
         # create checkpoint after each epoch - save the weights to h5 file

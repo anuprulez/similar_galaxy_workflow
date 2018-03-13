@@ -41,7 +41,7 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 5
+        n_epochs = 10
         num_predictions = 5
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
@@ -52,6 +52,7 @@ class EvaluateTopResults:
         for i in range( n_epochs ):
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
+            #file_path = "/home/anupkumar/Thesis_RS/code/workflows/embedding_layer/similar_galaxy_workflow/data/weights/trained_model.hdf5"
             print ( file_path )
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
             accuracy = self.get_top_prediction_accuracy( num_predictions, dimensions, loaded_model, test_data, test_labels )
@@ -65,15 +66,13 @@ class EvaluateTopResults:
         Compute top n predictions with a trained model
         """
         print ( "Get top %d predictions for each test input..." % topn )
-        num_predict = 2 #len( test_data )
+        num_predict = 500 #len( test_data )
         prediction_accuracy = 0
         for i in range( num_predict ):
             input_seq = test_data[ i ]
             label = test_labels[ i ]
             label_pos = np.where( label > 0 )[ 0 ]
             label_pos = label_pos[ 0 ]
-            print input_seq
-            print label_pos
             input_seq_reshaped = np.reshape( input_seq, ( 1, len( input_seq ) ) )
             # predict the next tool using the trained model
             prediction = trained_model.predict( input_seq_reshaped, verbose=0 )
