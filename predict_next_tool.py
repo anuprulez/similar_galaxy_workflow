@@ -63,7 +63,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 2
+        n_epochs = 1
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
@@ -71,13 +71,20 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, 32, mask_zero=True ) )
-        model.add( LSTM( 512, dropout=dropout, return_sequences=True ) )
-        model.add( LSTM( 512, dropout=dropout ) )
+        model.add( LSTM( 300, dropout=dropout, return_sequences=True ) )
+        model.add( LSTM( 300, dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
+
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write(model_json)
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
 
         print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
@@ -91,12 +98,6 @@ class PredictNextTool:
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
 
-        # save the network as json
-        model_json = model.to_json()
-        with open( self.network_config_json_path, "w" ) as json_file:
-            json_file.write(model_json)
-        # save the learned weights to h5 file
-        model.save_weights( self.weights_path )
         print ("Training finished")
 
     @classmethod
