@@ -21,11 +21,11 @@ class PredictNextNode:
         self.raw_file = "data/workflow_steps.txt"
         self.raw_paths = "data/complete_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/trained_model.hdf5"
+        self.trained_model_path = "data/weights-epoch-500.hdf5"
         self.graph_vectors_path = "data/doc2vec_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
-        self.vec_dimension = 100
+        self.vec_dimension = 200
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -46,7 +46,7 @@ class PredictNextNode:
         Predict next nodes for a path using a trained model 
         """
         top_prediction_prob = dict()
-        path_vec_reshaped = np.reshape( path_vec, ( 1, 1, len( path_vec ) ) )
+        path_vec_reshaped = np.reshape( path_vec, ( 1, len( path_vec ) ) )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
         prediction = np.reshape( prediction, ( len( nodes_dict ) ) )

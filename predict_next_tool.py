@@ -100,7 +100,7 @@ class PredictNextTool:
         Create keras classifier and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 200
+        n_epochs = 1000
         batch_size = 32
         dropout = 0.75
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
@@ -115,10 +115,10 @@ class PredictNextTool:
         # define network and related terms
         model = Sequential()
         optimizer = Adam( lr=0.0001 )
-        model.add(Dense( 356, input_shape=( train_data_shape[ 1 ], ), activation='relu', kernel_initializer='normal' ) )
+        model.add(Dense( 512, input_shape=( train_data_shape[ 1 ], ), activation='relu', kernel_initializer='normal' ) )
         model.add( Dropout( dropout ) )
-        #model.add( Dense( 100, activation='relu' ) )
-        #model.add( Dropout( dropout ) )
+        model.add( Dense( 512, activation='relu' ) )
+        model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
         model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ self.top_n_accuracy ] )
