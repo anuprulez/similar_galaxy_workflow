@@ -25,7 +25,7 @@ class PredictNextNode:
         self.graph_vectors_path = "data/doc2vec_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
-        self.vec_dimension = 100
+        self.vec_dimension = 200
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -41,12 +41,12 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_dict, nodes_rev_dict, top_n=5 ):
+    def predict_node( self, trained_model, path_vec, nodes_dict, nodes_rev_dict, top_n=10 ):
         """
         Predict next nodes for a path using a trained model 
         """
         top_prediction_prob = dict()
-        path_vec_reshaped = np.reshape( path_vec, ( 1, 1, len( path_vec ) ) )
+        path_vec_reshaped = np.reshape( path_vec, ( 1, len( path_vec ) ) )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
         prediction = np.reshape( prediction, ( len( nodes_dict ) ) )

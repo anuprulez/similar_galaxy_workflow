@@ -11,9 +11,8 @@ from random import shuffle
 
 # machine learning library
 from keras.models import Sequential
-from keras.layers import Dropout
-from keras.layers import Dense
-from keras.layers import Activation
+from keras.layers import Dropout, Dense, Activation
+from keras.metrics import top_k_categorical_accuracy
 from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import Adam
@@ -47,11 +46,11 @@ class PredictNextTool:
         Learn a vector representation for each path
         """
         training_epochs = 20
-        fix_graph_dimension = 100
+        fix_graph_dimension = 200
         len_graphs = len( tagged_documents )
         print ('Learning doc2vectors...')
         input_vector = np.zeros( [ len_graphs, fix_graph_dimension ] )
-        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=200, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
+        model = gensim.models.Doc2Vec( tagged_documents, dm=0, size=fix_graph_dimension, negative=5, min_count=1, iter=400, window=15, alpha=1e-2, min_alpha=1e-4, dbow_words=1, sample=1e-5 )
         for epoch in range( training_epochs ):
             print ( 'Learning vector repr. epoch %s' % epoch )
             shuffle( tagged_documents )
@@ -67,7 +66,7 @@ class PredictNextTool:
         """
         Divide data into train and test sets in a random way
         """
-        test_data_share = 0.33
+        test_data_share = 0.15
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary, tagged_documents = data.read_data()
@@ -92,33 +91,45 @@ class PredictNextTool:
         return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
 
     @classmethod
+    def top_n_accuracy( self, y_true, y_pred ):
+        return top_k_categorical_accuracy( y_true, y_pred, k=5 )
+
+    @classmethod
     def evaluate_Dense_classifier( self ):
         """
         Create keras classifier and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 700
-        batch_size = 40
-        dropout = 0.2
+        n_epochs = 1000
+        batch_size = 32
+        dropout = 0.75
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
 
         # reshape train and test data
-        train_data = np.reshape( train_data, ( train_data.shape[0], 1, train_data.shape[1] ) )
-        train_labels = np.reshape( train_labels, (train_labels.shape[0], 1, train_labels.shape[1] ) )
-        test_data = np.reshape(test_data, ( test_data.shape[0], 1, test_data.shape[1] ) )
-        test_labels = np.reshape( test_labels, ( test_labels.shape[0], 1, test_labels.shape[1] ) )
+        train_data = np.reshape( train_data, ( train_data.shape[0], train_data.shape[1] ) )
+        train_labels = np.reshape( train_labels, (train_labels.shape[0], train_labels.shape[1] ) )
+        test_data = np.reshape(test_data, ( test_data.shape[0], test_data.shape[1] ) )
+        test_labels = np.reshape( test_labels, ( test_labels.shape[0], test_labels.shape[1] ) )
         train_data_shape = train_data.shape
 
         # define network and related terms
         model = Sequential()
         optimizer = Adam( lr=0.0001 )
-        model.add(Dense( 256, input_shape=( train_data_shape[ 1 ], train_data_shape[ 2 ] ), activation='relu' ) )
+        model.add(Dense( 512, input_shape=( train_data_shape[ 1 ], ), activation='relu', kernel_initializer='normal' ) )
         model.add( Dropout( dropout ) )
-        model.add( Dense( 256 ) )
+        model.add( Dense( 512, activation='relu' ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions ) )
         model.add( Activation( 'softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ 'accuracy' ] )
+        model.compile( loss='categorical_crossentropy', optimizer=optimizer, metrics=[ self.top_n_accuracy ] )
+
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write(model_json)
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
+        model.summary()
 
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
@@ -128,21 +139,14 @@ class PredictNextTool:
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), epochs=n_epochs, batch_size=batch_size, callbacks=callbacks_list, shuffle=True )
 
         loss_values = model_fit_callbacks.history[ "loss" ]
-        accuracy_values = model_fit_callbacks.history[ "acc" ]
+        accuracy_values = model_fit_callbacks.history[ "top_n_accuracy" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
-        validation_acc = model_fit_callbacks.history[ "val_acc" ]
+        validation_acc = model_fit_callbacks.history[ "val_top_n_accuracy" ]
 
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-
-        # save the network as json
-        model_json = model.to_json()
-        with open( self.network_config_json_path, "w" ) as json_file:
-            json_file.write(model_json)
-        # save the learned weights to h5 file
-        model.save_weights( self.weights_path )
         print ("Training finished")
 
     @classmethod

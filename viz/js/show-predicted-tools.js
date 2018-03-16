@@ -60,7 +60,7 @@ $(document).ready(function() {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ul>";
                 for( let counter = 0; counter < predictedNodeList.length; counter++ ) {
-                    prob = predictedProb[ counter ] * 100;
+                    let prob = predictedProb[ counter ] * 100;
                     prob = prob.toPrecision( 4 );
                     toolsTemplate += "<li>" + predictedNodeList[ counter ] + " (" + prob + "%) " + "</li>";
                 }
