@@ -52,11 +52,11 @@ class PredictNextNode:
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get top n predictions
         top_prediction_pos = prediction_pos[ -top_n: ]
+        for index, item in enumerate( reversed( top_prediction_pos ) ):
+            top_prediction_prob[ index ] = str( prediction[ item ] )
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in reversed( top_prediction_pos ) ]
         predicted_nodes = ",".join( predicted_nodes )
-        print predicted_nodes
-        print top_prediction_prob
         return predicted_nodes, top_prediction_prob
 
     @classmethod
@@ -98,7 +98,6 @@ class PredictNextNode:
         try:
             predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict )
         except Exception as exception:
-            print exception
             predicted_nodes = {}
             all_input_seq_paths = {}
             predicted_prob = {}

@@ -67,10 +67,10 @@ class PredictNextTool:
         batch_size = 40
         dropout = 0.75
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
-        optimizer = Adam( lr=0.0001 )
+        #optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
-        model.add( Embedding( dimensions, 10, mask_zero=True ) )
+        model.add( Embedding( dimensions, 32, mask_zero=True ) )
         model.add( LSTM( 256, dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
         model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] )
@@ -84,13 +84,18 @@ class PredictNextTool:
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write(model_json)
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
         print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "categorical_accuracy" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         validation_acc = model_fit_callbacks.history[ "val_categorical_accuracy" ]
-
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
