@@ -16,6 +16,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
+from keras.metrics import categorical_accuracy
 
 import prepare_data
 
@@ -36,7 +37,6 @@ class PredictNextTool:
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
-        self.doc2vec_model_path = self.current_working_dir + "/data/doc2vec_model.hdf5"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -63,7 +63,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 1
+        n_epochs = 5
         batch_size = 40
         dropout = 0.2
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
@@ -73,29 +73,28 @@ class PredictNextTool:
         model.add( Embedding( dimensions, 10, mask_zero=True ) )
         model.add( LSTM( 256, dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] )
+        model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] )
+        # save the network as json
+        model_json = model.to_json()
+        with open( self.network_config_json_path, "w" ) as json_file:
+            json_file.write( model_json )
+        # save the learned weights to h5 file
+        model.save_weights( self.weights_path )
+        model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
-
         print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
-        accuracy_values = model_fit_callbacks.history[ "acc" ]
+        accuracy_values = model_fit_callbacks.history[ "categorical_accuracy" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
-        validation_acc = model_fit_callbacks.history[ "val_acc" ]
+        validation_acc = model_fit_callbacks.history[ "val_categorical_accuracy" ]
 
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-
-        # save the network as json
-        model_json = model.to_json()
-        with open( self.network_config_json_path, "w" ) as json_file:
-            json_file.write(model_json)
-        # save the learned weights to h5 file
-        model.save_weights( self.weights_path )
         print ("Training finished")
 
     @classmethod
