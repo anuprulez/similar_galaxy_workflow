@@ -16,7 +16,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/complete_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/trained_model.hdf5"
+        self.trained_model_path = "data/weights-epoch-12.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
 
@@ -47,6 +47,7 @@ class PredictNextNode:
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         top_prediction_pos = prediction_pos[ -top_n: ]
+        
         for index, item in enumerate( reversed( top_prediction_pos ) ):
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get top n predictions
@@ -54,6 +55,8 @@ class PredictNextNode:
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in reversed( top_prediction_pos ) ]
         predicted_nodes = ",".join( predicted_nodes )
+        print predicted_nodes
+        print top_prediction_prob
         return predicted_nodes, top_prediction_prob
 
     @classmethod
