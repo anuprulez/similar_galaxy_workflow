@@ -142,9 +142,10 @@ class PrepareData:
         for train_seq, train_label in train_labels_data.iteritems():
             nodes = list()
             positions = train_seq.split( "," )
+            start_pos = max_seq_length - len( positions )
             for id_pos, pos in enumerate( positions ):
                 if pos:
-                    train_data_array[ train_counter ][ id_pos ] = int( pos ) - 1
+                    train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
                     nodes.append( reverse_dictionary[ int( pos ) ] )
             pos_labels = train_label.split( "," )
             if len( pos_labels ) > 0:

@@ -16,7 +16,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/complete_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/weights-epoch-12.hdf5"
+        self.trained_model_path = "data/weights-epoch-100.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
 
@@ -34,7 +34,7 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, top_n=50 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, top_n=10 ):
         """
         Predict next nodes for a path using a trained model
         """
