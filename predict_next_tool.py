@@ -17,6 +17,7 @@ from keras.models import model_from_json
 from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
 from keras.metrics import categorical_accuracy
+import keras.backend as K
 
 import prepare_data
 
@@ -64,16 +65,17 @@ class PredictNextTool:
         """
         print ("Dividing data...")
         n_epochs = 20
-        batch_size = 200
+        batch_size = 50
         dropout = 0.75
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data() 
         #optimizer = Adam( lr=0.0001 )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, 32, mask_zero=True ) )
-        model.add( LSTM( 256, dropout=dropout ) )
+        model.add( LSTM( 256, dropout=dropout, return_sequences=False ) )
+        #model.add( LSTM( 128, dropout=dropout, activation='relu' ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss='categorical_crossentropy', optimizer='adam', metrics=[ 'accuracy' ] ) # categorical_accuracy
+        model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] ) # categorical_accuracy
         
         # save the network as json
         model_json = model.to_json()
@@ -88,6 +90,7 @@ class PredictNextTool:
         callbacks_list = [ checkpoint ]
         
         print ("Start training...")
+        # validation_data=( test_data, test_labels )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "categorical_accuracy" ]

@@ -16,7 +16,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/complete_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/weights-epoch-100.hdf5"
+        self.trained_model_path = "data/weights-epoch-01.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
 
@@ -73,13 +73,14 @@ class PredictNextNode:
         """
         Find a set of possible next nodes
         """
+        max_seq_len = 125 # max length of training input
         all_paths_train = list()
         all_input_seq_paths = dict()
         with open( self.raw_paths, 'r' ) as load_all_paths:
             all_paths = load_all_paths.read().split( "\n" )
         all_paths = all_paths[ :len( all_paths ) -1 ]
         for index, item in enumerate( all_paths ):
-            item = item.split(",")
+            item = item.split( "," )
             item = item[ :len( item ) - 1 ]
             all_paths_train.append( ",".join( item ) )
         for index, item in enumerate( all_paths_train ):
@@ -92,7 +93,7 @@ class PredictNextNode:
 
         input_seq_padded = np.zeros( [ len( nodes_dict ) ] )
         input_seq_split = input_sequence.split( "," )
-        start_pos = len( nodes_dict ) - len( input_seq_split )
+        start_pos = max_seq_len - len( input_seq_split )
         for index, item in enumerate( input_seq_split ):
             input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
         try:

@@ -130,7 +130,7 @@ class PrepareData:
         tagged_documents = list()
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
-        #self.create_train_labels_file( dictionary, raw_paths )
+        self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well 
         train_labels_data, max_seq_length = self.prepare_train_test_data()
         num_classes = len( dictionary )
