@@ -1,3 +1,7 @@
+"""
+Serve the predictions of future nodes to the client
+"""
+
 import socket
 import sys
 import re
@@ -5,6 +9,7 @@ import json
 import urlparse
 
 import predict_next_node
+
 
 class ToolPredictionServer:
     """ A script to predict next tool for a sequence """
