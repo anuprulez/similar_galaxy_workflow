@@ -8,7 +8,7 @@ If a Galaxy user can see a list of possible next tool(s) at all stages of creati
 
 Suppose we have a workflow:
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/workflow1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/workflow1.png">
 </p>
 
 This workflow can be broken down into following smaller sequences (or training samples):
@@ -46,31 +46,31 @@ The screenshots below show possible next tools for a sequence at each stage of c
 All the paths containing this sequence of tools are also shown.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/1.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/2.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/2.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/3.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/3.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/4.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/4.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/5.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/5.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/6.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/6.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/doc2vec_tools_sequences/images/7.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/7.png">
 </p>
 
 In order to run the visualizer, please follow these steps:
