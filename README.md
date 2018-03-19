@@ -1,14 +1,18 @@
 # Predict next tool in Galaxy workflows
 
 ## Galaxy workflows as directed graphs
-A [Galaxy](https://usegalaxy.eu/) workflow is a chain of (Galaxy) tools to process biological data. These datasets undergo a transformation at each node (a tool) which includes text manipulation, sorting on a column, deletion or addition of a column and so on. Each workflow can be considered as a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) where the output of each node becomes an input to the next node(s). Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its directed graph. Choose a workflow from the dropdown and see the [Cytoscape](http://js.cytoscape.org/) graph.
+A [Galaxy](https://usegalaxy.eu/) workflow is a chain of (Galaxy) tools to process biological data. These datasets undergo a transformation at each node (a tool) which includes text manipulation, sorting on a column, deletion or addition of a column and so on. Each workflow can be considered as a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) where the output of each node becomes an input to the next node(s). Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its directed graph. Choose a workflow from the dropdown and see the [Cytoscape](http://js.cytoscape.org/) graph. A typical [workflow](https://usegalaxy.org/workflow/editor?id=4ef668a0f832a731) in Galaxy looks like this:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/workflow_galaxy.png">
+</p>
 
 ## Predict next tool
 If a Galaxy user can see a list of possible next tool(s) at all stages of creating a workflow, it would be convenient and time-saving to create one. This work aims to achieve it by training a neural network on the existing set of workflows created by multiple users. There is a special kind of (recurrent) neural network, long short-term memory (LSTM), which learns connections in the input (sequential) data and predicts the next possible connections(s). The Galaxy workflows also qualify as sequential data (as a chain of tools) and this network is expected to work on these data processing pipelines to predict next possible connections. Moreover, this work identifies itself as a part of recommendation system for Galaxy tools and workflows. The approach is explained below:
 
 Suppose we have a workflow:
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/workflow1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/workflow1.png">
 </p>
 
 This workflow can be broken down into following smaller sequences (or training samples):
@@ -44,7 +48,7 @@ In our set of training samples, each one can have many labels (or categories) wh
 `20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot below shows an accuracy of k actual labels being present in the top-k predicted labels for a sequence over 90 training epochs (iterations). We can see the performance saturates around `60th` epoch. Here, "k" can be any number i.e. a sequence can have any number of labels. Suppose a sequence has 5 labels (5 tools it can connect to). We predict top 5 tools and find how many of these actual tools are present in the predicted tools. An accuracy of `80%` would mean that `4` out of `5` actual next tools are present in the predicted tools. An averate accuracy is computed over all test samples.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Mutual_accuracy.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/200-LSTM/Mutual_accuracy.png">
 </p>
 
 ## Vizualizer
@@ -54,31 +58,31 @@ The screenshots below show possible next tools for a sequence at each stage of c
 All the paths containing this sequence of tools are also shown.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/1.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/2.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/2.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/3.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/3.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/4.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/4.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/5.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/5.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/6.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/6.png">
 </p>
 <hr/>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/images/7.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/7.png">
 </p>
 
 In order to run the visualizer, please follow these steps:
@@ -103,8 +107,3 @@ Cytoscape.js: a graph theory library for visualisation and analysis
 Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
 [Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)](bioinformatics.oxfordjournals.org/content/32/2/309)
 [PubMed Abstract](https://www.ncbi.nlm.nih.gov/pubmed/26415722)
-
-<hr/>
-
-
-
