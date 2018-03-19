@@ -52,12 +52,15 @@ class EvaluateTopResults:
         topn_accuracy = list()
         dimensions = len( test_labels[ 0 ] )
         for i in range( n_epochs ):
+            start_time = time.time()
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
             accuracy = self.get_top_prediction_accuracy( num_predictions, dimensions, loaded_model, test_data, test_labels )
             topn_accuracy.append( np.mean( accuracy ) )
             print ( np.mean( accuracy ) )
+            end_time = time.time()
+            print( "Prediction finished in %d seconds" % int( end_time - start_time ) )
         np.savetxt( self.top_pred_path, np.array( topn_accuracy ), delimiter="," )
 
     @classmethod
@@ -95,7 +98,7 @@ class EvaluateTopResults:
             num_actual_labels = len( actual_labels )
             if num_actual_labels > 0:
                 # get top n predictions
-                top_prediction_pos = prediction_pos[ -num_actual_labels: ]
+                top_prediction_pos = prediction_pos[ -topn: ]
                 top_prediction_pos = [ ( item + 1 ) for item in reversed( top_prediction_pos ) ]
                 # find how many actual labels are present in the predicted ones
                 for item in actual_labels:
