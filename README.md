@@ -41,10 +41,10 @@ In our set of training samples, each one can have many labels (or categories) wh
 
 ## Accuracy on test data
 
-`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot below shows an accuracy of actual labels being present in the top-5 predicted labels over 200 epochs (training iterations). We can see the performance saturates around `80th` epoch.
-The accuracy increases from `33%` to around `95%`.
+`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot below shows an accuracy of k actual labels being present in the top-k predicted labels for a sequence over 90 training epochs (iterations). We can see the performance saturates around `60th` epoch. Here, "k" can be any number i.e. a sequence can have any number of labels. Suppose a sequence has 5 labels (5 tools it can connect to). We predict top 5 tools and find how many of these actual tools are present in the predicted tools. An accuracy of `80%` would mean that `4` out of `5` actual next tools are present in the predicted tools. An averate accuracy is computed over all test samples.
+
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/top5_mutual_accuracy.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Mutual_accuracy.png">
 </p>
 
 ## Vizualizer
