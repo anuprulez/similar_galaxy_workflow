@@ -20,7 +20,7 @@ This workflow can be broken down into following smaller sequences (or training s
 
 The last item in each such paths is the label (or category) of the previous sequence (of tools). For example, "pileometh > Remove beginning 1" is a training sample and its label is "Add_a_column1". Following this way, each path is divided into training samples (a tool or a sequence of tools) and their labels. The logic behind this breking up of a workflow is to make the classifier learn that if we are at a stage "pileometh > Remove beginning 1" of creating a workflow, the next tool would be "Add_a_column1". A similar approach is used for predicting next word in sentences.
 
-To feed the input training samples (smaller parts of workflows) into the neural network, we need to convert them into vectors (neural networks understand vectors and not words or text). Here, we draw an analogy between our smaller sequences from workflows and smaller parts of sentences (in English for example). They are similar - sentences in a language like in English and our smaller sequences as both make sense only when components (tools in our case and words in sentences) are arranged in a particular order. In order to convert them into vectors, we create a list of unique nodes (tools) and assign them unique integers (let's call them an id for each node). Now, we take a training sample and identify its nodes and take the respective ids and arrange these integers in the same order. For example, let's take this small dummy workflow - `filter1 → grouping1 → addvalue → join1 → add_a_column1`
+To feed the input training samples (smaller parts of workflows) into the neural network, we need to convert them into vectors (neural networks understand vectors and not words or text). Here, we draw an analogy between our smaller sequences from workflows and smaller parts of sentences (in English for example). They are similar - sentences in a language like in English and our smaller sequences as both make sense only when their components (tools in our case and words in sentences) are arranged in a particular order. In order to convert them into vectors, we create a list of unique nodes (tools) and assign them unique integers (let's call them an id for each node). Now, we take a training sample and identify its nodes and take the respective ids and arrange these integers in the same order. For example, let's take this small dummy workflow - `filter1 → grouping1 → addvalue → join1 → add_a_column1`
 
 let's create a dictionary:
 { "addvalue": 1, "add_a_column1": 2, "filter1": 3, "join1": 4, "grouping1": 5 }
@@ -34,7 +34,7 @@ Now create a training sample - a vector for the workflow:
 Now, its time for creating the label vector. It is multi-hot encoded vector which means that this vector is all zeros except for the position of the label.
 `[ 0, 0, 1, 0, 0 ]` ("add_a_column1" has `2` as its position in the dictionary. So, `2nd` position has `1` and others are zero). If there are multiple labels for a training sample (which happens to be the case in this work, we add `1s` to all the positions of the corresponding labels).
 
-We create training samples and their labels in this manner and feed them to the network.
+We create training samples and their labels in this manner and feed them to the network. The first layer in the network is an embedding layer which learns a dense, low dimensional vector for each training sample which are largely sparse. These dense, low dimensional vectors are then fed into the LSTM layer. Dropout is added between layers in order to avoid overfitting which happens when the learning (prediction performance) becomes better on training data and stops/saturates on test (unseen) data.
 
 ## Accuracy measure
 In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label(s) is/are present in the top 5 predicted labels for a training sequence.
@@ -84,12 +84,12 @@ In order to run the visualizer, please follow these steps:
 7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools (probability in percentage). 
 8. If the given combination is not present, no tools or paths are shown.
 
-Literature:
+## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - [A Beginner’s Guide to Recurrent Networks and LSTMs](https://deeplearning4j.org/lstm.html)
 - [LSTM by Example using Tensorflow](https://towardsdatascience.com/lstm-by-example-using-tensorflow-feb0c1968537)
 
-Citations:
+## Citations:
 
 Cytoscape.js: a graph theory library for visualisation and analysis
 Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
