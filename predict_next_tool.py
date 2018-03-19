@@ -14,10 +14,8 @@ from keras.layers import LSTM
 from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
-from keras.optimizers import RMSprop, Adam
 from sklearn.model_selection import train_test_split
 from keras.metrics import categorical_accuracy
-import keras.backend as K
 
 import prepare_data
 
@@ -27,7 +25,7 @@ class PredictNextTool:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd() #  "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
+        self.current_working_dir = os.getcwd()
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
@@ -67,15 +65,15 @@ class PredictNextTool:
         n_epochs = 20
         batch_size = 50
         dropout = 0.75
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data() 
-        #optimizer = Adam( lr=0.0001 )
+        lstm_units = 256
+        embedding_vec_size = 32
+        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # define recurrent network
         model = Sequential()
-        model.add( Embedding( dimensions, 32, mask_zero=True ) )
-        model.add( LSTM( 256, dropout=dropout, return_sequences=False ) )
-        #model.add( LSTM( 128, dropout=dropout, activation='relu' ) )
+        model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] ) # categorical_accuracy
+        model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] )
         
         # save the network as json
         model_json = model.to_json()
@@ -84,24 +82,19 @@ class PredictNextTool:
         # save the learned weights to h5 file
         model.save_weights( self.weights_path )
         model.summary()
-        
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         callbacks_list = [ checkpoint ]
-        
         print ("Start training...")
-        # validation_data=( test_data, test_labels )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         accuracy_values = model_fit_callbacks.history[ "categorical_accuracy" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         validation_acc = model_fit_callbacks.history[ "val_categorical_accuracy" ]
-        
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-        
         print ("Training finished")
 
     @classmethod

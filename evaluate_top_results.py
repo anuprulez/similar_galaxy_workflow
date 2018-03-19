@@ -17,7 +17,7 @@ class EvaluateTopResults:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.current_working_dir = os.getcwd() # "/home/fr/fr_fr/fr_ak548/thesis/code/workflows/embedding_layer/similar_galaxy_workflow"
+        self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.base_epochs_weights_path = self.current_working_dir + "/data/weights/weights-epoch-"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
@@ -54,7 +54,6 @@ class EvaluateTopResults:
         for i in range( n_epochs ):
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
-            #file_path = "/home/anupkumar/Thesis_RS/code/workflows/embedding_layer/similar_galaxy_workflow/data/weights/weights-epoch-75.hdf5"
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
             accuracy = self.get_top_prediction_accuracy( num_predictions, dimensions, loaded_model, test_data, test_labels )
             topn_accuracy.append( np.mean( accuracy ) )
@@ -67,12 +66,11 @@ class EvaluateTopResults:
         Compute top n predictions with a trained model
         """
         print ( "Get top %d predictions for each test input..." % topn )
-        num_predict = 50 #len( test_data )
-        prediction_accuracy = 0
+        num_predict = len( test_data )
         mutual_prediction_accuracy = np.zeros( [ num_predict ] )
         with open( self.train_test_labels, 'r' ) as train_data_labels:
             data_labels = json.loads( train_data_labels.read() )
-
+        # iterate over all the samples in the test data
         for i in range( num_predict ):
             mutual_prediction = 0.0
             actual_labels = list()
@@ -84,28 +82,26 @@ class EvaluateTopResults:
             input_seq_pos = np.where( input_seq > 0 )[ 0 ]
             input_seq_list = [ str( int( input_seq[ item ] + 1 ) ) for item in input_seq_pos ]
             input_seq_list = ",".join( input_seq_list )
-            
             # predict the next tool using the trained model
             prediction = trained_model.predict( input_seq_reshaped, verbose=0 )
             prediction = np.reshape( prediction, ( dimensions, ) )
             # take prediction in reverse order, best ones first
             prediction_pos = np.argsort( prediction, axis=0 )
-
+            # get the actual labels for the input sequence
             if input_seq_list in data_labels:
                 actual_labels = data_labels[ input_seq_list ]
             if actual_labels:
                 actual_labels = actual_labels.split( "," )
-
             num_actual_labels = len( actual_labels )
             if num_actual_labels > 0:
                 # get top n predictions
-                top_prediction_pos = prediction_pos[ -topn: ]
+                top_prediction_pos = prediction_pos[ -num_actual_labels: ]
                 top_prediction_pos = [ ( item + 1 ) for item in reversed( top_prediction_pos ) ]
- 
+                # find how many actual labels are present in the predicted ones
                 for item in actual_labels:
                     if int( item ) in top_prediction_pos:
                         mutual_prediction += 1.0
-                pred = mutual_prediction / float( len( actual_labels ) )
+                pred = mutual_prediction / float( num_actual_labels )
             mutual_prediction_accuracy[ i ] = pred
         return mutual_prediction_accuracy
 

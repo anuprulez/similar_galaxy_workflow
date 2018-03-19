@@ -39,6 +39,14 @@ We create training samples and their labels in this manner and feed them to the 
 ## Accuracy measure
 In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label(s) is/are present in the top 5 predicted labels for a training sequence.
 
+## Accuracy on test data
+
+`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot below shows an accuracy of actual labels being present in the top-5 predicted labels over 200 epochs (training iterations). We can see the performance saturates around `80th` epoch.
+The accuracy increases from `33%` to around `95%`.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/top5_mutual_accuracy.png">
+</p>
+
 ## Vizualizer
 
 The screenshots below show possible next tools for a sequence at each stage of creating a dummy workflow - `wc_gnu → collapse_dataset → join1 → join1 → cut1 → join1 → filter1 → cut1 → filter1 → grouping1 → addvalue → join1 → add_a_column1 → filter1`

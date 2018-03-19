@@ -17,7 +17,6 @@ class PrepareData:
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
-        self.distribution_file = self.current_working_dir + "/data/data_distribution.txt"
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
         self.multi_train_labels = self.current_working_dir + "/data/multi_labels.txt"
@@ -51,8 +50,6 @@ class PrepareData:
         for word, _ in count:
             dictionary[word] = len( dictionary ) + 1
         reverse_dictionary = dict( zip( dictionary.values(), dictionary.keys() ) )
-        with open( self.data_dictionary, 'w' ) as distribution_file:
-            distribution_file.write( json.dumps( dictionary ) )
         with open( self.data_rev_dict, 'w' ) as data_rev_dict:
             data_rev_dict.write( json.dumps( reverse_dictionary ) )
         return dictionary, reverse_dictionary
@@ -104,7 +101,6 @@ class PrepareData:
         train_file = train_file.read().split( "\n" )
         train_multi_label_samples = dict()
         seq_len = list()
-        data_distribution = dict()
         for item in train_file:
             tools = item.split( "," )
             train_tools = tools[ :len( tools) - 1 ]
@@ -117,7 +113,6 @@ class PrepareData:
                     train_multi_label_samples[ train_tools ] = tools[ -1 ]
                 len_train_seq = len( train_tools.split( "," ) )
                 seq_len.append( len_train_seq )
-        # save the data distribution - count the number of samples with same class
         with open( self.multi_train_labels, 'w' ) as train_multilabel_file:
             train_multilabel_file.write( json.dumps( train_multi_label_samples ) )
         return train_multi_label_samples, max( seq_len )
@@ -127,7 +122,6 @@ class PrepareData:
         """
         Convert the data into corresponding arrays
         """
-        tagged_documents = list()
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         self.create_train_labels_file( dictionary, raw_paths )
