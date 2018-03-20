@@ -57,6 +57,13 @@ In our set of training samples, each one can have many labels (or categories) wh
   <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/200-LSTM/Mutual_accuracy.png">
 </p>
 
+The plot below shows a different way to assess the accuracy of the estimator/classifier. It computes an average of the number of times actual labels appear in the top-5 predicted labels for all samples in the test data. For example, let's suppose a sequence has 4 actual labels (4 next tools it can connect to).
+We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `90` epochs of training.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/200-LSTM/Actual_labels_top5.png">
+</p>
+
 ## Vizualizer
 
 The screenshots below show possible next tools for a sequence at each stage of creating a dummy workflow - `wc_gnu → collapse_dataset → join1 → join1 → cut1 → join1 → filter1 → cut1 → filter1 → grouping1 → addvalue → join1 → add_a_column1 → filter1`
