@@ -61,7 +61,7 @@ The plot below shows a different way to assess the accuracy of the estimator/cla
 We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `90` epochs of training.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/200-LSTM/Actual_labels_top5.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Actual_labels_top5.png">
 </p>
 
 ## Vizualizer
