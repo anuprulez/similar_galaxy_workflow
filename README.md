@@ -113,6 +113,8 @@ In order to run the visualizer, please follow these steps:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - [A Beginner’s Guide to Recurrent Networks and LSTMs](https://deeplearning4j.org/lstm.html)
 - [LSTM by Example using Tensorflow](https://towardsdatascience.com/lstm-by-example-using-tensorflow-feb0c1968537)
+- [Learning to diagnose with LSTM Recurrent Neural Networks](https://arxiv.org/pdf/1511.03677.pdf)
+- [CNN-RNN: A Unified Framework for Multi-label Image Classification](https://arxiv.org/pdf/1604.04573.pdf)
 
 ## Citations:
 
