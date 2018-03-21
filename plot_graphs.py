@@ -16,6 +16,21 @@ def plot_data_distribution( file_path ):
     plt.show()
 
 
+def plot_labels_distribution( file_path ):
+    with open( file_path, 'r' ) as train_labels:
+        labels_distribution = json.loads( train_labels.read() )
+    labels_count = list()
+    for item in labels_distribution:
+        labels_count.append( len( labels_distribution[ item ].split( "," ) ) )
+    labels_index = np.arange( len( labels_count ) )
+    plt.bar( labels_index, labels_count, facecolor='b', align='center' )
+    plt.xlabel( 'Training samples' )
+    plt.ylabel( 'Number of labels' )
+    plt.title( 'Training samples and their respective number of labels' )
+    plt.grid( True )
+    plt.show()
+
+
 def plot_loss( file_path_train, file_path_test ):
     loss_values_train = list()
     loss_values_test = list()
@@ -53,6 +68,7 @@ def plot_accuracy( file_path_train, file_path_test ):
     plt.grid( True )
     plt.show()
 
+
 def plot_top_prediction( file_path ):
     loss_values = list()
     with open( file_path, 'r' ) as top_pred:
@@ -61,12 +77,11 @@ def plot_top_prediction( file_path ):
     plt.plot( pred_values )
     plt.ylabel( 'Accuracy' )
     plt.xlabel( 'Epochs' )
-    plt.title( 'Top 5 prediction accuracy vs epochs' )
+    plt.title( 'Number of actual labels in top-5 predicted labels' )
     plt.grid( True )
     plt.show()
 
-
-#plot_data_distribution( "data/data_distribution.txt" )
 plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
 plot_accuracy( "data/accuracy_history.txt", "data/val_accuracy_history.txt" )
 plot_top_prediction( "data/top_pred.txt" )
+plot_labels_distribution( "data/multi_labels.txt" )

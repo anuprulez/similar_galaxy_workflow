@@ -8,6 +8,7 @@ import os
 import h5py as h5
 
 # machine learning library
+from keras import optimizers
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
@@ -62,19 +63,19 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 20
+        n_epochs = 100
         batch_size = 50
-        dropout = 0.75
+        dropout = 0.5
         lstm_units = 256
-        embedding_vec_size = 32
+        embedding_vec_size = 100
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss='binary_crossentropy', optimizer='adam', metrics=[ categorical_accuracy ] )
-        
+        model.compile( loss='binary_crossentropy', optimizer='rmsprop', metrics=[ categorical_accuracy ] )
         # save the network as json
         model_json = model.to_json()
         with open( self.network_config_json_path, "w" ) as json_file:
