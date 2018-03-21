@@ -120,5 +120,5 @@ In order to run the visualizer, please follow these steps:
 
 Cytoscape.js: a graph theory library for visualisation and analysis
 Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
-[Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)](bioinformatics.oxfordjournals.org/content/32/2/309)
+Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)
 [PubMed Abstract](https://www.ncbi.nlm.nih.gov/pubmed/26415722)
