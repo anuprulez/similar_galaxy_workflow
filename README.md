@@ -61,7 +61,7 @@ The plot below shows a different way to assess the accuracy of the estimator/cla
 We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `90` epochs of training.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Actual_labels_top5.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Actual_labels_top5_2layers.png">
 </p>
 
 ## Vizualizer
@@ -120,5 +120,5 @@ In order to run the visualizer, please follow these steps:
 
 Cytoscape.js: a graph theory library for visualisation and analysis
 Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
-[Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)](bioinformatics.oxfordjournals.org/content/32/2/309)
+Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)
 [PubMed Abstract](https://www.ncbi.nlm.nih.gov/pubmed/26415722)
