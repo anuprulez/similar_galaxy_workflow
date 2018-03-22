@@ -6,6 +6,13 @@ import numpy as np
 import os
 import json
 from keras.models import model_from_json
+import yaml
+import requests
+
+NAME     = "name"
+CATEGORY = "tool_panel_section_label"
+TOOL_REPO_URL = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
+TOOL_LIST     = "tools"
 
 
 class PredictNextNode:
@@ -115,3 +122,24 @@ class PredictNextNode:
             all_input_seq_paths = {}
             predicted_prob = {}
         return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob }
+
+    @classmethod
+    def get_tool_category_catalog( self ):
+        """
+        Retrieves all tools' categories from usegalaxy.eu
+        """
+        tool_categories = {}
+
+        response = requests.get(TOOL_REPO_URL)
+
+        if response.status_code == 200:
+            tool_repo = yaml.load(response.content)
+
+            # we extract the tool list from the retrieved tool repository
+            tool_list = tool_repo[TOOL_LIST]
+
+            # we collect each tool and corresponding category
+            for tool in tool_list:
+                tool_categories[tool[CATEGORY]] = tool[NAME]
+
+        return tool_categories
