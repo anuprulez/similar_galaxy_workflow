@@ -140,6 +140,6 @@ class PredictNextNode:
 
             # we collect each tool and corresponding category
             for tool in tool_list:
-                tool_categories[tool[CATEGORY]] = tool[NAME]
+                tool_categories[tool[NAME]] = tool[CATEGORY]
 
         return tool_categories
