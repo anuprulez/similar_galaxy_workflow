@@ -23,6 +23,7 @@ class EvaluateTopResults:
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
         self.top_pred_path = self.current_working_dir + "/data/top_pred.txt"
+        self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
         self.train_test_labels = self.current_working_dir + "/data/multi_labels.txt"
 
     @classmethod
@@ -64,7 +65,9 @@ class EvaluateTopResults:
             print ( np.mean( abs_mutual_prediction_accuracy ) )
             end_time = time.time()
             print( "Prediction finished in %d seconds" % int( end_time - start_time ) )
+            print( "========================" )
         np.savetxt( self.top_pred_path, np.array( topn_accuracy ), delimiter="," )
+        np.savetxt( self.abs_top_pred_path, np.array( abs_topn_accuracy ), delimiter="," )
 
     @classmethod
     def get_top_prediction_accuracy( self, topn, dimensions, trained_model, test_data, test_labels ):
@@ -105,18 +108,17 @@ class EvaluateTopResults:
                 # get top n predictions
                 top_prediction_pos = prediction_pos[ -topn: ]
                 top_prediction_pos = [ ( item + 1 ) for item in reversed( top_prediction_pos ) ]
+                # find how many of all the true labels (k) present in the top-k predicted labels
+                abs_top_prediction_pos = prediction_pos[ -num_actual_labels: ]
+                abs_top_prediction_pos = [ ( item + 1 ) for item in reversed( abs_top_prediction_pos ) ]
                 # find how many actual labels are present in the predicted ones
                 for item in actual_labels:
                     if int( item ) in top_prediction_pos:
                         mutual_prediction += 1.0
-                pred = mutual_prediction / float( num_actual_labels )
-                abs_top_prediction_pos = prediction_pos[ -num_actual_labels: ]
-                abs_top_prediction_pos = [ ( item + 1 ) for item in reversed( abs_top_prediction_pos ) ]
-                # find how many of all the true labels (k) present in the top-k predicted labels
-                for item in actual_labels:
                     if int( item ) in abs_top_prediction_pos:
                         abs_mutual_prediction += 1.0
-                abs_pred = abs_mutual_prediction / float( num_actual_labels )
+                pred = mutual_prediction / float( num_actual_labels )
+                abs_pred = abs_mutual_prediction / float( num_actual_labels )      
             abs_mutual_prediction_accuracy[ i ] = abs_pred
             mutual_prediction_accuracy[ i ] = pred
         return mutual_prediction_accuracy, abs_mutual_prediction_accuracy

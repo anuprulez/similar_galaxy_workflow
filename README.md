@@ -51,18 +51,13 @@ In our set of training samples, each one can have many labels (or categories) wh
 
 ## Accuracy on test data
 
-`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot below shows an accuracy of k actual labels being present in the top-k predicted labels for a sequence over 90 training epochs (iterations). We can see the performance saturates around `60th` epoch. Here, "k" can be any number i.e. a sequence can have any number of labels. Suppose a sequence has 5 labels (5 tools it can connect to). We predict top 5 tools and find how many of these actual tools are present in the predicted tools. An accuracy of `80%` would mean that `4` out of `5` actual next tools are present in the predicted tools. An averate accuracy is computed over all test samples.
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/200-LSTM/Mutual_accuracy.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/top-k_accuracy.png">
 </p>
 
-The plot below shows a different way to assess the accuracy of the estimator/classifier. It computes an average of the number of times actual labels appear in the top-5 predicted labels for all samples in the test data. For example, let's suppose a sequence has 4 actual labels (4 next tools it can connect to).
-We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `90` epochs of training.
+`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot above (orange line) shows an accuracy of k actual labels being present in the top-k predicted labels for input sequences over 100 training epochs (iterations). We can see the performance saturates around `60th` epoch. Here, "k" can be any number i.e. a sequence can have any number of labels or tools it can connect to. Suppose a sequence has 5 labels (5 tools it can connect to). We predict top 5 tools using the trained model and find how many of these actual tools are present in the predicted tools. An accuracy of `80%` would mean that `4` out of `5` actual next tools are present in the predicted tools. An averate accuracy is computed over all test samples.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/Actual_labels_top5_2layers.png">
-</p>
+The blue line in the plot above shows a different way to assess the accuracy of the trained model. It computes an average of the number of times actual labels appear in the top-5 predicted labels for all samples in the test data. For example, let's suppose a sequence has 4 actual labels (4 next tools it can connect to). We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `100` epochs of training.
 
 ## Vizualizer
 

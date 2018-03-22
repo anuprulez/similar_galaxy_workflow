@@ -61,27 +61,32 @@ def plot_accuracy( file_path_train, file_path_test ):
     acc_values_test = [ float( item ) for item in acc_values_test if item ]   
     plt.plot( acc_values_train )
     plt.plot( acc_values_test )
-    plt.ylabel( 'Accuracy' )
-    plt.xlabel( 'Epochs' )
+    plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
+    plt.xlabel( 'Training epochs' )
     plt.title( 'Accuracy vs training epochs' )
     plt.legend( [ "train", "test" ] )
     plt.grid( True )
     plt.show()
 
 
-def plot_top_prediction( file_path ):
+def plot_top_prediction( file_path, abs_file_path ):
     loss_values = list()
     with open( file_path, 'r' ) as top_pred:
         pred_values = top_pred.read().split( "\n" )
-    pred_values = [ float( item ) for item in pred_values if item ]   
+    with open( abs_file_path, 'r' ) as _abs_top_pred:
+        abs_pred_values = _abs_top_pred.read().split( "\n" )
+    pred_values = [ float( item ) for item in pred_values if item ]
+    abs_pred_values = [ float( item ) for item in abs_pred_values if item ]   
     plt.plot( pred_values )
-    plt.ylabel( 'Accuracy' )
-    plt.xlabel( 'Epochs' )
-    plt.title( 'Number of actual labels in top-5 predicted labels' )
+    plt.plot( abs_pred_values )
+    plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
+    plt.xlabel( 'Training epochs' )
+    plt.title( 'Next tools (labels) prediction accuracy vs training epochs on test data' )
+    plt.legend( [ "Percentage of actual labels in top-5 predicted labels", "Percentage of k actual labels in top-k predicted labels" ] )
     plt.grid( True )
     plt.show()
 
 plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
 plot_accuracy( "data/accuracy_history.txt", "data/val_accuracy_history.txt" )
-plot_top_prediction( "data/top_pred.txt" )
-plot_labels_distribution( "data/multi_labels.txt" )
+plot_top_prediction( "data/top_pred.txt", "data/abs_top_pred.txt" )
+#plot_labels_distribution( "data/multi_labels.txt" )
