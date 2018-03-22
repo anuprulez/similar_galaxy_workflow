@@ -8,12 +8,13 @@ import json
 from keras.models import model_from_json
 import yaml
 import requests
+import operator
 
 NAME     = "name"
 CATEGORY = "tool_panel_section_label"
 TOOL_REPO_URL = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
 TOOL_LIST     = "tools"
-
+TOP_N = 10
 
 class PredictNextNode:
 
@@ -42,22 +43,43 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=10 ):
+    def predict_node( self, trained_model, path_vec, similar_tools, nodes_rev_dict, nodes_dict, max_seq_len ):
         """
         Predict next nodes for a path using a trained model
         """
+        predicted_nodes_list = list()
+        padded_sequences = list()
+        ordered_nodes = dict()
+        padded_sequences.append( path_vec )
+        for item in similar_tools:
+            if item in nodes_dict:
+                padded_seq = self.get_padded_input( max_seq_len, item, nodes_dict )
+                padded_sequences.append( padded_seq )
+        for item in padded_sequences:
+            predicted_nodes = self.predict_by_model( trained_model, item, nodes_rev_dict, max_seq_len )
+            predicted_nodes_list.extend( predicted_nodes )
+        for node in predicted_nodes_list:
+            if node in ordered_nodes:
+                ordered_nodes[ node ] += 1
+            else:
+                ordered_nodes[ node ] = 1
+        ordered_nodes = sorted( ordered_nodes.items(), key=operator.itemgetter( 1 ), reverse=True )[ :TOP_N ]
+        ordered_nodes = [ item for ( item, freq ) in ordered_nodes ]
+        ordered_nodes = ",".join( ordered_nodes )
+        print ordered_nodes
+        return ordered_nodes
+
+    @classmethod
+    def predict_by_model( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=TOP_N ):
         top_prediction_prob = dict()
         dimensions = len( nodes_rev_dict )
         path_vec_reshaped = np.reshape( path_vec, ( 1, max_seq_len ) )
-        with open( self.train_test_labels, 'r' ) as train_data_labels:
-            data_labels = json.loads( train_data_labels.read() )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
         prediction = np.reshape( prediction, ( dimensions, ) )
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         top_prediction_pos = prediction_pos[ -top_n: ]
-        
         for index, item in enumerate( reversed( top_prediction_pos ) ):
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get top n predictions
@@ -66,15 +88,7 @@ class PredictNextNode:
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in reversed( top_prediction_pos ) ]
-        predicted_nodes = ",".join( predicted_nodes )
-        top_pred_rev = [ str( item + 1 ) for item in reversed( top_prediction_pos ) ]
-        #print( "Predicted labels: %s" % ( ",".join( top_pred_rev ) ) )
-        path_vec_pos = np.where( path_vec > 0 )[ 0 ]
-        path_vec_pos_list = [ str( int( path_vec[ item ] + 1 ) ) for item in path_vec_pos ]
-        path_vec_pos_list = ",".join( path_vec_pos_list )
-        #if path_vec_pos_list in data_labels:
-            #print ( "Actual labels: %s" % ( data_labels[ path_vec_pos_list ] ) )
-        return predicted_nodes, top_prediction_prob
+        return predicted_nodes
 
     @classmethod
     def get_file_dictionary( self, file_name ):
@@ -86,6 +100,34 @@ class PredictNextNode:
         return nodes_dict
 
     @classmethod
+    def get_padded_input( self, max_seq_len, input_seq, nodes_dict ):
+        """
+        Make 0 padded vector for an input sequence
+        """
+        input_seq_padded = np.zeros( [ max_seq_len ] )
+        input_seq_split = input_seq.split( "," )
+        start_pos = max_seq_len - len( input_seq_split )
+        for index, item in enumerate( input_seq_split ):
+            input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
+        return input_seq_padded
+
+    @classmethod
+    def get_similar_tools( self, input_sequence ):
+        """
+        Get similar tools using Galaxy's manually labeled categories
+        """
+        similar_tools = list()
+        last_tool_category = ""
+        tool_categories = self.get_tool_category_catalog()
+        last_tool = input_sequence.split( "," )[ -1 ]
+        if last_tool in tool_categories:
+            last_tool_category = tool_categories[ last_tool ]
+        for item in tool_categories:
+            if item in tool_categories and last_tool_category == tool_categories[ item ]:
+                similar_tools.append( item )
+        return similar_tools
+
+    @classmethod
     def find_next_nodes( self, input_sequence="" ):
         """
         Find a set of possible next nodes
@@ -93,35 +135,24 @@ class PredictNextNode:
         max_seq_len = 125 # max length of training input
         all_paths_train = list()
         all_input_seq_paths = dict()
-        with open( self.raw_paths, 'r' ) as load_all_paths:
-            all_paths = load_all_paths.read().split( "\n" )
-        all_paths = all_paths[ :len( all_paths ) -1 ]
-        for index, item in enumerate( all_paths ):
-            item = item.split( "," )
-            item = item[ :len( item ) - 1 ]
-            all_paths_train.append( ",".join( item ) )
-        for index, item in enumerate( all_paths_train ):
-            if input_sequence in item: 
-                all_input_seq_paths[ index ] = item
-
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
         nodes_dict = self.get_file_dictionary( self.data_dictionary )
         nodes_rev_dict = self.get_file_dictionary( self.data_rev_dict )
-
-        input_seq_padded = np.zeros( [ max_seq_len ] )
-        input_seq_split = input_sequence.split( "," )
-        start_pos = max_seq_len - len( input_seq_split )
-        for index, item in enumerate( input_seq_split ):
-            input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
-        try:
-            predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict, max_seq_len )
-        except Exception as exception:
-            print( exception )
-            predicted_nodes = {}
-            all_input_seq_paths = {}
-            predicted_prob = {}
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob }
+        input_seq_padded = self.get_padded_input( max_seq_len, input_sequence, nodes_dict )
+        similar_tools = self.get_similar_tools( input_sequence )
+        predicted_nodes = self.predict_node( loaded_model, input_seq_padded, similar_tools, nodes_rev_dict, nodes_dict, max_seq_len )
+        with open( self.raw_paths, 'r' ) as load_all_paths:
+            all_paths = load_all_paths.read().split( "\n" )
+            all_paths = all_paths[ :len( all_paths ) -1 ]
+            for index, item in enumerate( all_paths ):
+                item = item.split( "," )
+                item = item[ :len( item ) - 1 ]
+                all_paths_train.append( ",".join( item ) )
+            for index, item in enumerate( all_paths_train ):
+                if input_sequence in item:
+                    all_input_seq_paths[ index ] = item
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths }
 
     @classmethod
     def get_tool_category_catalog( self ):
