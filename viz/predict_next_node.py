@@ -64,9 +64,9 @@ class PredictNextNode:
             else:
                 ordered_nodes[ node ] = 1
         ordered_nodes = sorted( ordered_nodes.items(), key=operator.itemgetter( 1 ), reverse=True )[ :TOP_N ]
+        print ordered_nodes
         ordered_nodes = [ item for ( item, freq ) in ordered_nodes ]
         ordered_nodes = ",".join( ordered_nodes )
-        print ordered_nodes
         return ordered_nodes
 
     @classmethod
@@ -88,6 +88,7 @@ class PredictNextNode:
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in reversed( top_prediction_pos ) ]
+        print predicted_nodes
         return predicted_nodes
 
     @classmethod
@@ -125,6 +126,7 @@ class PredictNextNode:
         for item in tool_categories:
             if item in tool_categories and last_tool_category == tool_categories[ item ]:
                 similar_tools.append( item )
+        print similar_tools
         return similar_tools
 
     @classmethod
