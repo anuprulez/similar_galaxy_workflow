@@ -13,28 +13,28 @@ import operator
 NAME     = "name"
 CATEGORY = "tool_panel_section_label"
 TOOL_LIST = "tools"
-TOOL_REPO_ASAIM             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/asaim.yaml"
-TOOL_REPO_BGRUENING         = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/bgruening.yaml"
-TOOL_REPO_EARLHAMINST       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/earlhaminst.yaml"
-TOOL_REPO_EPIGENETICS       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/epigenetics.yaml"
-TOOL_REPO_GENOME_ANNOTATION = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/genome-annotation.yaml"
-TOOL_REPO_GRAPHCLUST        = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/graphclust.yaml"
-TOOL_REPO_METABOLOMICS      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/metabolomics.yaml"
-TOOL_REPO_RNATEAM           = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/rnateam.yml"
+TOOL_REPO_ASAIM             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/asaim.yaml"
+TOOL_REPO_BGRUENING         = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/bgruening.yaml"
+TOOL_REPO_EARLHAMINST       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/earlhaminst.yaml"
+TOOL_REPO_EPIGENETICS       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/epigenetics.yaml"
+TOOL_REPO_GENOME_ANNOTATION = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/genome-annotation.yaml"
+TOOL_REPO_GRAPHCLUST        = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/graphclust.yaml"
+TOOL_REPO_METABOLOMICS      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/metabolomics.yaml"
+TOOL_REPO_RNATEAM           = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/rnateam.yml"
 TOOL_REPO_TOOLS             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
-TOOL_REPO_TOOLSGALAXYP      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_galaxyp.yaml"
-TOOL_REPO_IUC               = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_iuc.yaml"
+TOOL_REPO_TOOLSGALAXYP      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools_galaxyp.yaml"
+TOOL_REPO_IUC               = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools_iuc.yaml"
 TOOL_REPOS = {
-    TOOL_REPO_ASAIM
-    TOOL_REPO_BGRUENING
-    TOOL_REPO_EARLHAMINST
-    TOOL_REPO_EPIGENETICS
-    TOOL_REPO_GENOME_ANNOTATION
-    TOOL_REPO_GRAPHCLUST
-    TOOL_REPO_METABOLOMICS
-    TOOL_REPO_RNATEAM
-    TOOL_REPO_TOOLS
-    TOOL_REPO_TOOLSGALAXYP
+    TOOL_REPO_ASAIM,
+    TOOL_REPO_BGRUENING,
+    TOOL_REPO_EARLHAMINST,
+    TOOL_REPO_EPIGENETICS,
+    TOOL_REPO_GENOME_ANNOTATION,
+    TOOL_REPO_GRAPHCLUST,
+    TOOL_REPO_METABOLOMICS,
+    TOOL_REPO_RNATEAM,
+    TOOL_REPO_TOOLS,
+    TOOL_REPO_TOOLSGALAXYP,
     TOOL_REPO_IUC
 }
 
