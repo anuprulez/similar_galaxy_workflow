@@ -53,16 +53,13 @@ $(document).ready(function() {
             console.log(data);
             let predictedNodes = data[ "predicted_nodes" ],
                 allInputPaths = data[ "all_input_paths" ],
-                predictedProb = data[ "predicted_prob" ],
                 toolsTemplate = "",
                 pathsTemplate = "";
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ul>";
                 for( let counter = 0; counter < predictedNodeList.length; counter++ ) {
-                    let prob = predictedProb[ counter ] * 100;
-                    prob = prob.toPrecision( 4 );
-                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + " (" + prob + "%) " + "</li>";
+                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + "</li>";
                 }
                 toolsTemplate += "</ul>";
             }
