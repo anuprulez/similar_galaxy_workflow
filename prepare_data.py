@@ -20,6 +20,7 @@ class PrepareData:
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
         self.multi_train_labels = self.current_working_dir + "/data/multi_labels.txt"
+        self.max_tool_sequence_len = 40
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -107,15 +108,17 @@ class PrepareData:
             train_tools = ",".join( train_tools )
             label = tools[ -1 ]
             if label:
-                if train_tools in train_multi_label_samples:
-                    train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
-                else:
-                    train_multi_label_samples[ train_tools ] = tools[ -1 ]
                 len_train_seq = len( train_tools.split( "," ) )
-                seq_len.append( len_train_seq )
+                if len_train_seq <= self.max_tool_sequence_len:
+                    if train_tools in train_multi_label_samples:
+                        train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
+                    else:
+                        train_multi_label_samples[ train_tools ] = tools[ -1 ]
+                    len_train_seq = len( train_tools.split( "," ) )
+                    seq_len.append( len_train_seq )
         with open( self.multi_train_labels, 'w' ) as train_multilabel_file:
             train_multilabel_file.write( json.dumps( train_multi_label_samples ) )
-        return train_multi_label_samples, max( seq_len )
+        return train_multi_label_samples
 
     @classmethod
     def read_data( self ):
@@ -126,17 +129,17 @@ class PrepareData:
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well 
-        train_labels_data, max_seq_length = self.prepare_train_test_data()
+        train_labels_data = self.prepare_train_test_data()
         num_classes = len( dictionary )
         len_train_data = len( train_labels_data )
         # initialize the training data matrix
-        train_data_array = np.zeros( [ len_train_data, max_seq_length ] )
+        train_data_array = np.zeros( [ len_train_data, self.max_tool_sequence_len ] )
         train_label_array = np.zeros( [ len_train_data, num_classes ] )
         train_counter = 0
         for train_seq, train_label in train_labels_data.iteritems():
             nodes = list()
             positions = train_seq.split( "," )
-            start_pos = max_seq_length - len( positions )
+            start_pos = self.max_tool_sequence_len - len( positions )
             for id_pos, pos in enumerate( positions ):
                 if pos:
                     train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1

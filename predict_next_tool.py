@@ -66,7 +66,7 @@ class PredictNextTool:
         n_epochs = 100
         batch_size = 50
         dropout = 0.5
-        lstm_units = 256
+        lstm_units = 128
         embedding_vec_size = 100
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         # define recurrent network
