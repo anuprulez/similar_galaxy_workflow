@@ -6,6 +6,36 @@ import numpy as np
 import os
 import json
 from keras.models import model_from_json
+import yaml
+import requests
+
+NAME     = "name"
+CATEGORY = "tool_panel_section_label"
+TOOL_LIST = "tools"
+TOOL_REPO_ASAIM             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/asaim.yaml"
+TOOL_REPO_BGRUENING         = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/bgruening.yaml"
+TOOL_REPO_EARLHAMINST       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/earlhaminst.yaml"
+TOOL_REPO_EPIGENETICS       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/epigenetics.yaml"
+TOOL_REPO_GENOME_ANNOTATION = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/genome-annotation.yaml"
+TOOL_REPO_GRAPHCLUST        = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/graphclust.yaml"
+TOOL_REPO_METABOLOMICS      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/metabolomics.yaml"
+TOOL_REPO_RNATEAM           = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/rnateam.yml"
+TOOL_REPO_TOOLS             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
+TOOL_REPO_TOOLSGALAXYP      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_galaxyp.yaml"
+TOOL_REPO_IUC               = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_iuc.yaml"
+TOOL_REPOS = {
+    TOOL_REPO_ASAIM
+    TOOL_REPO_BGRUENING
+    TOOL_REPO_EARLHAMINST
+    TOOL_REPO_EPIGENETICS
+    TOOL_REPO_GENOME_ANNOTATION
+    TOOL_REPO_GRAPHCLUST
+    TOOL_REPO_METABOLOMICS
+    TOOL_REPO_RNATEAM
+    TOOL_REPO_TOOLS
+    TOOL_REPO_TOOLSGALAXYP
+    TOOL_REPO_IUC
+}
 
 
 class PredictNextNode:
@@ -115,3 +145,26 @@ class PredictNextNode:
             all_input_seq_paths = {}
             predicted_prob = {}
         return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob }
+
+    @classmethod
+    def get_tool_category_catalog( self ):
+        """
+        Retrieves all tools' categories from usegalaxy.eu
+        """
+        tool_categories = {}
+
+        for repo in TOOL_REPOS:
+
+            response = requests.get(repo)
+
+            if response.status_code == 200:
+                tool_repo = yaml.load(response.content)
+
+                # we extract the tool list from the retrieved tool repository
+                tool_list = tool_repo[TOOL_LIST]
+
+                # we collect each tool and corresponding category
+                for tool in tool_list:
+                    tool_categories[tool[NAME]] = tool[CATEGORY]
+
+        return tool_categories
