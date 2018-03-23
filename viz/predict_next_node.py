@@ -12,8 +12,32 @@ import operator
 
 NAME     = "name"
 CATEGORY = "tool_panel_section_label"
-TOOL_REPO_URL = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
-TOOL_LIST     = "tools"
+TOOL_LIST = "tools"
+TOOL_REPO_ASAIM             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/asaim.yaml"
+TOOL_REPO_BGRUENING         = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/bgruening.yaml"
+TOOL_REPO_EARLHAMINST       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/earlhaminst.yaml"
+TOOL_REPO_EPIGENETICS       = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/epigenetics.yaml"
+TOOL_REPO_GENOME_ANNOTATION = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/genome-annotation.yaml"
+TOOL_REPO_GRAPHCLUST        = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/graphclust.yaml"
+TOOL_REPO_METABOLOMICS      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/metabolomics.yaml"
+TOOL_REPO_RNATEAM           = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/rnateam.yml"
+TOOL_REPO_TOOLS             = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/master/tools.yaml"
+TOOL_REPO_TOOLSGALAXYP      = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_galaxyp.yaml"
+TOOL_REPO_IUC               = "https://raw.githubusercontent.com/usegalaxy-eu/usegalaxy-eu-tools/blob/master/tools_iuc.yaml"
+TOOL_REPOS = {
+    TOOL_REPO_ASAIM
+    TOOL_REPO_BGRUENING
+    TOOL_REPO_EARLHAMINST
+    TOOL_REPO_EPIGENETICS
+    TOOL_REPO_GENOME_ANNOTATION
+    TOOL_REPO_GRAPHCLUST
+    TOOL_REPO_METABOLOMICS
+    TOOL_REPO_RNATEAM
+    TOOL_REPO_TOOLS
+    TOOL_REPO_TOOLSGALAXYP
+    TOOL_REPO_IUC
+}
+
 TOP_N = 10
 
 class PredictNextNode:
@@ -160,16 +184,18 @@ class PredictNextNode:
         """
         tool_categories = {}
 
-        response = requests.get(TOOL_REPO_URL)
+        for repo in TOOL_REPOS:
 
-        if response.status_code == 200:
-            tool_repo = yaml.load(response.content)
+            response = requests.get(repo)
 
-            # we extract the tool list from the retrieved tool repository
-            tool_list = tool_repo[TOOL_LIST]
+            if response.status_code == 200:
+                tool_repo = yaml.load(response.content)
 
-            # we collect each tool and corresponding category
-            for tool in tool_list:
-                tool_categories[tool[NAME]] = tool[CATEGORY]
+                # we extract the tool list from the retrieved tool repository
+                tool_list = tool_repo[TOOL_LIST]
+
+                # we collect each tool and corresponding category
+                for tool in tool_list:
+                    tool_categories[tool[NAME]] = tool[CATEGORY]
 
         return tool_categories
