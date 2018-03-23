@@ -46,6 +46,14 @@ If there are multiple labels for a training sample (which happens to be the case
 
 We create training samples and their labels in this manner and feed them to the network. The first layer in the network is an embedding layer which learns a dense, low dimensional vector for each training sample which are largely sparse. These dense, low dimensional vectors are then fed into the LSTM layer. Dropout is added between layers in order to avoid overfitting which happens when the learning (prediction performance) becomes better on training data and stops/saturates on test (unseen) data.
 
+## Data distribution
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/training_seq_tools_distribution.png">
+</p>
+
+The above plot shows the distribution of length of training sequences. We can see that most of the training sequences lie between length (frequency) 0 and 60. This length play an important role to determine the dimensionality of input dense vector. Thus, to reduce the input dimensionality, we take a maximum length of 40 per training sequence which still includes most of the training sequences. We lose some training sequences, but not many (~500 out of 11,000). At the same time, we gain in prediction time as the trained model needs to deal with smaller size vector.
+
 ## Accuracy measure
 In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label(s) is/are present in the top 5 predicted labels for a training sequence.
 
