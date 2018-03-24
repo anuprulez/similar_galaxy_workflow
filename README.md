@@ -69,37 +69,16 @@ The blue line in the plot above shows a different way to assess the accuracy of 
 
 ## Vizualizer
 
-The screenshots below show possible next tools for a sequence at each stage of creating a dummy workflow - `wc_gnu → collapse_dataset → join1 → join1 → cut1 → join1 → filter1 → cut1 → filter1 → grouping1 → addvalue → join1 → add_a_column1 → filter1`
+A small animation below shows possible next tools for a sequence at each stage of creating a dummy workflow:
+
+`trim_galore → bismark_bowtie → samtools_rmdup → samtools_sort → methtools_calling → methtools_destrand → filter1 → smooth_running_window`
 
 All the paths containing this sequence of tools are also shown.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/wf_pred.gif">
 </p>
 <hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/2.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/3.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/4.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/5.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/6.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/7.png">
-</p>
 
 In order to run the visualizer, please follow these steps:
 
