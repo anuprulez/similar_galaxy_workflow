@@ -119,8 +119,8 @@ class EvaluateTopResults:
                         abs_mutual_prediction += 1.0
                 pred = mutual_prediction / float( num_actual_labels )
                 abs_pred = abs_mutual_prediction / float( num_actual_labels )      
-            abs_mutual_prediction_accuracy[ i ] = abs_pred
-            mutual_prediction_accuracy[ i ] = pred
+                abs_mutual_prediction_accuracy[ i ] = abs_pred
+                mutual_prediction_accuracy[ i ] = pred
         return mutual_prediction_accuracy, abs_mutual_prediction_accuracy
 
 

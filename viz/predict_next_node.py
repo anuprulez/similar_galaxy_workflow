@@ -83,7 +83,7 @@ class PredictNextNode:
         """
         Find a set of possible next nodes
         """
-        max_seq_len = 125 # max length of training input
+        max_seq_len = 40 # max length of training input
         all_paths_train = list()
         all_input_seq_paths = dict()
         with open( self.raw_paths, 'r' ) as load_all_paths:
