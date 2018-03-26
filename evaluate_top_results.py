@@ -44,7 +44,7 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 100
+        n_epochs = 50
         num_predictions = 5
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
@@ -64,7 +64,7 @@ class EvaluateTopResults:
             print ( np.mean( accuracy ) )
             print ( np.mean( abs_mutual_prediction_accuracy ) )
             end_time = time.time()
-            print( "Prediction finished in %d seconds" % int( end_time - start_time ) )
+            print( "Prediction finished in %d seconds for epoch %d" % ( int( end_time - start_time ), i + 1 ) )
             print( "========================" )
         np.savetxt( self.top_pred_path, np.array( topn_accuracy ), delimiter="," )
         np.savetxt( self.abs_top_pred_path, np.array( abs_topn_accuracy ), delimiter="," )

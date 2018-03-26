@@ -73,16 +73,16 @@ class PredictNextTool:
         print ("Dividing data...")
         n_epochs = 20
         batch_size = 40
-        dropout = 0.5
-        lstm_units = 256
+        dropout = 0.2
+        lstm_units = 128
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
-        model.add( Dense( dimensions, activation='softmax' ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss=self.binary_acc, optimizer='rmsprop', metrics=[ categorical_accuracy ]  )
         # save the network as json
         model_json = model.to_json()
