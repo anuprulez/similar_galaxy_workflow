@@ -45,33 +45,50 @@ $(document).ready(function() {
         let predictUrl =  "http://" + host + "/?predict_tool=true&tool_seq=" + toolSeq,
             $elLoading = $( ".loading-image" ),
             $elPredictedTools = $( ".predicted-tools" ),
+            $elActualTools = $( ".actual-tools" ),
             $elAllPaths = $( ".all-included-paths" );
         $elLoading.show();
         $elPredictedTools.empty();
+        $elActualTools.empty();
         $elAllPaths.empty();
         $.getJSON( predictUrl, function( data ) {
-            console.log(data);
             let predictedNodes = data[ "predicted_nodes" ],
                 allInputPaths = data[ "all_input_paths" ],
                 predictedProb = data[ "predicted_prob" ],
+                correctPredictedNodes = data[ "actual_predicted_nodes" ],
+                actualNextNodes = data[ "actual_labels" ],
+                presentCounter = 0,
+                predictionRate = 0.0,
                 toolsTemplate = "",
+                correctToolsTemplate = "",
                 pathsTemplate = "";
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
-                toolsTemplate = "<ul>";
-                for( let counter = 0; counter < predictedNodeList.length; counter++ ) {
-                    let prob = predictedProb[ counter ] * 100;
-                    prob = prob.toPrecision( 4 );
-                    toolsTemplate += "<li>" + predictedNodeList[ counter ] + " (" + prob + "%) " + "</li>";
+                toolsTemplate = "<ol>";
+                correctToolsTemplate = "<ol>";
+                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
+                    let nodeName = predictedNodeList[ counter ],
+                        isTrue = correctPredictedNodes[ nodeName ];
+                    if ( isTrue || isTrue === 'true' ) {
+                        toolsTemplate += "<li class='present-node'>" + nodeName + "</li>";
+                        presentCounter += 1;
+                    }
+                    else {
+                        toolsTemplate += "<li class='absent-node'>" + nodeName + "</li>";
+                    }
+                    correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>"
                 }
-                toolsTemplate += "</ul>";
+                toolsTemplate += "</ol>";
+                correctToolsTemplate += "</ol>";
+                predictionRate = ( presentCounter / actualNextNodes.length ) * 100;
+                toolsTemplate += "<div>Prediction rate: <b>" + predictionRate.toFixed( 2 ) + "%</b></div>";
             }
             else {
                 toolsTemplate = "No predicted tools";
             }
 
             if( Object.keys( allInputPaths ).length > 0 ) {
-                pathsTemplate = "<ul>";
+                pathsTemplate = "<ol>";
                 for( var index in allInputPaths ) {
                     let toolsPath = allInputPaths[ index ],
                         toolItems = toolsPath.split( "," );
@@ -80,12 +97,13 @@ $(document).ready(function() {
                         pathsTemplate += "<li>" + toolsPath + "</li>";
                     }
                 }
-                pathsTemplate += "</ul>";
+                pathsTemplate += "</ol>";
             }
             else {
                 pathsTemplate = "No paths involving this sequence in the complete data"
             }
             $elLoading.hide();
+            $elActualTools.append( correctToolsTemplate );
             $elPredictedTools.append( toolsTemplate );
             $elAllPaths.append( pathsTemplate );
         });
