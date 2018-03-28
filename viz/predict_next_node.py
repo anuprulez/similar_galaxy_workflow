@@ -6,6 +6,7 @@ import numpy as np
 import os
 import json
 from keras.models import model_from_json
+import re
 
 
 class PredictNextNode:
@@ -34,7 +35,7 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=10 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=100 ):
         """
         Predict next nodes for a path using a trained model
         """
@@ -86,7 +87,9 @@ class PredictNextNode:
             item = item[ :len( item ) - 1 ]
             all_paths_train.append( ",".join( item ) )
         for index, item in enumerate( all_paths_train ):
-            if input_sequence in item:
+            # find exact string match, not approximate
+            occur = re.findall( '\\b' + input_sequence + '\\b', item )
+            if( len( occur ) > 0 ):
                 all_input_seq_paths[ index ] = item
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
@@ -98,11 +101,23 @@ class PredictNextNode:
         start_pos = max_seq_len - len( input_seq_split )
         for index, item in enumerate( input_seq_split ):
             input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
-        try:
-            predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict, max_seq_len )
-        except Exception as exception:
-            print( exception )
-            predicted_nodes = {}
-            all_input_seq_paths = {}
-            predicted_prob = {}
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob }
+	predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict, max_seq_len )
+	actual_predicted_nodes = dict()
+	actual_labels = list()
+	for item in predicted_nodes.split( "," ):
+            next_seq = input_sequence + "," + item
+	    for path in all_input_seq_paths:
+		pth = all_input_seq_paths[ path ]
+		if next_seq in pth:
+		    actual_predicted_nodes[ item ] = True
+		if input_sequence in pth:
+		    last_item_input = input_sequence.split( "," )[ -1 ]
+		    path_list = pth.split( "," )
+		    if last_item_input != path_list[ -1 ]:
+		        pos_in_path = path_list.index( last_item_input )
+		        actual_next_tool = path_list[ pos_in_path + 1 ]
+		        if actual_next_tool not in actual_labels:
+		            actual_labels.append( actual_next_tool )
+            if not item in actual_predicted_nodes:
+		actual_predicted_nodes[ item ] = False
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels }

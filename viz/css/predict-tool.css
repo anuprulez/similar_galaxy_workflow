@@ -31,3 +31,13 @@
 .cyto-workflows{
     margin: 1% 0 1% 0;
 }
+
+.present-node {
+    font-weight: bold;
+    color:  #136b17;
+}
+
+.absent-node {
+    font-weight: bold;
+    color:  #e81717 ;
+}
