@@ -49,8 +49,10 @@ class PrepareData:
         count = collections.Counter( words ).most_common()
         dictionary = dict()
         for word, _ in count:
-            dictionary[word] = len( dictionary ) + 1
+            dictionary[ word ] = len( dictionary ) + 1
         reverse_dictionary = dict( zip( dictionary.values(), dictionary.keys() ) )
+        with open( self.data_dictionary, 'w' ) as data_dict:
+            data_dict.write( json.dumps( dictionary ) )
         with open( self.data_rev_dict, 'w' ) as data_rev_dict:
             data_rev_dict.write( json.dumps( reverse_dictionary ) )
         return dictionary, reverse_dictionary

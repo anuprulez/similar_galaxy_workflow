@@ -47,17 +47,15 @@ If there are multiple labels for a training sample (which happens to be the case
 We create training samples and their labels in this manner and feed them to the network. The first layer in the network is an embedding layer which learns a dense, low dimensional vector for each training sample which are largely sparse. These dense, low dimensional vectors are then fed into the LSTM layer. Dropout is added between layers in order to avoid overfitting which happens when the learning (prediction performance) becomes better on training data and stops/saturates on test (unseen) data.
 
 ## Accuracy measure
-In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top 5 predicted tools (top-5 accuracy). In this accuracy measure, we verify if the actual label(s) is/are present in the top 5 predicted labels for a training sequence.
+In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top k predicted tools (top-k accuracy). `20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model.
 
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/200-LSTM/top-k_accuracy.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/topk-accuracy.png.png">
 </p>
 
-`20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model. The plot above (orange line) shows an accuracy of k actual labels being present in the top-k predicted labels for input sequences over 100 training epochs (iterations). We can see the performance saturates around `60th` epoch. Here, "k" can be any number i.e. a sequence can have any number of labels or tools it can connect to. Suppose a sequence has 5 labels (5 tools it can connect to). We predict top 5 tools using the trained model and find how many of these actual tools are present in the predicted tools. An accuracy of `80%` would mean that `4` out of `5` actual next tools are present in the predicted tools. An averate accuracy is computed over all test samples.
-
-The blue line in the plot above shows a different way to assess the accuracy of the trained model. It computes an average of the number of times actual labels appear in the top-5 predicted labels for all samples in the test data. For example, let's suppose a sequence has 4 actual labels (4 next tools it can connect to). We check that out of these 4 actual labels, how many are present in the top-5 predicted ones. If 3 labels are present in the top-5 predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `100` epochs of training.
+In the plot above, blue line shows an increase in accuracy of the trained model over multiple training epochs. It computes an average of how many actual labels appear in the top-k predicted labels for all samples in the test data. For example, let's suppose a sequence has `4` actual labels (`4` next tools it can connect to). We check that out of these `4` actual labels, how many are present in the `top-4` predicted ones using the trained model. If `3` labels are present in the `top-4` predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `120` epochs of training.
 
 ## Vizualizer
 
