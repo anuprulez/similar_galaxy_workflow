@@ -22,7 +22,6 @@ class EvaluateTopResults:
         self.base_epochs_weights_path = self.current_working_dir + "/data/weights/weights-epoch-"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
-        self.top_pred_path = self.current_working_dir + "/data/top_pred.txt"
         self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
         self.train_test_labels = self.current_working_dir + "/data/multi_labels.txt"
 
@@ -44,39 +43,34 @@ class EvaluateTopResults:
         """
         Get topn accuracy over training epochs
         """
-        n_epochs = 100
-        num_predictions = 5
+        n_epochs = 150
         test_data = h5.File( self.test_data_path, 'r' )
         test_data = test_data[ "testdata" ]
         test_labels = h5.File( self.test_labels_path, 'r' )
         test_labels = test_labels[ "testlabels" ]
-        topn_accuracy = list()
         abs_topn_accuracy = list()
         dimensions = len( test_labels[ 0 ] )
         for i in range( n_epochs ):
             start_time = time.time()
+            if i / 2 == 0
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
-            accuracy, abs_mutual_prediction_accuracy = self.get_top_prediction_accuracy( num_predictions, dimensions, loaded_model, test_data, test_labels )
-            topn_accuracy.append( np.mean( accuracy ) )
+            abs_mutual_prediction_accuracy = self.get_top_prediction_accuracy( dimensions, loaded_model, test_data, test_labels )
             abs_topn_accuracy.append( np.mean( abs_mutual_prediction_accuracy ) )
-            print ( np.mean( accuracy ) )
             print ( np.mean( abs_mutual_prediction_accuracy ) )
             end_time = time.time()
-            print( "Prediction finished in %d seconds" % int( end_time - start_time ) )
+            print( "Prediction finished in %d seconds for epoch %d" % ( int( end_time - start_time ), i + 1 ) )
             print( "========================" )
-        np.savetxt( self.top_pred_path, np.array( topn_accuracy ), delimiter="," )
         np.savetxt( self.abs_top_pred_path, np.array( abs_topn_accuracy ), delimiter="," )
 
     @classmethod
-    def get_top_prediction_accuracy( self, topn, dimensions, trained_model, test_data, test_labels ):
+    def get_top_prediction_accuracy( self, dimensions, trained_model, test_data, test_labels ):
         """
         Compute top n predictions with a trained model
         """
-        print ( "Get top %d predictions for each test input..." % topn )
+        print ( "Get topn predictions for each test input..." )
         num_predict = len( test_data )
-        mutual_prediction_accuracy = np.zeros( [ num_predict ] )
         abs_mutual_prediction_accuracy = np.zeros( [ num_predict ] )
         with open( self.train_test_labels, 'r' ) as train_data_labels:
             data_labels = json.loads( train_data_labels.read() )
@@ -105,23 +99,16 @@ class EvaluateTopResults:
                 actual_labels = actual_labels.split( "," )
             num_actual_labels = len( actual_labels )
             if num_actual_labels > 0:
-                # get top n predictions
-                top_prediction_pos = prediction_pos[ -topn: ]
-                top_prediction_pos = [ ( item + 1 ) for item in reversed( top_prediction_pos ) ]
                 # find how many of all the true labels (k) present in the top-k predicted labels
                 abs_top_prediction_pos = prediction_pos[ -num_actual_labels: ]
                 abs_top_prediction_pos = [ ( item + 1 ) for item in reversed( abs_top_prediction_pos ) ]
                 # find how many actual labels are present in the predicted ones
                 for item in actual_labels:
-                    if int( item ) in top_prediction_pos:
-                        mutual_prediction += 1.0
                     if int( item ) in abs_top_prediction_pos:
                         abs_mutual_prediction += 1.0
-                pred = mutual_prediction / float( num_actual_labels )
                 abs_pred = abs_mutual_prediction / float( num_actual_labels )      
-            abs_mutual_prediction_accuracy[ i ] = abs_pred
-            mutual_prediction_accuracy[ i ] = pred
-        return mutual_prediction_accuracy, abs_mutual_prediction_accuracy
+                abs_mutual_prediction_accuracy[ i ] = abs_pred
+        return abs_mutual_prediction_accuracy
 
 
 if __name__ == "__main__":

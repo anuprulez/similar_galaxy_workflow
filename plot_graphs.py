@@ -20,13 +20,25 @@ def plot_labels_distribution( file_path ):
     with open( file_path, 'r' ) as train_labels:
         labels_distribution = json.loads( train_labels.read() )
     labels_count = list()
+    seq_count = list()
     for item in labels_distribution:
-        labels_count.append( len( labels_distribution[ item ].split( "," ) ) )
+        seq = item.split( "," )
+        labels = labels_distribution[ item ].split( "," )
+        seq_count.append( len( seq ) )
+        labels_count.append( len( labels ) )
     labels_index = np.arange( len( labels_count ) )
+
+    plt.bar( labels_index, seq_count, facecolor='r', align='center' )
+    plt.xlabel( 'Training samples' )
+    plt.ylabel( 'Frequency' )
+    plt.title( '# tools in training sequences' )
+    plt.grid( True )
+    plt.show()
+
     plt.bar( labels_index, labels_count, facecolor='b', align='center' )
     plt.xlabel( 'Training samples' )
-    plt.ylabel( 'Number of labels' )
-    plt.title( 'Training samples and their respective number of labels' )
+    plt.ylabel( 'Frequency' )
+    plt.title( '# tools in labels' )
     plt.grid( True )
     plt.show()
 
@@ -69,24 +81,20 @@ def plot_accuracy( file_path_train, file_path_test ):
     plt.show()
 
 
-def plot_top_prediction( file_path, abs_file_path ):
+def plot_top_prediction( abs_file_path ):
     loss_values = list()
-    with open( file_path, 'r' ) as top_pred:
-        pred_values = top_pred.read().split( "\n" )
     with open( abs_file_path, 'r' ) as _abs_top_pred:
         abs_pred_values = _abs_top_pred.read().split( "\n" )
-    pred_values = [ float( item ) for item in pred_values if item ]
     abs_pred_values = [ float( item ) for item in abs_pred_values if item ]   
-    plt.plot( pred_values )
-    plt.plot( abs_pred_values )
+    plt.plot( abs_pred_values, marker=".", color="red" )
     plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )
     plt.title( 'Next tools (labels) prediction accuracy vs training epochs on test data' )
-    plt.legend( [ "Percentage of actual labels in top-5 predicted labels", "Percentage of k actual labels in top-k predicted labels" ] )
+    plt.legend( [ "Percentage of k actual labels in top-k predicted labels" ], loc=2 )
     plt.grid( True )
     plt.show()
 
 plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
 plot_accuracy( "data/accuracy_history.txt", "data/val_accuracy_history.txt" )
-plot_top_prediction( "data/top_pred.txt", "data/abs_top_pred.txt" )
-#plot_labels_distribution( "data/multi_labels.txt" )
+plot_top_prediction( "data/abs_top_pred.txt" )
+plot_labels_distribution( "data/multi_labels.txt" )

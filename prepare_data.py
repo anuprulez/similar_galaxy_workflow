@@ -21,7 +21,7 @@ class PrepareData:
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
         self.multi_train_labels = self.current_working_dir + "/data/multi_labels.txt"
         self.max_tool_sequence_len = 40
- 
+
     @classmethod
     def process_processed_data( self, fname ):
         """
@@ -103,16 +103,21 @@ class PrepareData:
         train_file = open( self.train_file, "r" )
         train_file = train_file.read().split( "\n" )
         train_multi_label_samples = dict()
+        seq_len = list()
         for item in train_file:
             tools = item.split( "," )
             train_tools = tools[ :len( tools) - 1 ]
             train_tools = ",".join( train_tools )
             label = tools[ -1 ]
             if label:
-                if train_tools in train_multi_label_samples:
-                    train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
-                else:
-                    train_multi_label_samples[ train_tools ] = tools[ -1 ]
+                len_train_seq = len( train_tools.split( "," ) )
+                if len_train_seq <= self.max_tool_sequence_len:
+                    if train_tools in train_multi_label_samples:
+                        train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
+                    else:
+                        train_multi_label_samples[ train_tools ] = tools[ -1 ]
+                    len_train_seq = len( train_tools.split( "," ) )
+                    seq_len.append( len_train_seq )
         with open( self.multi_train_labels, 'w' ) as train_multilabel_file:
             train_multilabel_file.write( json.dumps( train_multi_label_samples ) )
         return train_multi_label_samples

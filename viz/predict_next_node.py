@@ -19,7 +19,6 @@ class PredictNextNode:
         self.trained_model_path = "data/trained_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
-        self.train_test_labels = "data/multi_labels.txt"
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -42,15 +41,12 @@ class PredictNextNode:
         top_prediction_prob = dict()
         dimensions = len( nodes_rev_dict )
         path_vec_reshaped = np.reshape( path_vec, ( 1, max_seq_len ) )
-        with open( self.train_test_labels, 'r' ) as train_data_labels:
-            data_labels = json.loads( train_data_labels.read() )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
         prediction = np.reshape( prediction, ( dimensions, ) )
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         top_prediction_pos = prediction_pos[ -top_n: ]
-        
         for index, item in enumerate( reversed( top_prediction_pos ) ):
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get top n predictions
@@ -60,13 +56,9 @@ class PredictNextNode:
         # get tool names for the predicted positions
         predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in reversed( top_prediction_pos ) ]
         predicted_nodes = ",".join( predicted_nodes )
-        top_pred_rev = [ str( item + 1 ) for item in reversed( top_prediction_pos ) ]
-        #print( "Predicted labels: %s" % ( ",".join( top_pred_rev ) ) )
         path_vec_pos = np.where( path_vec > 0 )[ 0 ]
         path_vec_pos_list = [ str( int( path_vec[ item ] + 1 ) ) for item in path_vec_pos ]
         path_vec_pos_list = ",".join( path_vec_pos_list )
-        #if path_vec_pos_list in data_labels:
-            #print ( "Actual labels: %s" % ( data_labels[ path_vec_pos_list ] ) )
         return predicted_nodes, top_prediction_prob
 
     @classmethod
@@ -83,20 +75,19 @@ class PredictNextNode:
         """
         Find a set of possible next nodes
         """
-        max_seq_len = 125 # max length of training input
+        max_seq_len = 40
         all_paths_train = list()
         all_input_seq_paths = dict()
         with open( self.raw_paths, 'r' ) as load_all_paths:
             all_paths = load_all_paths.read().split( "\n" )
-        all_paths = all_paths[ :len( all_paths ) -1 ]
+        all_paths = all_paths[ :len( all_paths ) - 1 ]
         for index, item in enumerate( all_paths ):
             item = item.split( "," )
             item = item[ :len( item ) - 1 ]
             all_paths_train.append( ",".join( item ) )
         for index, item in enumerate( all_paths_train ):
-            if input_sequence in item: 
+            if input_sequence in item:
                 all_input_seq_paths[ index ] = item
-
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
         nodes_dict = self.get_file_dictionary( self.data_dictionary )

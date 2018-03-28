@@ -17,6 +17,7 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from sklearn.model_selection import train_test_split
 from keras.metrics import categorical_accuracy
+from keras import backend as K
 
 import prepare_data
 
@@ -63,19 +64,19 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 100
-        batch_size = 50
+        n_epochs = 150
+        batch_size = 40
         dropout = 0.5
         lstm_units = 256
-        embedding_vec_size = 100
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
+        embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss='binary_crossentropy', optimizer='rmsprop', metrics=[ categorical_accuracy ] )
+        model.compile( loss="binary_crossentropy", optimizer='rmsprop', metrics=[ categorical_accuracy ]  )
         # save the network as json
         model_json = model.to_json()
         with open( self.network_config_json_path, "w" ) as json_file:
@@ -96,7 +97,7 @@ class PredictNextTool:
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-        print ("Training finished")
+        print ( "Training finished" )
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
