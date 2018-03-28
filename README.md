@@ -52,44 +52,23 @@ In our set of training samples, each one can have many labels (or categories) wh
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/topk-accuracy.png.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/topk-accuracy.png">
 </p>
 
 In the plot above, blue line shows an increase in accuracy of the trained model over multiple training epochs. It computes an average of how many actual labels appear in the top-k predicted labels for all samples in the test data. For example, let's suppose a sequence has `4` actual labels (`4` next tools it can connect to). We check that out of these `4` actual labels, how many are present in the `top-4` predicted ones using the trained model. If `3` labels are present in the `top-4` predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `120` epochs of training.
 
 ## Vizualizer
 
-The screenshots below show possible next tools for a sequence at each stage of creating a dummy workflow - `wc_gnu → collapse_dataset → join1 → join1 → cut1 → join1 → filter1 → cut1 → filter1 → grouping1 → addvalue → join1 → add_a_column1 → filter1`
+A small animation below shows possible next tools for a sequence at each stage of creating a dummy workflow:
+
+`trim_galore → bismark_bowtie → samtools_rmdup → samtools_sort → methtools_calling → methtools_destrand → filter1 → smooth_running_window`
 
 All the paths containing this sequence of tools are also shown.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/wf_pred.gif">
 </p>
 <hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/2.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/3.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/4.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/5.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/6.png">
-</p>
-<hr/>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/7.png">
-</p>
 
 In order to run the visualizer, please follow these steps:
 
