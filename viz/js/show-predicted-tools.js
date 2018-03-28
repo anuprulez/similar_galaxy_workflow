@@ -68,7 +68,8 @@ $(document).ready(function() {
                 correctToolsTemplate = "<ol>";
                 for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
                     let nodeName = predictedNodeList[ counter ],
-                        isTrue = correctPredictedNodes[ nodeName ];
+                        isTrue = correctPredictedNodes[ nodeName ],
+                        prob = ( predictedProb[ counter ] * 100 ).toFixed( 2 );
                     if ( isTrue || isTrue === 'true' ) {
                         toolsTemplate += "<li class='present-node'>" + nodeName + "</li>";
                         presentCounter += 1;
