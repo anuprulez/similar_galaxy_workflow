@@ -66,7 +66,7 @@ $(document).ready(function() {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ol>";
                 correctToolsTemplate = "<ol>";
-                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
+                for( let counter = 0; counter < 2 * actualNextNodes.length; counter++ ) {
                     let nodeName = predictedNodeList[ counter ],
                         isTrue = correctPredictedNodes[ nodeName ],
                         prob = ( predictedProb[ counter ] * 100 ).toFixed( 2 );
@@ -77,7 +77,9 @@ $(document).ready(function() {
                     else {
                         toolsTemplate += "<li class='absent-node'>" + nodeName + "</li>";
                     }
-                    correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>"
+                }
+                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
+                    correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>";
                 }
                 toolsTemplate += "</ol>";
                 correctToolsTemplate += "</ol>";
