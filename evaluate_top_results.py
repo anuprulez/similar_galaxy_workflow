@@ -52,7 +52,6 @@ class EvaluateTopResults:
         dimensions = len( test_labels[ 0 ] )
         for i in range( n_epochs ):
             start_time = time.time()
-            if i / 2 == 0
             ite = '0' + str( i + 1 ) if i < 9 else str( i + 1  )
             file_path = self.base_epochs_weights_path + ite + '.hdf5'
             loaded_model = self.load_saved_model( self.network_config_json_path, file_path )
