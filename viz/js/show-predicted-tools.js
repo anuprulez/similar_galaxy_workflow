@@ -66,19 +66,17 @@ $(document).ready(function() {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<ol>";
                 correctToolsTemplate = "<ol>";
-                for( let counter = 0; counter < 2 * actualNextNodes.length; counter++ ) {
+                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
                     let nodeName = predictedNodeList[ counter ],
                         isTrue = correctPredictedNodes[ nodeName ],
                         prob = ( predictedProb[ counter ] * 100 ).toFixed( 2 );
                     if ( isTrue || isTrue === 'true' ) {
-                        toolsTemplate += "<li class='present-node'>" + nodeName + "</li>";
+                        toolsTemplate += "<li class='present-node'>" + nodeName + "(" + prob + "%)" + "</li>";
                         presentCounter += 1;
                     }
                     else {
-                        toolsTemplate += "<li class='absent-node'>" + nodeName + "</li>";
+                        toolsTemplate += "<li class='absent-node'>" + nodeName + "(" + prob + "%)" + "</li>";
                     }
-                }
-                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
                     correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>";
                 }
                 toolsTemplate += "</ol>";
