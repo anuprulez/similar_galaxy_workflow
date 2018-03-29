@@ -32,7 +32,13 @@ $(document).ready(function() {
                 template = currTool;
             }
             else {
-                template += currTool + "<span class='arrow-tool'> &rarr; </span>";
+                if ( counter === lenTools - 1 ) {
+                    template += currTool;
+                }
+                else {
+                    template += currTool + "<span class='arrow-tool'> &rarr; </span>";
+                }
+                
             }
         }
         return template;
@@ -80,6 +86,8 @@ $(document).ready(function() {
             $elLoading = $( ".loading-image" ),
             $elActualPredictedTools = $( ".predicted-actual-tools" ),
             $elAllPaths = $( ".all-included-paths" );
+        if( toolSeq === "" )
+            return;
         $elLoading.show();
         $elActualPredictedTools.empty();
         $elAllPaths.empty();
