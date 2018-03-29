@@ -71,13 +71,13 @@ $(document).ready(function() {
                         isTrue = correctPredictedNodes[ nodeName ],
                         prob = ( predictedProb[ counter ] * 100 ).toFixed( 2 );
                     if ( isTrue || isTrue === 'true' ) {
-                        toolsTemplate += "<li class='present-node'>" + nodeName + "</li>";
+                        toolsTemplate += "<li class='present-node'>" + nodeName + "(" + prob + "%)" + "</li>";
                         presentCounter += 1;
                     }
                     else {
-                        toolsTemplate += "<li class='absent-node'>" + nodeName + "</li>";
+                        toolsTemplate += "<li class='absent-node'>" + nodeName + "(" + prob + "%)" + "</li>";
                     }
-                    correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>"
+                    correctToolsTemplate += "<li class='present-node'>" + actualNextNodes[ counter ] + "</li>";
                 }
                 toolsTemplate += "</ol>";
                 correctToolsTemplate += "</ol>";
