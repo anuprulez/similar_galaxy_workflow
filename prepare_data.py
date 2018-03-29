@@ -68,7 +68,7 @@ class PrepareData:
             tools = item.split(" ")
             max_window_size = len( tools )
             for window in range( 1, max_window_size ):
-                slide_window_time = ( max_window_size - 1 ) // window
+                slide_window_time = ( len( tools ) - window )
                 for j in range( 0, slide_window_time ):
                     training_sequence = tools[ j: j + window ]
                     label = tools[ j + window: j + window + 1 ]
@@ -84,7 +84,6 @@ class PrepareData:
 
                     if data_seq not in train_data_sequence:
                         train_data_sequence.append( data_seq )
-
             print ( "Path %d processed" % ( index + 1 ) )
 
         with open( self.train_file, "w" ) as train_file:
