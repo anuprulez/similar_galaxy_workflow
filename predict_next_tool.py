@@ -44,7 +44,7 @@ class PredictNextTool:
         """
         Divide data into train and test sets in a random way
         """
-        test_data_share = 0.2
+        test_data_share = 0.33
         seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary = data.read_data()
@@ -64,10 +64,10 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ("Dividing data...")
-        n_epochs = 40
-        batch_size = 80
+        n_epochs = 100
+        batch_size = 40
         dropout = 0.5
-        lstm_units = 256
+        lstm_units = 128
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network

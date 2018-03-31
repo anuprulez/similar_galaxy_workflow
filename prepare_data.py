@@ -64,10 +64,11 @@ class PrepareData:
         """
         train_data = list()
         train_data_sequence = list()
+        start_window_size = 2
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
             max_window_size = len( tools )
-            for window in range( 1, max_window_size ):
+            for window in range( start_window_size, max_window_size ):
                 slide_window_time = ( len( tools ) - window )
                 for j in range( 0, slide_window_time ):
                     training_sequence = tools[ j: j + window ]
@@ -128,7 +129,7 @@ class PrepareData:
         """
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
-        #self.create_train_labels_file( dictionary, raw_paths )
+        self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well 
         train_labels_data = self.prepare_train_test_data()
         num_classes = len( dictionary )

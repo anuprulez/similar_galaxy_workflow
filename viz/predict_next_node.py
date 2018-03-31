@@ -15,9 +15,9 @@ class PredictNextNode:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.raw_paths = "data/complete_data_sequence.txt"
+        self.raw_paths = "data/train_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/trained_model.hdf5"
+        self.trained_model_path = "data/weights-epoch-100.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
         self.train_test_labels = "data/multi_labels.txt"
@@ -102,6 +102,7 @@ class PredictNextNode:
         for index, item in enumerate( input_seq_split ):
             input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
 	predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict, max_seq_len )
+	print predicted_nodes
 	# find which predicted nodes are present as next nodes
 	for item in predicted_nodes.split( "," ):
             next_seq = input_sequence + "," + item
@@ -116,6 +117,7 @@ class PredictNextNode:
             multi_train_test_labels = json.loads( multi_labels.read() )
         input_seq_indices = [ str( nodes_dict[ item ] ) for item in input_seq_split ]
         input_seq_indices = ",".join( input_seq_indices )
+        print input_seq_indices
 	for train_seq, train_label in multi_train_test_labels.iteritems():
 	    if train_seq == input_seq_indices:
 	        actual_labels = [ nodes_rev_dict[ str( item ) ] for item in train_label.split( "," ) ]
