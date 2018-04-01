@@ -97,22 +97,25 @@ $(document).ready(function() {
                 predictedProb = data[ "predicted_prob" ],
                 correctPredictedNodes = data[ "actual_predicted_nodes" ],
                 actualNextNodes = data[ "actual_labels" ],
+                actualLabelDist = data[ "actual_labels_distribution" ],
                 presentCounter = 0,
                 predictionRate = 0.0,
                 toolsTemplate = "",
                 correctToolsTemplate = "",
-                pathsTemplate = "";
+                pathsTemplate = "",
+                topK = actualLabelDist.length;
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
                 toolsTemplate = "<table class='table table-bordered table-striped thead-dark'>";
                 toolsTemplate += "<thead><th>SNo.</th><th>Predicted next tools</th><th> Actual next tools</th></thead>";
                 toolsTemplate += "<tbody>";
-                for( let counter = 0; counter < actualNextNodes.length; counter++ ) {
+                for( let counter = 0; counter < topK; counter++ ) {
                     let nodeName = predictedNodeList[ counter ],
                         isTrue = correctPredictedNodes[ nodeName ],
+                        actualProb = ( actualLabelDist[ counter ][ 1 ] * 100 ).toFixed( 2 ),
                         prob = ( predictedProb[ counter ] * 100 ).toFixed( 2 );
                     toolsTemplate += "<tr>";
-                    toolsTemplate += "<td>" + ( counter + 1 ) + "</td>"
+                    toolsTemplate += "<td>" + ( counter + 1 ) + "</td>";
                     if ( isTrue || isTrue === 'true' ) {
                         toolsTemplate += "<td class='present-node'>" + nodeName + "(" + prob + "%)" + "</td>";
                         presentCounter += 1;
@@ -120,7 +123,7 @@ $(document).ready(function() {
                     else {
                         toolsTemplate += "<td class='absent-node'>" + nodeName + "(" + prob + "%)" + "</td>";
                     }
-                    toolsTemplate += "<td class='present-node'>" + actualNextNodes[ counter ] + "</td>";
+                    toolsTemplate += "<td class='present-node'>" + actualLabelDist[ counter ][ 0 ] + "(" + actualProb + "%)" + "</td>";
                     toolsTemplate += "</tr>";
                 }
                 toolsTemplate += "</tbody></table>";

@@ -65,7 +65,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 20
+        n_epochs = 25
         batch_size = 60
         dropout = 0.2
         lstm_units = 128

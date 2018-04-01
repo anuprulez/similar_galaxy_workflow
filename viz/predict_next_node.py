@@ -7,6 +7,7 @@ import os
 import json
 from keras.models import model_from_json
 import re
+import operator
 
 
 class PredictNextNode:
@@ -17,7 +18,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/train_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/weights-epoch-20.hdf5"
+        self.trained_model_path = "data/trained_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
         self.train_test_labels = "data/multi_labels.txt"
@@ -36,7 +37,7 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=100 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=50 ):
         """
         Predict next nodes for a path using a trained model
         """
@@ -106,8 +107,7 @@ class PredictNextNode:
 	for item in predicted_nodes.split( "," ):
             next_seq = input_sequence + "," + item
 	    for path in all_input_seq_paths:
-		pth = path #all_input_seq_paths[ path ]
-		if next_seq in pth:
+		if next_seq in path:
 		    actual_predicted_nodes[ item ] = True
             if not item in actual_predicted_nodes:
 		actual_predicted_nodes[ item ] = False
@@ -121,4 +121,19 @@ class PredictNextNode:
 	        labels = [ nodes_rev_dict[ str( item ) ] for item in train_label.split( "," ) ]
 	        actual_labels.extend( labels )
 	actual_labels = list( set( actual_labels ) )
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels }
+	actual_labels_distribution = dict()
+	for actual_next_tool in actual_labels:
+	    nxt_seq = input_sequence + "," + actual_next_tool
+	    for path in all_input_seq_paths:
+	        if nxt_seq in path:
+	            if actual_next_tool in actual_labels_distribution:
+	               actual_labels_distribution[ actual_next_tool ] += 1
+	            else:
+	               actual_labels_distribution[ actual_next_tool ] = 1
+	distribution_sum = 0
+	for item in actual_labels_distribution:
+	    distribution_sum += actual_labels_distribution[ item ]
+	for item in actual_labels_distribution:
+	    actual_labels_distribution[ item ] = actual_labels_distribution[ item ] / float( distribution_sum )    
+	actual_labels_distribution = sorted( actual_labels_distribution.items(), key=operator.itemgetter( 1 ), reverse=True )
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels, "actual_labels_distribution": actual_labels_distribution }
