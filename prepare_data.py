@@ -64,7 +64,7 @@ class PrepareData:
         """
         train_data = list()
         train_data_sequence = list()
-        start_window_size = 2
+        start_window_size = 1
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
             max_window_size = len( tools )

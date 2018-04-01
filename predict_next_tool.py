@@ -13,14 +13,14 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers.embeddings import Embedding
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, Callback
 from keras.models import model_from_json
 from sklearn.model_selection import train_test_split
-from keras.metrics import categorical_accuracy
+from keras.metrics import categorical_accuracy, top_k_categorical_accuracy
 from keras import backend as K
+import tensorflow as tf
 
 import prepare_data
-
 
 class PredictNextTool:
 
@@ -38,6 +38,7 @@ class PredictNextTool:
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
+        self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -63,10 +64,10 @@ class PredictNextTool:
         """
         Create LSTM network and evaluate performance
         """
-        print ("Dividing data...")
-        n_epochs = 100
-        batch_size = 40
-        dropout = 0.5
+        print ( "Dividing data..." )
+        n_epochs = 20
+        batch_size = 60
+        dropout = 0.2
         lstm_units = 128
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
         embedding_vec_size = 100
@@ -76,7 +77,7 @@ class PredictNextTool:
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
         model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss="binary_crossentropy", optimizer='rmsprop', metrics=[ categorical_accuracy ]  )
+        model.compile( loss="binary_crossentropy", optimizer='rmsprop', metrics=[ categorical_accuracy ] )
         # save the network as json
         model_json = model.to_json()
         with open( self.network_config_json_path, "w" ) as json_file:
@@ -86,7 +87,9 @@ class PredictNextTool:
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        callbacks_list = [ checkpoint ]
+        predict_callback = PredictCallback( test_data, test_labels, n_epochs )
+        callbacks_list = [ checkpoint, predict_callback ]
+        
         print ("Start training...")
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -97,37 +100,41 @@ class PredictNextTool:
         np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
+        np.savetxt( self.abs_top_pred_path, predict_callback.epochs_acc, delimiter="," )
         print ( "Training finished" )
 
-    @classmethod
-    def load_saved_model( self, network_config_path, weights_path ):
-        """
-        Load the saved trained model using the saved network and its weights
-        """
-        with open( network_config_path, 'r' ) as network_config_file:
-            loaded_model = network_config_file.read()
-        # load the network
-        loaded_model = model_from_json(loaded_model)
-        # load the saved weights into the model
-        loaded_model.load_weights( weights_path )
-        return loaded_model
 
-    @classmethod
-    def get_raw_paths( self ):
+class PredictCallback( Callback ):
+    def __init__( self, test_data, test_labels, n_epochs ):
+        self.test_data = test_data
+        self.test_labels = test_labels
+        self.epochs_acc = np.zeros( [ n_epochs ] )
+
+    def on_epoch_end( self, epoch, logs={} ):
         """
-        Read training data and its labels files
+        Compute topk accuracy for each test sample
         """
-        training_samples = list()
-        training_labels = list()
-        train_file = open( self.sequence_file, "r" )
-        train_file = train_file.read().split( "\n" )
-        for item in train_file:
-            tools = item.split( "," )
-            train_tools = tools[ :len( tools) - 1 ]
-            train_tools = ",".join( train_tools )
-            training_samples.append( train_tools )
-            training_labels.append( tools[ -1 ] )
-        return training_samples, training_labels
+        x, y = self.test_data, self.test_labels
+        size = y.shape[ 0 ]
+        dimensions = y.shape[ 1 ]
+        topk_pred = np.zeros( [ size ] )
+        for i in range( size ):
+            correct_prediction_count = 0.0
+            actual_classes_pos = np.where( y[ i ] > 0.0 )[ 0 ]
+            topk = len( actual_classes_pos )
+            test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
+            prediction = self.model.predict( test_sample, verbose=0 )
+            prediction = np.reshape( prediction, ( dimensions, ) )
+            prediction_pos = np.argsort( prediction, axis=-1 )
+            topk_prediction_pos = prediction_pos[ -topk: ]
+            for item in topk_prediction_pos:
+                if item in actual_classes_pos:
+                    correct_prediction_count += 1.0
+            topk_prediction_sample = correct_prediction_count / float( topk )
+            topk_pred[ i ] = topk_prediction_sample
+        epoch_mean_acc = np.mean( topk_pred )
+        self.epochs_acc[ epoch ] = epoch_mean_acc
+        print "Epoch %d topk accuracy: %.2f" % ( epoch + 1, epoch_mean_acc )
 
 
 if __name__ == "__main__":
