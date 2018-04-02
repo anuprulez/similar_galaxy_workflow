@@ -83,6 +83,8 @@ class PredictNextNode:
         all_input_seq_paths = list()
         actual_predicted_nodes = dict()
 	actual_labels = list()
+	actual_labels_distribution = dict()
+	distribution_sum = 0
         with open( self.raw_paths, 'r' ) as load_all_paths:
             all_paths = load_all_paths.read().split( "\n" )
         for index, item in enumerate( all_paths ):
@@ -120,13 +122,9 @@ class PredictNextNode:
             multi_train_test_labels = json.loads( multi_labels.read() )
         input_seq_indices = [ str( nodes_dict[ item ] ) for item in input_seq_split ]
         input_seq_indices = ",".join( input_seq_indices )
-	for train_seq, train_label in multi_train_test_labels.iteritems():
-	    if input_seq_indices in train_seq and input_seq_indices.split( "," )[ -1 ] == train_seq.split( "," )[ -1 ]:
-	        labels = [ nodes_rev_dict[ str( item ) ] for item in train_label.split( "," ) ]
-	        actual_labels.extend( labels )
-	actual_labels = list( set( actual_labels ) )
-	actual_labels_distribution = dict()
-	actual_correct_labels = list()
+        actual_labels = multi_train_test_labels[ str( input_seq_indices ) ]
+        actual_labels = actual_labels.split( "," )
+        actual_labels = [ str( nodes_rev_dict[ item ] ) for item in actual_labels ]
 	for actual_next_tool in actual_labels:
 	    nxt_seq = input_sequence + "," + actual_next_tool
 	    for path in all_input_seq_paths:
@@ -135,12 +133,9 @@ class PredictNextNode:
 	                actual_labels_distribution[ actual_next_tool ] += 1
 	            else:
 	                actual_labels_distribution[ actual_next_tool ] = 1
-	            if actual_next_tool not in actual_correct_labels:
-	                actual_correct_labels.append( actual_next_tool )
-	distribution_sum = 0
 	for item in actual_labels_distribution:
 	    distribution_sum += actual_labels_distribution[ item ]
 	for item in actual_labels_distribution:
 	    actual_labels_distribution[ item ] = actual_labels_distribution[ item ] / float( distribution_sum )    
 	actual_labels_distribution = sorted( actual_labels_distribution.items(), key=operator.itemgetter( 1 ), reverse=True )
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_correct_labels, "actual_labels_distribution": actual_labels_distribution }
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels, "actual_labels_distribution": actual_labels_distribution }
