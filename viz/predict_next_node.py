@@ -18,7 +18,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/train_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/trained_model.hdf5"
+        self.trained_model_path = "data/weights-epoch-50.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
         self.train_test_labels = "data/multi_labels.txt"
@@ -91,7 +91,11 @@ class PredictNextNode:
             # find exact string match, not approximate
             occur = re.findall( '\\b' + input_sequence + '\\b', item )
             if( len( occur ) > 0 ):
-                all_input_seq_paths.append( item )
+                first_tools_input = input_sequence.split( "," )
+                first_tools_seq = item.split( "," )[ :len( first_tools_input ) ]
+                first_tools_seq = ",".join( first_tools_seq )
+                if input_sequence == first_tools_seq:
+                    all_input_seq_paths.append( item )
         # load the trained model
         loaded_model = self.load_saved_model( self.network_config_json_path, self.trained_model_path )
         nodes_dict = self.get_file_dictionary( self.data_dictionary )

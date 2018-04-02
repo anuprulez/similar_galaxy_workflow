@@ -63,7 +63,7 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 75
+        n_epochs = 10
         batch_size = 60
         dropout = 0.5
         lstm_units = 256
@@ -72,8 +72,8 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='relu' ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
         model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss="binary_crossentropy", optimizer='rmsprop' )
         # save the network as json
