@@ -30,15 +30,13 @@ class PredictNextTool:
         self.current_working_dir = os.getcwd()
         self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/trained_model.h5"
         self.loss_path = self.current_working_dir + "/data/loss_history.txt"
-        self.accuracy_path = self.current_working_dir + "/data/accuracy_history.txt"
         self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
-        self.val_accuracy_path = self.current_working_dir + "/data/val_accuracy_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
         self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
+        self.test_top_pred_path = self.current_working_dir + "/data/test_top_pred.txt"
 
     @classmethod
     def divide_train_test_data( self ):
@@ -57,7 +55,7 @@ class PredictNextTool:
             test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
         with h5.File( self.test_labels_path, "w" ) as test_labels_file:
             test_labels_file.create_dataset( "testlabels", test_labels.shape, data=test_labels )
-        return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary
+        return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, complete_data, labels
 
     @classmethod
     def evaluate_LSTM_network( self ):
@@ -65,42 +63,37 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 25
+        n_epochs = 75
         batch_size = 60
-        dropout = 0.2
-        lstm_units = 128
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary = self.divide_train_test_data()
+        dropout = 0.5
+        lstm_units = 256
+        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, comp_data, comp_labels = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
-        model.add( Dense( dimensions, activation='softmax' ) )
-        model.compile( loss="binary_crossentropy", optimizer='rmsprop', metrics=[ categorical_accuracy ] )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( Dense( dimensions, activation='sigmoid' ) )
+        model.compile( loss="binary_crossentropy", optimizer='rmsprop' )
         # save the network as json
         model_json = model.to_json()
         with open( self.network_config_json_path, "w" ) as json_file:
             json_file.write( model_json )
-        # save the learned weights to h5 file
-        model.save_weights( self.weights_path )
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        predict_callback = PredictCallback( test_data, test_labels, n_epochs )
-        callbacks_list = [ checkpoint, predict_callback ]
-        
-        print ("Start training...")
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
+        predict_callback_complete = PredictCallback( comp_data, comp_labels, n_epochs )
+        predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
+        callbacks_list = [ checkpoint, predict_callback_complete, predict_callback_test ]
+        print ( "Start training..." )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.1, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
-        accuracy_values = model_fit_callbacks.history[ "categorical_accuracy" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
-        validation_acc = model_fit_callbacks.history[ "val_categorical_accuracy" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
-        np.savetxt( self.accuracy_path, np.array( accuracy_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        np.savetxt( self.val_accuracy_path, np.array( validation_acc ), delimiter="," )
-        np.savetxt( self.abs_top_pred_path, predict_callback.epochs_acc, delimiter="," )
+        np.savetxt( self.abs_top_pred_path, predict_callback_complete.epochs_acc, delimiter="," )
+        np.savetxt( self.test_top_pred_path, predict_callback_test.epochs_acc, delimiter="," )
         print ( "Training finished" )
 
 
@@ -134,7 +127,7 @@ class PredictCallback( Callback ):
             topk_pred[ i ] = topk_prediction_sample
         epoch_mean_acc = np.mean( topk_pred )
         self.epochs_acc[ epoch ] = epoch_mean_acc
-        print "Epoch %d topk accuracy: %.2f" % ( epoch + 1, epoch_mean_acc )
+        print( "Epoch %d topk accuracy: %.2f" % ( epoch + 1, epoch_mean_acc ) )
 
 
 if __name__ == "__main__":
