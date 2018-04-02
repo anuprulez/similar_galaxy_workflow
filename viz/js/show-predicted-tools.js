@@ -92,6 +92,7 @@ $(document).ready(function() {
         $elActualPredictedTools.empty();
         $elAllPaths.empty();
         $.getJSON( predictUrl, function( data ) {
+            console.log(data);
             let predictedNodes = data[ "predicted_nodes" ],
                 allInputPaths = data[ "all_input_paths" ],
                 predictedProb = data[ "predicted_prob" ],
