@@ -64,33 +64,21 @@ class PrepareData:
         """
         train_data = list()
         train_data_sequence = list()
-        start_window_size = 1
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
-            max_window_size = len( tools )
-            for window in range( start_window_size, max_window_size ):
-                slide_window_time = ( len( tools ) - window )
-                for j in range( 0, slide_window_time ):
-                    training_sequence = tools[ j: j + window ]
-                    label = tools[ j + window: j + window + 1 ]
-                    data_seq = ",".join( training_sequence )
-                    data_seq += "," + label[ 0 ]
-
-                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
-                    tools_pos = ",".join( tools_pos )
-                    tools_pos = tools_pos + "," + str( dictionary[ str( label[ 0 ] ) ] )
-
-                    if tools_pos not in train_data:
-                        train_data.append( tools_pos )
-
-                    if data_seq not in train_data_sequence:
-                        train_data_sequence.append( data_seq )
+            for window in range( 1, len( tools ) ):
+                training_sequence = tools[ 0: window + 1 ]
+                tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
+                tools_pos = ",".join( tools_pos )
+                data_seq = ",".join( training_sequence )
+                if tools_pos not in train_data:
+                    train_data.append( tools_pos )
+                if data_seq not in train_data_sequence:
+                    train_data_sequence.append( data_seq )
             print ( "Path %d processed" % ( index + 1 ) )
-
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )
-
         with open( self.sequence_file, "w" ) as train_seq:
             for item in train_data_sequence:
                 train_seq.write( "%s\n" % item )
@@ -129,7 +117,7 @@ class PrepareData:
         """
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
-        #self.create_train_labels_file( dictionary, raw_paths )
+        self.create_train_labels_file( dictionary, raw_paths )
         # all the nodes/tools are classes as well 
         train_labels_data = self.prepare_train_test_data()
         num_classes = len( dictionary )
@@ -138,14 +126,12 @@ class PrepareData:
         train_data_array = np.zeros( [ len_train_data, self.max_tool_sequence_len ] )
         train_label_array = np.zeros( [ len_train_data, num_classes ] )
         train_counter = 0
-        for train_seq, train_label in train_labels_data.iteritems():
-            nodes = list()
+        for train_seq, train_label in list( train_labels_data.items() ):
             positions = train_seq.split( "," )
             start_pos = self.max_tool_sequence_len - len( positions )
             for id_pos, pos in enumerate( positions ):
                 if pos:
                     train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
-                    nodes.append( reverse_dictionary[ int( pos ) ] )
             pos_labels = train_label.split( "," )
             if len( pos_labels ) > 0:
                 # one-hot vector for labels

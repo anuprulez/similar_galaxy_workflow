@@ -18,7 +18,7 @@ class PredictNextNode:
         self.current_working_dir = os.getcwd()
         self.raw_paths = "data/train_data_sequence.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/weights-epoch-50.hdf5"
+        self.trained_model_path = "data/weights-epoch-10.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
         self.train_test_labels = "data/multi_labels.txt"

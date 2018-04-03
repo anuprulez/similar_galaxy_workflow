@@ -63,10 +63,10 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 10
-        batch_size = 60
+        n_epochs = 75
+        batch_size = 20
         dropout = 0.5
-        lstm_units = 256
+        lstm_units = 128
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, comp_data, comp_labels = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network
@@ -85,9 +85,9 @@ class PredictNextTool:
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         predict_callback_complete = PredictCallback( comp_data, comp_labels, n_epochs )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
-        callbacks_list = [ checkpoint, predict_callback_complete, predict_callback_test ]
+        callbacks_list = [ checkpoint, predict_callback_test, predict_callback_complete ]
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.1, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.05, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
