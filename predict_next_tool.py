@@ -82,9 +82,9 @@ class PredictNextTool:
         """
         print ( "Dividing data..." )
         n_epochs = 20
-        batch_size = 40
+        batch_size = 20
         dropout = 0.5
-        lstm_units = 256
+        lstm_units = 128
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, comp_data, comp_labels = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network
@@ -101,16 +101,16 @@ class PredictNextTool:
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        predict_callback_complete = PredictCallback( comp_data, comp_labels, n_epochs )
+        #predict_callback_complete = PredictCallback( comp_data, comp_labels, n_epochs )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
-        callbacks_list = [ checkpoint, predict_callback_test, predict_callback_complete ]
+        callbacks_list = [ checkpoint, predict_callback_test ]
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.05, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        np.savetxt( self.abs_top_pred_path, predict_callback_complete.epochs_acc, delimiter="," )
+        #np.savetxt( self.abs_top_pred_path, predict_callback_complete.epochs_acc, delimiter="," )
         np.savetxt( self.test_top_pred_path, predict_callback_test.epochs_acc, delimiter="," )
         print ( "Training finished" )
 
@@ -158,3 +158,4 @@ if __name__ == "__main__":
     predict_tool.evaluate_LSTM_network()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
+

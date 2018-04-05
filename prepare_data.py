@@ -66,17 +66,21 @@ class PrepareData:
         train_data_sequence = list()
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
-            for pos in range( 0, len( tools ) ):
-                for window in range( pos + 1, len( tools ) ):
-                    training_sequence = tools[ pos: window + 1 ]
+            len_tools = len( tools )
+            if len_tools <= self.max_tool_sequence_len:
+                for window in range( 1, len_tools ):
+                    training_sequence = tools[ 0: window + 1 ]
                     tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
-                    tools_pos = ",".join( tools_pos )
-                    data_seq = ",".join( training_sequence )
-                    if tools_pos not in train_data:
-                        train_data.append( tools_pos )
-                    if data_seq not in train_data_sequence:
-                        train_data_sequence.append( data_seq )
-            print ( "Path %d processed" % ( index + 1 ) )
+                    if len( tools_pos ) > 1:
+                        tools_pos = ",".join( tools_pos )
+                        data_seq = ",".join( training_sequence )
+                        if tools_pos not in train_data:
+                            train_data.append( tools_pos )
+                        if data_seq not in train_data_sequence:
+                            train_data_sequence.append( data_seq )
+                print ( "Path %d processed" % ( index + 1 ) )
+            else:
+                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )
@@ -91,22 +95,19 @@ class PrepareData:
         """
         train_file = open( self.train_file, "r" )
         train_file = train_file.read().split( "\n" )
+        len_data = len( train_file )
         train_multi_label_samples = dict()
-        seq_len = list()
         for item in train_file:
-            tools = item.split( "," )
-            train_tools = tools[ :len( tools) - 1 ]
-            train_tools = ",".join( train_tools )
-            label = tools[ -1 ]
-            if label:
+            if item and item not in "":
+                tools = item.split( "," )
+                label = tools[ -1 ]
+                train_tools = tools[ :len( tools) - 1 ]
+                train_tools = ",".join( train_tools )
                 len_train_seq = len( train_tools.split( "," ) )
-                if len_train_seq <= self.max_tool_sequence_len:
-                    if train_tools in train_multi_label_samples:
-                        train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
-                    else:
-                        train_multi_label_samples[ train_tools ] = tools[ -1 ]
-                    len_train_seq = len( train_tools.split( "," ) )
-                    seq_len.append( len_train_seq )
+                if train_tools in train_multi_label_samples:
+                    train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
+                else:
+                    train_multi_label_samples[ train_tools ] = tools[ -1 ]
         with open( self.multi_train_labels, 'w' ) as train_multilabel_file:
             train_multilabel_file.write( json.dumps( train_multi_label_samples ) )
         return train_multi_label_samples
@@ -131,12 +132,8 @@ class PrepareData:
             positions = train_seq.split( "," )
             start_pos = self.max_tool_sequence_len - len( positions )
             for id_pos, pos in enumerate( positions ):
-                if pos:
-                    train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
-            pos_labels = train_label.split( "," )
-            if len( pos_labels ) > 0:
-                # one-hot vector for labels
-                for label_item in pos_labels:
-                    train_label_array[ train_counter ][ int( label_item ) - 1 ] = 1.0
+                train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
+            for label_item in train_label.split( "," ):
+                train_label_array[ train_counter ][ int( label_item ) - 1 ] = 1.0
             train_counter += 1
         return train_data_array, train_label_array, dictionary, reverse_dictionary
