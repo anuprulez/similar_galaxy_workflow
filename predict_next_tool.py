@@ -39,17 +39,35 @@ class PredictNextTool:
         self.test_top_pred_path = self.current_working_dir + "/data/test_top_pred.txt"
 
     @classmethod
+    def split_random( self, complete_data, labels, test_share ):
+        """
+        Split data randomly into train and test buckets
+        """
+        data_size = complete_data.shape
+        labels_size = labels.shape
+        random_indices = np.random.randint(0, data_size[ 0 ], data_size[ 0 ] )
+        test_share = int( test_share * data_size[ 0 ] )
+        data_random = np.zeros( [ data_size[ 0 ], data_size[ 1 ] ] )
+        labels_random = np.zeros( [ labels_size[ 0 ], labels_size[ 1 ] ] )
+        for idx, item in enumerate( random_indices ):
+            data_random[ idx ][ : ] = complete_data[ item ]
+            labels_random[ idx ][ : ] = labels[ item ]
+        test_data = data_random[ :test_share ]
+        test_labels = labels_random[ :test_share ]
+        train_data = data_random[ test_share + 1: ]
+        train_labels = labels_random[ test_share + 1: ]
+        return train_data, train_labels, test_data, test_labels
+
+    @classmethod
     def divide_train_test_data( self ):
         """
         Divide data into train and test sets in a random way
         """
         test_data_share = 0.33
-        seed = 0
         data = prepare_data.PrepareData()
         complete_data, labels, dictionary, reverse_dictionary = data.read_data()
-        np.random.seed( seed )
         dimensions = len( dictionary )
-        train_data, test_data, train_labels, test_labels = train_test_split( complete_data, labels, test_size=test_data_share, random_state=seed )
+        train_data, train_labels, test_data, test_labels = self.split_random( complete_data, labels, test_data_share )
         # write the test data and labels to files for further evaluation
         with h5.File( self.test_data_path, "w" ) as test_data_file:
             test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
@@ -63,17 +81,17 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 75
-        batch_size = 20
+        n_epochs = 20
+        batch_size = 40
         dropout = 0.5
-        lstm_units = 128
+        lstm_units = 256
         train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, comp_data, comp_labels = self.divide_train_test_data()
         embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='relu' ) )
+        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='relu' ) )
         model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss="binary_crossentropy", optimizer='rmsprop' )
         # save the network as json

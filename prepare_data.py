@@ -66,15 +66,16 @@ class PrepareData:
         train_data_sequence = list()
         for index, item in enumerate( raw_paths ):
             tools = item.split(" ")
-            for window in range( 1, len( tools ) ):
-                training_sequence = tools[ 0: window + 1 ]
-                tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
-                tools_pos = ",".join( tools_pos )
-                data_seq = ",".join( training_sequence )
-                if tools_pos not in train_data:
-                    train_data.append( tools_pos )
-                if data_seq not in train_data_sequence:
-                    train_data_sequence.append( data_seq )
+            for pos in range( 0, len( tools ) ):
+                for window in range( pos + 1, len( tools ) ):
+                    training_sequence = tools[ pos: window + 1 ]
+                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
+                    tools_pos = ",".join( tools_pos )
+                    data_seq = ",".join( training_sequence )
+                    if tools_pos not in train_data:
+                        train_data.append( tools_pos )
+                    if data_seq not in train_data_sequence:
+                        train_data_sequence.append( data_seq )
             print ( "Path %d processed" % ( index + 1 ) )
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
