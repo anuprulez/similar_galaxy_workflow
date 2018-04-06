@@ -5,22 +5,16 @@ import sys
 import numpy as np
 import time
 import os
-import h5py as h5
 
 # machine learning library
-from keras import optimizers
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
-from keras.models import model_from_json
-from sklearn.model_selection import train_test_split
-from keras.metrics import categorical_accuracy, top_k_categorical_accuracy
-from keras import backend as K
-import tensorflow as tf
 
 import prepare_data
+
 
 class PredictNextTool:
 
@@ -28,52 +22,12 @@ class PredictNextTool:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
         self.loss_path = self.current_working_dir + "/data/loss_history.txt"
         self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
-        self.test_data_path = self.current_working_dir + "/data/test_data.hdf5"
-        self.test_labels_path = self.current_working_dir + "/data/test_labels.hdf5"
         self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
         self.test_top_pred_path = self.current_working_dir + "/data/test_top_pred.txt"
-
-    @classmethod
-    def split_random( self, complete_data, labels, test_share ):
-        """
-        Split data randomly into train and test buckets
-        """
-        data_size = complete_data.shape
-        labels_size = labels.shape
-        random_indices = np.random.randint(0, data_size[ 0 ], data_size[ 0 ] )
-        test_share = int( test_share * data_size[ 0 ] )
-        data_random = np.zeros( [ data_size[ 0 ], data_size[ 1 ] ] )
-        labels_random = np.zeros( [ labels_size[ 0 ], labels_size[ 1 ] ] )
-        for idx, item in enumerate( random_indices ):
-            data_random[ idx ][ : ] = complete_data[ item ]
-            labels_random[ idx ][ : ] = labels[ item ]
-        test_data = data_random[ :test_share ]
-        test_labels = labels_random[ :test_share ]
-        train_data = data_random[ test_share + 1: ]
-        train_labels = labels_random[ test_share + 1: ]
-        return train_data, train_labels, test_data, test_labels
-
-    @classmethod
-    def divide_train_test_data( self ):
-        """
-        Divide data into train and test sets in a random way
-        """
-        test_data_share = 0.33
-        data = prepare_data.PrepareData()
-        complete_data, labels, dictionary, reverse_dictionary = data.read_data()
-        dimensions = len( dictionary )
-        train_data, train_labels, test_data, test_labels = self.split_random( complete_data, labels, test_data_share )
-        # write the test data and labels to files for further evaluation
-        with h5.File( self.test_data_path, "w" ) as test_data_file:
-            test_data_file.create_dataset( "testdata", test_data.shape, data=test_data )
-        with h5.File( self.test_labels_path, "w" ) as test_labels_file:
-            test_labels_file.create_dataset( "testlabels", test_labels.shape, data=test_labels )
-        return train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, complete_data, labels
 
     @classmethod
     def evaluate_LSTM_network( self ):
@@ -85,7 +39,10 @@ class PredictNextTool:
         batch_size = 20
         dropout = 0.5
         lstm_units = 128
-        train_data, train_labels, test_data, test_labels, dimensions, dictionary, reverse_dictionary, comp_data, comp_labels = self.divide_train_test_data()
+        # get training and test data and their labels
+        data = prepare_data.PrepareData()
+        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()
+        dimensions = len( dictionary )
         embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
@@ -101,11 +58,11 @@ class PredictNextTool:
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        #predict_callback_complete = PredictCallback( comp_data, comp_labels, n_epochs )
+        #predict_callback_complete = PredictCallback( train_data, train_labels, n_epochs )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
         callbacks_list = [ checkpoint, predict_callback_test ]
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.05, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.1, batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
@@ -158,4 +115,3 @@ if __name__ == "__main__":
     predict_tool.evaluate_LSTM_network()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
-
