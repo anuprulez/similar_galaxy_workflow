@@ -178,7 +178,7 @@ class PrepareData:
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
         # randomize all the paths
-        random.shuffle( raw_paths )
+        '''random.shuffle( raw_paths )
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]
@@ -186,7 +186,7 @@ class PrepareData:
         print( "Processing train paths..." )
         self.process_train_paths( train_paths, dictionary )
         print( "Processing test paths..." )
-        self.process_test_paths( test_paths, dictionary )
+        self.process_test_paths( test_paths, dictionary )'''
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
