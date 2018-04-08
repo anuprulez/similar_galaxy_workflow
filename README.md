@@ -56,11 +56,11 @@ The above plot shows the distribution of length of training sequences. We can se
 
 ### Labels distribution
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Test_labels_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/test_dist_2.png">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Train_labels_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/train_dist_2.png">
 </p>
 
 
