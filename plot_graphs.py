@@ -8,7 +8,6 @@ def plot_data_distribution( file_path ):
     with open( file_path, 'r' ) as dist_file:
         data = json.loads( dist_file.read() )
     freq = [ len( item.split( "," ) ) for item in data ]
-   
     plt.bar( [ index for index, item in enumerate( freq ) ], height=freq, facecolor='g' )
     plt.xlabel( 'Class number (tools that become labels for the sequence)' )
     plt.ylabel( 'Frequency (number of sequences having the same class)' )
@@ -22,7 +21,6 @@ def plot_labels_distribution( test_path, train_path ):
         test_labels_distribution = json.loads( test_labels.read() )
     with open( train_path, 'r' ) as train_labels:
         train_labels_distribution = json.loads( train_labels.read() )
-        
     test_labels_count = list()
     test_seq_count = list()
     for item in test_labels_distribution:
@@ -48,14 +46,14 @@ def plot_labels_distribution( test_path, train_path ):
     font = { 'family' : 'sans serif', 'size': 22 }
     plt.rc('font', **font) 
     plt.bar( comp_labels_index, train_seq_count, facecolor='r', align='center' )
-    plt.xlabel( '# sequences' )
+    plt.xlabel( 'Number of samples' )
     plt.ylabel( 'Number of tools in samples' )
     plt.title( 'Distribution of number of tools in samples' )
     plt.grid( True )
     plt.show()
 
     plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
-    plt.xlabel( '# sequences' )
+    plt.xlabel( 'Number of samples' )
     plt.ylabel( 'Number of labels in samples' )
     plt.title( 'Distribution of number of labels in samples' )
     plt.grid( True )
@@ -89,7 +87,7 @@ def plot_accuracy( complete_data_file, test_data_file ):
     complete_data_acc = [ float( item ) for item in complete_data_acc if item ]
     with open( test_data_file, 'r' ) as acc_test:
         test_data_acc = acc_test.read().split( "\n" )    
-    test_data_acc = [ float( item ) for item in test_data_acc if item ]  
+    test_data_acc = [ float( item ) for item in test_data_acc if item ]
     font = { 'family' : 'sans serif', 'size': 22 }
     plt.rc('font', **font) 
     plt.plot( complete_data_acc )
@@ -106,7 +104,7 @@ def plot_top_prediction( abs_file_path ):
     loss_values = list()
     with open( abs_file_path, 'r' ) as _abs_top_pred:
         abs_pred_values = _abs_top_pred.read().split( "\n" )
-    abs_pred_values = [ float( item ) for item in abs_pred_values if item ]   
+    abs_pred_values = [ float( item ) for item in abs_pred_values if item ]
     plt.plot( abs_pred_values, marker=".", color="red" )
     plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )

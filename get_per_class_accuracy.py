@@ -168,14 +168,14 @@ class EvaluateTopResults:
         plt.bar( classes, count_classes_test, color='red' )
         plt.xlabel( 'Number of classes (next tools)' )
         plt.ylabel( 'Number of samples' )
-        plt.title( 'Number of samples per class (next tool) for test data' )
+        plt.title( 'Number of samples per class (next tool) for test samples' )
         plt.grid( True )
         plt.show()
         
         plt.bar( classes_train, count_classes_train, color='blue' )
         plt.xlabel( 'Number of classes (next tools)' )
         plt.ylabel( 'Number of samples' )
-        plt.title( 'Number of samples per class (next tool) for train data' )
+        plt.title( 'Number of samples per class (next tool) for train samples' )
         plt.grid( True )
         plt.show()
 

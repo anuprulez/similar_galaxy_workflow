@@ -49,7 +49,7 @@ We create training samples and their labels in this manner and feed them to the 
 ## Data distribution
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Num_tools_samples_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/tools_len_dist_2.png">
 </p>
 
 The above plot shows the distribution of length of training sequences. We can see that most of the training sequences lie between length (frequency) 0 and 60. This length play an important role to determine the dimensionality of input dense vector. Thus, to reduce the input dimensionality, we take a maximum length of 40 per training sequence which still includes most of the training sequences. We lose some training sequences, but not many (~500 out of 11,000). At the same time, we gain in prediction time as the trained model needs to deal with smaller size vector.
