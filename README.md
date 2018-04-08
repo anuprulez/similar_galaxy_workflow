@@ -49,18 +49,18 @@ We create training samples and their labels in this manner and feed them to the 
 ## Data distribution
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/Num_tools_samples_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/tools_len_dist_2.png">
 </p>
 
 The above plot shows the distribution of length of training sequences. We can see that most of the training sequences lie between length (frequency) 0 and 60. This length play an important role to determine the dimensionality of input dense vector. Thus, to reduce the input dimensionality, we take a maximum length of 40 per training sequence which still includes most of the training sequences. We lose some training sequences, but not many (~500 out of 11,000). At the same time, we gain in prediction time as the trained model needs to deal with smaller size vector.
 
 ### Labels distribution
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/Test_labels_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/test_dist_2.png">
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/Train_labels_dist_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/train_dist_2.png">
 </p>
 
 
@@ -70,14 +70,14 @@ In our set of training samples, each one can have many labels (or categories) wh
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/Acc_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Acc_1.png">
 </p>
 
 In the plot above, red line shows an increase in accuracy of the trained model over multiple training epochs. It computes an average of how many actual labels appear in the top-k predicted labels for all samples in the test data. For example, let's suppose a sequence has `4` actual labels (`4` next tools it can connect to). We check that out of these `4` actual labels, how many are present in the `top-4` predicted ones using the trained model. If `3` labels are present in the `top-4` predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `50` epochs of training.
 
 ## Topk accuracy per class for test and train samples 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/topk_test_train_1.tif">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Test_train_topk_acc_1.png">
 </p>
 
 ## Vizualizer
