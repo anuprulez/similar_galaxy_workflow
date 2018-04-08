@@ -1,11 +1,12 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
+Prepare the workflows for downstream usage by machine learning algorithms
 """
 
 import os
 import collections
 import numpy as np
 import json
+import random
 
 
 class PrepareData:
@@ -15,12 +16,16 @@ class PrepareData:
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
-        self.train_file = self.current_working_dir + "/data/train_data.txt"
-        self.sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
-        self.multi_train_labels = self.current_working_dir + "/data/multi_labels.txt"
+        self.train_file = self.current_working_dir + "/data/train_data.txt"
+        self.train_sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
+        self.test_file = self.current_working_dir + "/data/test_data.txt"
+        self.test_sequence_file = self.current_working_dir + "/data/test_data_sequence.txt"
+        self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
+        self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.max_tool_sequence_len = 40
+        self.test_share = 0.33
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -58,98 +63,135 @@ class PrepareData:
         return dictionary, reverse_dictionary
 
     @classmethod
-    def create_train_labels_file( self, dictionary, raw_paths ):
+    def process_train_paths( self, train_paths, dictionary ):
         """
-        Create training data with its labels with varying window sizes
+        Process train paths using a variable length sliding window
         """
         train_data = list()
         train_data_sequence = list()
-        for index, item in enumerate( raw_paths ):
+        random.shuffle( train_paths )
+        for index, item in enumerate( train_paths ):
             tools = item.split(" ")
-            max_window_size = len( tools )
-            for window in range( 1, max_window_size ):
-                slide_window_time = ( max_window_size - 1 ) // window
-                for j in range( 0, slide_window_time ):
-                    training_sequence = tools[ j: j + window ]
-                    label = tools[ j + window: j + window + 1 ]
-                    data_seq = ",".join( training_sequence )
-                    data_seq += "," + label[ 0 ]
-
-                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in training_sequence ]
-                    tools_pos = ",".join( tools_pos )
-                    tools_pos = tools_pos + "," + str( dictionary[ str( label[ 0 ] ) ] )
-
-                    if tools_pos not in train_data:
-                        train_data.append( tools_pos )
-
-                    if data_seq not in train_data_sequence:
-                        train_data_sequence.append( data_seq )
-
-            print ( "Path %d processed" % ( index + 1 ) )
-
+            len_tools = len( tools )
+            if len_tools <= self.max_tool_sequence_len:
+                for pos in range( len_tools ):
+                    for window in range( 1, len_tools ):
+                        sequence = tools[ pos: window + pos + 1 ]
+                        tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
+                        if len( tools_pos ) > 1:
+                            tools_pos = ",".join( tools_pos )
+                            data_seq = ",".join( sequence )
+                            if tools_pos not in train_data:
+                                train_data.append( tools_pos )
+                            if data_seq not in train_data_sequence:
+                                train_data_sequence.append( data_seq )
+                print ( "Path %d processed" % ( index + 1 ) )
+            else:
+                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
         with open( self.train_file, "w" ) as train_file:
             for item in train_data:
                 train_file.write( "%s\n" % item )
-
-        with open( self.sequence_file, "w" ) as train_seq:
+        with open( self.train_sequence_file, "w" ) as train_seq:
             for item in train_data_sequence:
                 train_seq.write( "%s\n" % item )
 
     @classmethod
-    def prepare_train_test_data( self ):
+    def process_test_paths( self, test_paths, dictionary ):
         """
-        Read training data and its labels files
+        Process test paths of variable length keeping the first tool/node fixed
         """
-        train_file = open( self.train_file, "r" )
-        train_file = train_file.read().split( "\n" )
-        train_multi_label_samples = dict()
-        seq_len = list()
-        for item in train_file:
-            tools = item.split( "," )
-            train_tools = tools[ :len( tools) - 1 ]
-            train_tools = ",".join( train_tools )
-            label = tools[ -1 ]
-            if label:
-                len_train_seq = len( train_tools.split( "," ) )
-                if len_train_seq <= self.max_tool_sequence_len:
-                    if train_tools in train_multi_label_samples:
-                        train_multi_label_samples[ train_tools ] += "," + tools[ -1 ]
-                    else:
-                        train_multi_label_samples[ train_tools ] = tools[ -1 ]
-                    len_train_seq = len( train_tools.split( "," ) )
-                    seq_len.append( len_train_seq )
-        with open( self.multi_train_labels, 'w' ) as train_multilabel_file:
-            train_multilabel_file.write( json.dumps( train_multi_label_samples ) )
-        return train_multi_label_samples
+        test_data = list()
+        test_data_sequence = list()
+        random.shuffle( test_paths )
+        for index, item in enumerate( test_paths ):
+            tools = item.split(" ")
+            len_tools = len( tools )
+            if len_tools <= self.max_tool_sequence_len:
+                for window in range( 1, len_tools ):
+                    sequence = tools[ 0: window + 1 ]
+                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
+                    if len( tools_pos ) > 1:
+                        tools_pos = ",".join( tools_pos )
+                        data_seq = ",".join( sequence )
+                        if tools_pos not in test_data:
+                            test_data.append( tools_pos )
+                        if data_seq not in test_data_sequence:
+                            test_data_sequence.append( data_seq )
+                print ( "Path %d processed" % ( index + 1 ) )
+            else:
+                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
+        with open( self.test_file, "w" ) as test_file:
+            for item in test_data:
+                test_file.write( "%s\n" % item )
+        with open( self.test_sequence_file, "w" ) as test_seq:
+            for item in test_data_sequence:
+                test_seq.write( "%s\n" % item )
 
     @classmethod
-    def read_data( self ):
+    def prepare_paths_labels_dictionary( self, read_file, destination_file ):
         """
-        Convert the data into corresponding arrays
+        Create a dictionary of sequences with their labels for training and test paths
         """
-        processed_data, raw_paths = self.process_processed_data( self.raw_file )
-        dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
-        self.create_train_labels_file( dictionary, raw_paths )
-        # all the nodes/tools are classes as well 
-        train_labels_data = self.prepare_train_test_data()
-        num_classes = len( dictionary )
-        len_train_data = len( train_labels_data )
-        # initialize the training data matrix
-        train_data_array = np.zeros( [ len_train_data, self.max_tool_sequence_len ] )
-        train_label_array = np.zeros( [ len_train_data, num_classes ] )
+        paths = open( read_file, "r" )
+        paths = paths.read().split( "\n" )
+        paths_labels = dict()
+        random.shuffle( paths )
+        for item in paths:
+            if item and item not in "":
+                tools = item.split( "," )
+                label = tools[ -1 ]
+                train_tools = tools[ :len( tools) - 1 ]
+                train_tools = ",".join( train_tools )
+                if train_tools in paths_labels:
+                    paths_labels[ train_tools ] += "," + label
+                else:
+                    paths_labels[ train_tools ] = label
+        with open( destination_file, 'w' ) as multilabel_file:
+            multilabel_file.write( json.dumps( paths_labels ) )
+        return paths_labels
+
+    @classmethod
+    def pad_paths( self, paths_dictionary, num_classes ):
+        """
+        Add padding to the tools sequences and create multi-hot encoded labels
+        """
+        size_data = len( paths_dictionary )
+        data_mat = np.zeros( [ size_data, self.max_tool_sequence_len ] )
+        label_mat = np.zeros( [ size_data, num_classes ] )
         train_counter = 0
-        for train_seq, train_label in train_labels_data.iteritems():
-            nodes = list()
+        for train_seq, train_label in list( paths_dictionary.items() ):
             positions = train_seq.split( "," )
             start_pos = self.max_tool_sequence_len - len( positions )
             for id_pos, pos in enumerate( positions ):
-                if pos:
-                    train_data_array[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
-                    nodes.append( reverse_dictionary[ int( pos ) ] )
-            pos_labels = train_label.split( "," )
-            if len( pos_labels ) > 0:
-                # one-hot vector for labels
-                for label_item in pos_labels:
-                    train_label_array[ train_counter ][ int( label_item ) - 1 ] = 1.0
+                data_mat[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
+            for label_item in train_label.split( "," ):
+                label_mat[ train_counter ][ int( label_item ) - 1 ] = 1.0
             train_counter += 1
-        return train_data_array, train_label_array, dictionary, reverse_dictionary
+        return data_mat, label_mat
+
+    @classmethod
+    def get_data_labels_mat( self ):
+        """
+        Convert the training and test paths into corresponding numpy matrices
+        """
+        processed_data, raw_paths = self.process_processed_data( self.raw_file )
+        dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
+        num_classes = len( dictionary )
+        # randomize all the paths
+        random.shuffle( raw_paths )
+        # divide train and test paths
+        test_share = self.test_share * len( raw_paths )
+        test_paths = raw_paths[ :int( test_share ) ]
+        train_paths = raw_paths[ int( test_share ): ]
+        print( "Processing train paths..." )
+        self.process_train_paths( train_paths, dictionary )
+        print( "Processing test paths..." )
+        self.process_test_paths( test_paths, dictionary )
+        # create sequences with labels for train and test paths
+        train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
+        test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
+        # create 0 padded sequences from train and test paths
+        train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
+        test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary
+

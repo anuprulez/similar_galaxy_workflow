@@ -7,7 +7,8 @@ import numpy as np
 def plot_data_distribution( file_path ):
     with open( file_path, 'r' ) as dist_file:
         data = json.loads( dist_file.read() )
-    freq = [ data[ item ] for item in data ]
+    freq = [ len( item.split( "," ) ) for item in data ]
+   
     plt.bar( [ index for index, item in enumerate( freq ) ], height=freq, facecolor='g' )
     plt.xlabel( 'Class number (tools that become labels for the sequence)' )
     plt.ylabel( 'Frequency (number of sequences having the same class)' )
@@ -16,29 +17,47 @@ def plot_data_distribution( file_path ):
     plt.show()
 
 
-def plot_labels_distribution( file_path ):
-    with open( file_path, 'r' ) as train_labels:
-        labels_distribution = json.loads( train_labels.read() )
-    labels_count = list()
-    seq_count = list()
-    for item in labels_distribution:
+def plot_labels_distribution( test_path, train_path ):
+    with open( test_path, 'r' ) as test_labels:
+        test_labels_distribution = json.loads( test_labels.read() )
+    with open( train_path, 'r' ) as train_labels:
+        train_labels_distribution = json.loads( train_labels.read() )
+        
+    test_labels_count = list()
+    test_seq_count = list()
+    for item in test_labels_distribution:
         seq = item.split( "," )
-        labels = labels_distribution[ item ].split( "," )
-        seq_count.append( len( seq ) )
-        labels_count.append( len( labels ) )
-    labels_index = np.arange( len( labels_count ) )
-
-    plt.bar( labels_index, seq_count, facecolor='r', align='center' )
-    plt.xlabel( 'Training samples' )
-    plt.ylabel( 'Frequency' )
-    plt.title( '# tools in training sequences' )
+        labels = test_labels_distribution[ item ].split( "," )
+        test_seq_count.append( len( seq ) )
+        test_labels_count.append( len( labels ) )
+    
+    train_labels_count = list()
+    train_seq_count = list()
+    for item in train_labels_distribution:
+        seq = item.split( "," )
+        labels = train_labels_distribution[ item ].split( "," )
+        train_seq_count.append( len( seq ) )
+        train_labels_count.append( len( labels ) )
+    
+    train_seq_count.extend( test_seq_count )
+    train_labels_count.extend( test_labels_count )
+    comp_labels_index = np.arange( len( train_labels_count ) )
+    print len( comp_labels_index )
+    print len( train_seq_count )
+    print len( train_labels_count )
+    font = { 'family' : 'sans serif', 'size': 22 }
+    plt.rc('font', **font) 
+    plt.bar( comp_labels_index, train_seq_count, facecolor='r', align='center' )
+    plt.xlabel( '# sequences' )
+    plt.ylabel( 'Number of tools in samples' )
+    plt.title( 'Distribution of number of tools in samples' )
     plt.grid( True )
     plt.show()
 
-    plt.bar( labels_index, labels_count, facecolor='b', align='center' )
-    plt.xlabel( 'Training samples' )
-    plt.ylabel( 'Frequency' )
-    plt.title( '# tools in labels' )
+    plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
+    plt.xlabel( '# sequences' )
+    plt.ylabel( 'Number of labels in samples' )
+    plt.title( 'Distribution of number of labels in samples' )
     plt.grid( True )
     plt.show()
 
@@ -62,21 +81,23 @@ def plot_loss( file_path_train, file_path_test ):
     plt.show()
 
 
-def plot_accuracy( file_path_train, file_path_test ):
+def plot_accuracy( complete_data_file, test_data_file ):
     acc_values_train = list()
     acc_values_test = list()
-    with open( file_path_train, 'r' ) as acc_file_train:
-        acc_values_train = acc_file_train.read().split( "\n" )
-    acc_values_train = [ float( item ) for item in acc_values_train if item ]
-    with open( file_path_test, 'r' ) as acc_file_test:
-        acc_values_test = acc_file_test.read().split( "\n" )
-    acc_values_test = [ float( item ) for item in acc_values_test if item ]   
-    plt.plot( acc_values_train )
-    plt.plot( acc_values_test )
-    plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
+    with open( complete_data_file, 'r' ) as acc_complete:
+        complete_data_acc = acc_complete.read().split( "\n" )
+    complete_data_acc = [ float( item ) for item in complete_data_acc if item ]
+    with open( test_data_file, 'r' ) as acc_test:
+        test_data_acc = acc_test.read().split( "\n" )    
+    test_data_acc = [ float( item ) for item in test_data_acc if item ]  
+    font = { 'family' : 'sans serif', 'size': 22 }
+    plt.rc('font', **font) 
+    plt.plot( complete_data_acc )
+    plt.plot( test_data_acc )
+    plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )
-    plt.title( 'Accuracy vs training epochs' )
-    plt.legend( [ "train", "test" ] )
+    plt.title( 'Next tools (labels) pred. topk acc vs. train and test samples' )
+    plt.legend( [ "Train samples", "Test samples" ] )
     plt.grid( True )
     plt.show()
 
@@ -94,7 +115,7 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
-plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/accuracy_history.txt", "data/val_accuracy_history.txt" )
-plot_top_prediction( "data/abs_top_pred.txt" )
-plot_labels_distribution( "data/multi_labels.txt" )
+#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
+plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
+plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
+

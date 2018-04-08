@@ -20,7 +20,7 @@
     position: relative;
 }
 
-.top-margin{
+.top-margin {
     margin-top: 1%;
 }
 
@@ -39,5 +39,16 @@
 
 .absent-node {
     font-weight: bold;
-    color:  #e81717 ;
+    color:  #e81717;
+}
+
+.arrow-tool {
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+.remove-tool {
+    margin: 0 0.5% 0 0.5%;
+    color: #e81717;
+    cursor: pointer;
 }
