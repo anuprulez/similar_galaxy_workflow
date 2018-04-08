@@ -17,29 +17,47 @@ def plot_data_distribution( file_path ):
     plt.show()
 
 
-def plot_labels_distribution( file_path ):
-    with open( file_path, 'r' ) as train_labels:
-        labels_distribution = json.loads( train_labels.read() )
-    labels_count = list()
-    seq_count = list()
-    for item in labels_distribution:
+def plot_labels_distribution( test_path, train_path ):
+    with open( test_path, 'r' ) as test_labels:
+        test_labels_distribution = json.loads( test_labels.read() )
+    with open( train_path, 'r' ) as train_labels:
+        train_labels_distribution = json.loads( train_labels.read() )
+        
+    test_labels_count = list()
+    test_seq_count = list()
+    for item in test_labels_distribution:
         seq = item.split( "," )
-        labels = labels_distribution[ item ].split( "," )
-        seq_count.append( len( seq ) )
-        labels_count.append( len( labels ) )
-    labels_index = np.arange( len( labels_count ) )
-
-    plt.bar( labels_index, seq_count, facecolor='r', align='center' )
+        labels = test_labels_distribution[ item ].split( "," )
+        test_seq_count.append( len( seq ) )
+        test_labels_count.append( len( labels ) )
+    
+    train_labels_count = list()
+    train_seq_count = list()
+    for item in train_labels_distribution:
+        seq = item.split( "," )
+        labels = train_labels_distribution[ item ].split( "," )
+        train_seq_count.append( len( seq ) )
+        train_labels_count.append( len( labels ) )
+    
+    train_seq_count.extend( test_seq_count )
+    train_labels_count.extend( test_labels_count )
+    comp_labels_index = np.arange( len( train_labels_count ) )
+    print len( comp_labels_index )
+    print len( train_seq_count )
+    print len( train_labels_count )
+    font = { 'family' : 'sans serif', 'size': 22 }
+    plt.rc('font', **font) 
+    plt.bar( comp_labels_index, train_seq_count, facecolor='r', align='center' )
     plt.xlabel( '# sequences' )
-    plt.ylabel( 'Frequency (number of tools in sequences)' )
-    plt.title( 'Workflows: # tools in sequences distribution' )
+    plt.ylabel( 'Number of tools in samples' )
+    plt.title( 'Distribution of number of tools in samples' )
     plt.grid( True )
     plt.show()
 
-    plt.bar( labels_index, labels_count, facecolor='b', align='center' )
+    plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
     plt.xlabel( '# sequences' )
-    plt.ylabel( 'Frequency (number of next tools for sequences)' )
-    plt.title( 'Workflows: # labels (next tools) in sequences distribution' )
+    plt.ylabel( 'Number of labels in samples' )
+    plt.title( 'Distribution of number of labels in samples' )
     plt.grid( True )
     plt.show()
 
@@ -71,13 +89,15 @@ def plot_accuracy( complete_data_file, test_data_file ):
     complete_data_acc = [ float( item ) for item in complete_data_acc if item ]
     with open( test_data_file, 'r' ) as acc_test:
         test_data_acc = acc_test.read().split( "\n" )    
-    test_data_acc = [ float( item ) for item in test_data_acc if item ]   
+    test_data_acc = [ float( item ) for item in test_data_acc if item ]  
+    font = { 'family' : 'sans serif', 'size': 22 }
+    plt.rc('font', **font) 
     plt.plot( complete_data_acc )
     plt.plot( test_data_acc )
-    plt.ylabel( 'Accuracy (0.7 = 70% accuracy)' )
+    plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )
-    plt.title( 'Next tools (labels) prediction accuracy vs epochs on test and complete data' )
-    plt.legend( [ "Complete data accuracy", "Test data accuracy" ] )
+    plt.title( 'Next tools (labels) pred. topk acc vs. train and test samples' )
+    plt.legend( [ "Train samples", "Test samples" ] )
     plt.grid( True )
     plt.show()
 
@@ -95,7 +115,7 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
-plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
+#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
 plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
-plot_labels_distribution( "data/multi_labels.txt" )
+plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 

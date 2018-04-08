@@ -1,5 +1,5 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
+Prepare the workflows for downstream usage by machine learning algorithms
 """
 
 import os
@@ -25,7 +25,7 @@ class PrepareData:
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.max_tool_sequence_len = 40
-        self.test_share = 0.3
+        self.test_share = 0.33
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -178,7 +178,7 @@ class PrepareData:
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
         # randomize all the paths
-        '''random.shuffle( raw_paths )
+        random.shuffle( raw_paths )
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]
@@ -186,7 +186,7 @@ class PrepareData:
         print( "Processing train paths..." )
         self.process_train_paths( train_paths, dictionary )
         print( "Processing test paths..." )
-        self.process_test_paths( test_paths, dictionary )'''
+        self.process_test_paths( test_paths, dictionary )
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
@@ -194,3 +194,4 @@ class PrepareData:
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary
+
