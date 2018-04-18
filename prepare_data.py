@@ -1,5 +1,5 @@
 """
-Prepare the workflows for downstream usage by machine learning algorithms
+Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
 """
 
 import os
@@ -194,4 +194,3 @@ class PrepareData:
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary
-
