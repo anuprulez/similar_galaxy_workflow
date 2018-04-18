@@ -186,7 +186,7 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     evaluate_perf = EvaluateTopResults()
-    #evaluate_perf.get_top_prediction_accuracy()
+    evaluate_perf.get_top_prediction_accuracy()
     evaluate_perf.plot_per_class_topk_accuracy()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ) )

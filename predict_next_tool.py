@@ -43,7 +43,7 @@ class PredictNextTool:
         data = prepare_data.PrepareData()
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()
         dimensions = len( dictionary )
-        embedding_vec_size = 100
+        embedding_vec_size = 400
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
@@ -115,4 +115,3 @@ if __name__ == "__main__":
     predict_tool.evaluate_LSTM_network()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
-
