@@ -70,14 +70,14 @@ In our set of training samples, each one can have many labels (or categories) wh
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Acc_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Acc_2.png">
 </p>
 
 In the plot above, red line shows an increase in accuracy of the trained model over multiple training epochs. It computes an average of how many actual labels appear in the top-k predicted labels for all samples in the test data. For example, let's suppose a sequence has `4` actual labels (`4` next tools it can connect to). We check that out of these `4` actual labels, how many are present in the `top-4` predicted ones using the trained model. If `3` labels are present in the `top-4` predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `50` epochs of training.
 
 ## Topk accuracy per class for test and train samples 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Test_train_topk_acc_1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/Ave_topk_Cluster.png">
 </p>
 
 ## Vizualizer
