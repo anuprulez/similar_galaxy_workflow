@@ -134,7 +134,3 @@ def get_names_categories():
                     result[name] = categories
 
     return result
-
-if __name__ == '__main__':
-    result = get_attributes()
-    print result
