@@ -1,3 +1,6 @@
+# module for the retrieval of tools and tools' attributes from
+# usegalaxy.eu web interface
+
 import dryscrape
 import re
 import urllib
