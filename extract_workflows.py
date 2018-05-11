@@ -36,15 +36,19 @@ class ExtractWorkflows:
                     tool_internal_ids = list()
                     steps = list()
                     immediate_parents = dict()
+                    tool_input_connections = dict()
+                    tool_output_connections = dict()
                     for step in all_steps:
                         wf_step = all_steps[ step ]
-                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "type": wf_step[ "type" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ] } )
+                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "type": wf_step[ "type" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ], "outputs": wf_step[ "outputs" ] } )
                     steps = sorted( steps, key=operator.itemgetter( "id" ) )
                     for step in steps:
                         # take a workflow if there is at least one step
                         tool_id_orig = step[ "tool_id" ]
                         if tool_id_orig:
                             parent_ids = list()
+                            parent_outputs = list()
+                            output_types = list()
                             tool_id = self.extract_tool_id( tool_id_orig )
                             tool_internal_id = step[ "id" ]
                             tool_internal_ids.append( tool_internal_id )
@@ -56,7 +60,12 @@ class ExtractWorkflows:
                                 # take only those parents whose tool id is not null
                                 if steps[ parent_id ][ "tool_id" ] is not None:
                                     parent_ids.append( str( parent_id ) )
+                                    parent_outputs.append( parents[ item ][ "output_name" ] )
                             immediate_parents[ str( tool_internal_id ) ] = list( set( parent_ids ) )
+                            tool_input_connections[ str( tool_internal_id ) ] = parent_outputs
+                            for output in step[ "outputs" ]:
+                                output_types.append( { "name": output[ "name" ], "type": output[ "type" ] } )
+                            tool_output_connections[ str( tool_internal_id ) ] = output_types
                     if len( tool_steps ) > 0:
                         workflow_json[ "steps" ] = tool_steps
                         workflow_json[ "id" ] = file_id
@@ -65,7 +74,9 @@ class ExtractWorkflows:
                         workflow_json[ "annotation" ] = file_json[ "annotation" ]
                         workflow_json[ "parents" ] = immediate_parents
                         workflow_json[ "original_steps" ] = steps
-            except Exception:
+                        workflow_json[ "input_types" ] = tool_input_connections
+                        workflow_json[ "output_types" ] = tool_output_connections
+            except Exception as exception:
                 pass
         return workflow_json, workflow_tools
 
@@ -200,6 +211,52 @@ class ExtractWorkflows:
         tool_id_split = tool_id.split( "." )
         return tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
 
+    @classmethod
+    def assign_input_output_types( self, wf_json_path ):
+        """
+        Assign input and output types to tools
+        """
+        workflows = list()
+        with open( wf_json_path, "r" ) as wf_json:
+            workflows = json.loads( wf_json.read() )
+        tool_io_types = dict()
+        for wf_id in workflows:
+            wf = workflows[ wf_id ]
+            for step in wf[ "steps" ]:
+                tool_name = wf[ "steps" ][ step ]
+                tool_input_types = list()
+                if not tool_name in tool_io_types:
+                    tool_io_types[ tool_name ] = dict()
+
+                ip_types = wf[ "input_types" ][ step ]
+                parents = wf[ "parents" ][ step ]
+                for it in ip_types:
+                    for parent_id in parents:
+                       ot = wf[ "output_types" ][ parent_id ]
+                       if len( ot ) > 0 and it == ot[ 0 ][ "name" ]:
+                           ip_type = ot[ 0 ][ "type" ]
+                           if ip_type != "input":
+                               tool_input_types.append( ip_type )
+                if "input_types" in tool_io_types[ tool_name ]:
+                    tool_io_types[ tool_name ][ "input_types" ].extend( tool_input_types )
+                else:
+                   tool_io_types[ tool_name ][ "input_types" ] = tool_input_types
+
+                # set output types. If there is "input" in the output types, copy all items from the input types
+                outtps = [ obj[ "type" ] for obj in wf[ "output_types" ][ step ] ]
+                if "input" in outtps:
+                    outtps.extend( tool_input_types )
+                outtps = [ tp for tp in outtps if tp != "input" ]
+                if "output_types" in tool_io_types[ tool_name ]:
+                    tool_io_types[ tool_name ][ "output_types" ].extend( outtps )
+                else:
+                    tool_io_types[ tool_name ][ "output_types" ] = outtps
+
+                tool_io_types[ tool_name ][ "input_types" ] = list( set( tool_io_types[ tool_name ][ "input_types" ] ) )
+                tool_io_types[ tool_name ][ "output_types" ] = list( set( tool_io_types[ tool_name ][ "output_types" ] ) )
+        with open( "data/tools_file_types.json", "w" ) as tool_types:
+            tool_types.write( json.dumps( tool_io_types ) ) 
+
 
 if __name__ == "__main__":
 
@@ -209,5 +266,7 @@ if __name__ == "__main__":
     start_time = time.time()
     extract_workflow = ExtractWorkflows()
     extract_workflow.read_workflow_directory()
+    print( "Finished extracting workflows" )
+    extract_workflow.assign_input_output_types( "data/workflows.json" )
     end_time = time.time()
     print ("Program finished in %d seconds" % int( end_time - start_time ) )
