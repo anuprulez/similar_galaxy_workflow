@@ -183,6 +183,7 @@ class PrepareData:
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]
         train_paths = raw_paths[ int( test_share ): ]
+        random.shuffle( train_paths )
         print( "Processing train paths..." )
         self.process_train_paths( train_paths, dictionary )
         print( "Processing test paths..." )

@@ -7,6 +7,7 @@ import json
 import time
 import pandas as pd
 import operator
+from itertools import groupby
 
 
 class ExtractWorkflows:
@@ -15,7 +16,6 @@ class ExtractWorkflows:
     def __init__( self ):
         """ Init method. """
         self.workflow_directory = 'data/workflows/'
-        self.tool_data_filename = 'data/workflows_raw.csv'
         self.tools_filename = "data/all_tools.csv"
         self.workflows_filename = "data/processed_workflows.csv"
 
@@ -151,7 +151,10 @@ class ExtractWorkflows:
                 if sequence == "":
                     sequence = tool_name
                 else:
-                    sequence += " " + tool_name
+                    # merge the repeated tools into just one tool
+                    last_tool_name = sequence.split( " " )[ -1 ]
+                    if last_tool_name != tool_name:
+                        sequence += " " + tool_name
             sequence += "\n"
             # exclude the duplicate tool paths
             if sequence not in tool_seq:

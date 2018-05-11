@@ -12,6 +12,9 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
+from keras import regularizers
+from keras.layers.core import SpatialDropout1D
+
 
 import prepare_data
 
@@ -35,21 +38,22 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 50
+        n_epochs = 15
         batch_size = 40
-        dropout = 0.5
-        lstm_units = 128
+        dropout = 0.0
+        lstm_units = 64
         # get training and test data and their labels
         data = prepare_data.PrepareData()
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()
         dimensions = len( dictionary )
-        embedding_vec_size = 400
+        embedding_vec_size = 100
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
+        model.add( SpatialDropout1D( 0.2 ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='softsign' ) )
-        model.add( Dense( dimensions, activation='softmax' ) )
+        model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( 0.01 ) ) )
         model.compile( loss="binary_crossentropy", optimizer='rmsprop' )
         # save the network as json
         model_json = model.to_json()
@@ -58,16 +62,16 @@ class PredictNextTool:
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        predict_callback_train = PredictCallback( train_data, train_labels, n_epochs )
+        #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
-        callbacks_list = [ checkpoint, predict_callback_test, predict_callback_train ] #predict_callback_train
+        callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        np.savetxt( self.abs_top_pred_path, predict_callback_train.epochs_acc, delimiter="," )
+        #np.savetxt( self.abs_top_pred_path, predict_callback_train.epochs_acc, delimiter="," )
         np.savetxt( self.test_top_pred_path, predict_callback_test.epochs_acc, delimiter="," )
         print ( "Training finished" )
 
