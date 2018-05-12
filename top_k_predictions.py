@@ -29,6 +29,7 @@ class EvaluateTopResults:
         self.data_dictionary_rev_path = self.current_working_dir + "/data/data_rev_dict.txt"
         self.test_class_topk_accuracy = self.current_working_dir + "/data/test_class_topk_accuracy.txt"
         self.train_class_topk_accuracy = self.current_working_dir + "/data/train_class_topk_accuracy.txt"
+        self.tools_filetypes = self.current_working_dir + "/data/tools_file_types.json"
         self.max_seq_length = 40
 
     @classmethod
@@ -45,7 +46,7 @@ class EvaluateTopResults:
         return loaded_model
         
     @classmethod
-    def get_per_class_topk_acc( self, data, model, dimensions, reverse_data_dictionary ):
+    def get_per_class_topk_acc( self, data, model, dimensions, reverse_data_dictionary, tools_filetypes ):
         """
         Compute average per class topk accuarcy 
         """
@@ -79,16 +80,32 @@ class EvaluateTopResults:
             actual_tools = [ reverse_data_dictionary[ ps ] for ps in label_pos ]
             predicted_tools = [ reverse_data_dictionary[ str( ps ) ] for ps in top_prediction_pos ]
             false_positives = [ tool for tool in predicted_tools if tool not in actual_tools ]
+            
             for pos in top_prediction_pos:
                 if str( pos ) in label_pos:
                     topk_prediction += 1.0
             topk_pred = topk_prediction / float( len( top_prediction_pos ) )
+
             if len( sequence ) > min_seq_length:
+                compatible_tool_types = list()
                 test_seq_performance[ "input_sequence" ] = ",".join( [ reverse_data_dictionary[ ps ] for ps in sequence ] )
                 test_seq_performance[ "actual_tools" ] = ",".join( actual_tools )
                 test_seq_performance[ "predicted_tools" ] = ",".join( predicted_tools )
                 test_seq_performance[ "false_positives" ] = ",".join( false_positives )
                 test_seq_performance[ "precision" ] = topk_pred
+                adjusted_compatibility = topk_pred
+                seq_last_tool = actual_tools[ -1 ]
+                if seq_last_tool in tools_filetypes:
+                    last_tool_output_types = tools_filetypes[ seq_last_tool ][ "output_types" ]
+                    for false_pos in false_positives:
+                        if false_pos in tools_filetypes:
+                            inputs_false_pos = tools_filetypes[ false_pos ][ "input_types" ]
+                            compatible_types = [ filetype for filetype in inputs_false_pos if filetype in last_tool_output_types ]
+                            if len( compatible_types ) > 0:
+                                compatible_tool_types.append( false_pos )
+                                adjusted_compatibility += 1 / float( len( top_prediction_pos ) )
+                test_seq_performance[ "precision_adjusted_compatibility" ] = adjusted_compatibility
+                test_seq_performance[ "compatible_tool_types" ] = ",".join( compatible_tool_types )
                 test_data_performance.append( test_seq_performance )
             num_class_topk[ str( len_label_pos ) ] = topk_pred
             class_topk_accuracy.append( num_class_topk )
@@ -99,7 +116,11 @@ class EvaluateTopResults:
         """
         Save the list of dictionaries as a tabular file
         """
-        keys = list_of_dict[ 0 ].keys()
+        #keys = list_of_dict[ 0 ].keys()
+        # supply actual 
+        #keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision' ]
+        #fieldnames = [ "Input tools sequence", "Actual next tools", "Predicted next tools", "False positives", "Compatible tools", "Precision" ]
+        keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision', "precision_adjusted_compatibility" ]
         with open( file_name, 'wb' ) as output_file:
             dict_writer = csv.DictWriter( output_file, keys )
             dict_writer.writeheader()
@@ -119,96 +140,24 @@ class EvaluateTopResults:
             data_dict = json.loads( data_dict.read() )
         with open( self.data_dictionary_rev_path, 'r' ) as rev_data_dict:
             reverse_data_dictionary = json.loads( rev_data_dict.read() )
+        with open( self.tools_filetypes, 'r' ) as filetypes:
+            tools_filetypes = json.loads( filetypes.read() )
+        filetypes = dict()
+        for tool in tools_filetypes:
+            filetypes[ tool.lower() ] = tools_filetypes[ tool ]
         dimensions = len( data_dict )
         print ( "Get topn predictions for %d test samples" % len( test_labels ) )
-        test_class_topk_accuracy, test_perf = self.get_per_class_topk_acc( test_labels, loaded_model, dimensions, reverse_data_dictionary )
+        test_class_topk_accuracy, test_perf = self.get_per_class_topk_acc( test_labels, loaded_model, dimensions, reverse_data_dictionary, filetypes )
         with open( self.test_class_topk_accuracy, 'w' ) as test_topk_file:
             test_topk_file.write( json.dumps( test_class_topk_accuracy ) )
         print ( "Get topn predictions for %d train samples" % len( train_labels ) )
-        train_class_topk_accuracy, train_perf = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary )
+        train_class_topk_accuracy, train_perf = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary, filetypes )
         train_perf.extend( test_perf )
         self.save_as_csv( train_perf, "data/complete_data_performance.csv" )
         with open( self.train_class_topk_accuracy, 'w' ) as train_topk_file:
             train_topk_file.write( json.dumps( train_class_topk_accuracy ) )
 
-    @classmethod
-    def plot_per_class_topk_accuracy( self ):
-        """
-        Plot the accuracy 
-        """
-        with open( self.test_class_topk_accuracy, 'r' ) as test_topk_file:
-            test_acc = json.loads( test_topk_file.read() )
-        
-        with open( self.train_class_topk_accuracy, 'r' ) as train_topk_file:
-            train_acc = json.loads( train_topk_file.read() )
-
-        classes = list()
-        accuracies = list()
-        classes_train = list()
-        classes_acc = dict()
-        accuracies_train = list()
-        classes_count = dict()
-        classes_acc_train = dict()
-        classes_count_train = dict()
-        count_classes_test = list()
-        count_classes_train = list()
-        for index, item in enumerate( test_acc ):
-            for key in item:
-                if key in classes_acc:
-                    classes_acc[ key ] += float( item[ key ] )
-                    classes_count[ key ] += 1
-                else:
-                    classes_acc[ key ] = float( item[ key ] )
-                    classes_count[ key ] = 1
-                    
-        for item in classes_acc:
-            classes_acc[ item ] = classes_acc[ item ] / float( classes_count[ item ] )
-        for item in classes_acc:
-            acc = classes_acc[ item ]
-            accuracies.append( acc )
-            classes.append( int( item ) )
-            count_classes_test.append( classes_count[ item ] )
-          
-        # training data
-        for item in train_acc:
-            for key in item:
-                if key in classes_acc_train:
-                    classes_acc_train[ key ] += float( item[ key ] )
-                    classes_count_train[ key ] += 1
-                else:
-                    classes_acc_train[ key ] = float( item[ key ] )
-                    classes_count_train[ key ] = 1
-                    
-        for item in classes_acc_train:
-            classes_acc_train[ item ] = classes_acc_train[ item ] / float( classes_count_train[ item ] )
-        for item in classes_acc_train:
-            accuracies_train.append( classes_acc_train[ item ] )
-            classes_train.append( int( item ) )
-            count_classes_train.append( classes_count_train[ item ] )
-        font = { 'family' : 'sans serif', 'size': 22 }
-        plt.rc('font', **font)
-        plt.plot( classes, accuracies, 'ro' )
-        plt.plot( classes_train, accuracies_train, 'bo' )
-        plt.xlabel( 'Number of classes (next tools)' )
-        plt.ylabel( 'Topk accuracy ( 0.7 = 70% )' )
-        plt.title( 'Number of classes vs avg. topk accuracy for all samples' )
-        plt.legend([ "Test samples", "Train samples" ])
-        plt.grid( True )
-        plt.show()
-        
-        plt.bar( classes, count_classes_test, color='red' )
-        plt.xlabel( 'Number of classes (next tools)' )
-        plt.ylabel( 'Number of samples' )
-        plt.title( 'Number of samples per class (next tool) for test samples' )
-        plt.grid( True )
-        plt.show()
-        
-        plt.bar( classes_train, count_classes_train, color='blue' )
-        plt.xlabel( 'Number of classes (next tools)' )
-        plt.ylabel( 'Number of samples' )
-        plt.title( 'Number of samples per class (next tool) for train samples' )
-        plt.grid( True )
-        plt.show()
+    
 
 if __name__ == "__main__":
 
@@ -218,6 +167,5 @@ if __name__ == "__main__":
     start_time = time.time()
     evaluate_perf = EvaluateTopResults()
     evaluate_perf.get_top_prediction_accuracy()
-    #evaluate_perf.plot_per_class_topk_accuracy()
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ) )
