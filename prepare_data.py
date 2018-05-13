@@ -25,7 +25,7 @@ class PrepareData:
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.max_tool_sequence_len = 40
-        self.test_share = 0.33
+        self.test_share = 0.4
 
     @classmethod
     def process_processed_data( self, fname ):

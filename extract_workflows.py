@@ -141,9 +141,7 @@ class ExtractWorkflows:
             workflows_as_json.close()
             
         workflow_seqes = wf_steps_sentences.split( "\n" )
-        print len(workflow_seqes)
         wf_steps_sentences = list( set( workflow_seqes ) )
-        print len(wf_steps_sentences)
         wf_steps_sentences = "\n".join( wf_steps_sentences )
 
         # write all the paths from all the workflow to a text file
