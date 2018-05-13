@@ -54,7 +54,8 @@ class EvaluateTopResults:
         data = list( data.items() )
         class_topk_accuracy = list()
         test_data_performance = list()
-        min_seq_length = 1
+        min_seq_length = 0
+        top_k = 1
         for i in range( len( data ) ):
             topk_prediction = 0.0
             num_class_topk = dict()
@@ -80,7 +81,7 @@ class EvaluateTopResults:
             actual_tools = [ reverse_data_dictionary[ ps ] for ps in label_pos ]
             predicted_tools = [ reverse_data_dictionary[ str( ps ) ] for ps in top_prediction_pos ]
             false_positives = [ tool for tool in predicted_tools if tool not in actual_tools ]
-            
+            sequence_tools = [ reverse_data_dictionary[ ps ] for ps in sequence ]
             for pos in top_prediction_pos:
                 if str( pos ) in label_pos:
                     topk_prediction += 1.0
@@ -88,22 +89,24 @@ class EvaluateTopResults:
 
             if len( sequence ) > min_seq_length:
                 compatible_tool_types = list()
-                test_seq_performance[ "input_sequence" ] = ",".join( [ reverse_data_dictionary[ ps ] for ps in sequence ] )
+                test_seq_performance[ "input_sequence" ] = ",".join( sequence_tools )
                 test_seq_performance[ "actual_tools" ] = ",".join( actual_tools )
                 test_seq_performance[ "predicted_tools" ] = ",".join( predicted_tools )
                 test_seq_performance[ "false_positives" ] = ",".join( false_positives )
                 test_seq_performance[ "precision" ] = topk_pred
                 adjusted_compatibility = topk_pred
-                seq_last_tool = actual_tools[ -1 ]
+                # get the last tool in the input sequence
+                seq_last_tool = sequence_tools[ -1 ]
                 if seq_last_tool in tools_filetypes:
                     last_tool_output_types = tools_filetypes[ seq_last_tool ][ "output_types" ]
-                    for false_pos in false_positives:
-                        if false_pos in tools_filetypes:
-                            inputs_false_pos = tools_filetypes[ false_pos ][ "input_types" ]
-                            compatible_types = [ filetype for filetype in inputs_false_pos if filetype in last_tool_output_types ]
-                            if len( compatible_types ) > 0:
-                                compatible_tool_types.append( false_pos )
-                                adjusted_compatibility += 1 / float( len( top_prediction_pos ) )
+                    if len( last_tool_output_types ) > 0:
+                        for false_pos in false_positives:
+                            if false_pos in tools_filetypes:
+                                inputs_false_pos = tools_filetypes[ false_pos ][ "input_types" ]
+                                compatible_types = [ filetype for filetype in inputs_false_pos if filetype in last_tool_output_types ]
+                                if len( compatible_types ) > 0:
+                                    compatible_tool_types.append( false_pos )
+                                    adjusted_compatibility += 1 / float( len( top_prediction_pos ) )
                 test_seq_performance[ "precision_adjusted_compatibility" ] = adjusted_compatibility
                 test_seq_performance[ "compatible_tool_types" ] = ",".join( compatible_tool_types )
                 test_data_performance.append( test_seq_performance )
@@ -121,6 +124,7 @@ class EvaluateTopResults:
         #keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision' ]
         #fieldnames = [ "Input tools sequence", "Actual next tools", "Predicted next tools", "False positives", "Compatible tools", "Precision" ]
         keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision', "precision_adjusted_compatibility" ]
+        #keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', "precision_adjusted_compatibility" ]
         with open( file_name, 'wb' ) as output_file:
             dict_writer = csv.DictWriter( output_file, keys )
             dict_writer.writeheader()
@@ -153,9 +157,9 @@ class EvaluateTopResults:
         print ( "Get topn predictions for %d train samples" % len( train_labels ) )
         train_class_topk_accuracy, train_perf = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary, filetypes )
         train_perf.extend( test_perf )
-        self.save_as_csv( train_perf, "data/complete_data_performance.csv" )
         with open( self.train_class_topk_accuracy, 'w' ) as train_topk_file:
             train_topk_file.write( json.dumps( train_class_topk_accuracy ) )
+        self.save_as_csv( train_perf, "data/complete_data_performance.csv" )
 
     
 
