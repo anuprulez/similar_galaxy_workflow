@@ -24,6 +24,8 @@ class PrepareData:
         self.test_sequence_file = self.current_working_dir + "/data/test_data_sequence.txt"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
+        self.tool_filetypes = self.current_working_dir + "/data/tools_file_types.json"
+        self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = 40
         self.test_share = 0.4
 
@@ -128,7 +130,7 @@ class PrepareData:
                 test_seq.write( "%s\n" % item )
 
     @classmethod
-    def prepare_paths_labels_dictionary( self, read_file, destination_file ):
+    def prepare_paths_labels_dictionary( self, read_file, destination_file, filetype_compatibility, dictionary, reverse_dictionary ):
         """
         Create a dictionary of sequences with their labels for training and test paths
         """
@@ -140,12 +142,20 @@ class PrepareData:
             if item and item not in "":
                 tools = item.split( "," )
                 label = tools[ -1 ]
-                train_tools = tools[ :len( tools) - 1 ]
+                train_tools = tools[ :len( tools ) - 1 ]
+                last_tool = reverse_dictionary[ int( train_tools[ -1 ] ) ]
                 train_tools = ",".join( train_tools )
                 if train_tools in paths_labels:
                     paths_labels[ train_tools ] += "," + label
                 else:
                     paths_labels[ train_tools ] = label
+                    # encode the compatible next tools along with the labels
+                    if last_tool in dictionary and last_tool in filetype_compatibility:
+                        last_tool_name = dictionary[ last_tool ]
+                        compatible_next_tools = filetype_compatibility[ last_tool ].split( "," )
+                        for tool in compatible_next_tools:
+                            if tool in dictionary:
+                                paths_labels[ train_tools ] += "," + str( dictionary[ tool ] )
         with open( destination_file, 'w' ) as multilabel_file:
             multilabel_file.write( json.dumps( paths_labels ) )
         return paths_labels
@@ -170,6 +180,37 @@ class PrepareData:
         return data_mat, label_mat
 
     @classmethod
+    def assign_filetype_compatibility( self, filetypes_path, dictionary ):
+        """
+        Get the tools with compatible file types
+        """
+        max_compatible = 3
+        with open( filetypes_path, "r" ) as file_types:
+            tools_filetypes = json.loads( file_types.read() )
+        tools_compatibility = dict()
+        for out_tool in tools_filetypes:
+            output_types = tools_filetypes[ out_tool ][ "output_types" ]
+            if len( output_types ) > 0:
+                for in_tool in tools_filetypes:
+                    if out_tool != in_tool:
+                        input_types = tools_filetypes[ in_tool ][ "input_types" ]
+                        if len( input_types ) > 0:
+                            compatible_filetypes = [ filetype for filetype in output_types if filetype in input_types ]
+                            if len( compatible_filetypes ) > 0:
+                                if out_tool in tools_compatibility:
+                                    compatible_tools = tools_compatibility[ out_tool ]
+                                    # take only a fixed number of file type compatible tools
+                                    if len( compatible_tools.split( "," ) ) < max_compatible:
+                                        if out_tool in dictionary and in_tool in dictionary:
+                                            tools_compatibility[ out_tool ] += "," + in_tool
+                                else:
+                                    if out_tool in dictionary and in_tool in dictionary:
+                                        tools_compatibility[ out_tool ] = in_tool
+        with open( self.compatible_tools_filetypes, "w" ) as compatible_filetypes:
+            compatible_filetypes.write( json.dumps( tools_compatibility ) )
+        return tools_compatibility
+
+    @classmethod
     def get_data_labels_mat( self ):
         """
         Convert the training and test paths into corresponding numpy matrices
@@ -179,6 +220,7 @@ class PrepareData:
         num_classes = len( dictionary )
         # randomize all the paths
         random.shuffle( raw_paths )
+        filetype_compatibility = self.assign_filetype_compatibility( self.tool_filetypes, dictionary )
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]
@@ -189,8 +231,8 @@ class PrepareData:
         print( "Processing test paths..." )
         self.process_test_paths( test_paths, dictionary )
         # create sequences with labels for train and test paths
-        train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
-        test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
+        train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict, filetype_compatibility, dictionary, reverse_dictionary )
+        test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict, filetype_compatibility, dictionary, reverse_dictionary )
         # create 0 padded sequences from train and test paths
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
