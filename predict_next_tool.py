@@ -38,9 +38,9 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 15
+        n_epochs = 30
         batch_size = 40
-        dropout = 0.0
+        dropout = 0.25
         lstm_units = 64
         # get training and test data and their labels
         data = prepare_data.PrepareData()
@@ -50,7 +50,7 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( SpatialDropout1D( 0.2 ) )
+        model.add( SpatialDropout1D( dropout ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( 0.01 ) ) )
