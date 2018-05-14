@@ -20,7 +20,7 @@ class EvaluateTopResults:
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-100.hdf5"
+        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-80.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.train_labels_path = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.train_class_acc = self.current_working_dir + "/data/train_class_acc.txt"
@@ -55,7 +55,7 @@ class EvaluateTopResults:
         class_topk_accuracy = list()
         test_data_performance = list()
         min_seq_length = 0
-        top_k = 1
+        #top_k = 1
         for i in range( len( data ) ):
             topk_prediction = 0.0
             num_class_topk = dict()
@@ -154,14 +154,13 @@ class EvaluateTopResults:
         test_class_topk_accuracy, test_perf = self.get_per_class_topk_acc( test_labels, loaded_model, dimensions, reverse_data_dictionary, filetypes )
         with open( self.test_class_topk_accuracy, 'w' ) as test_topk_file:
             test_topk_file.write( json.dumps( test_class_topk_accuracy ) )
-        print ( "Get topn predictions for %d train samples" % len( train_labels ) )
+        '''print ( "Get topn predictions for %d train samples" % len( train_labels ) )
         train_class_topk_accuracy, train_perf = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary, filetypes )
         train_perf.extend( test_perf )
         with open( self.train_class_topk_accuracy, 'w' ) as train_topk_file:
-            train_topk_file.write( json.dumps( train_class_topk_accuracy ) )
-        self.save_as_csv( train_perf, "data/complete_data_performance.csv" )
+            train_topk_file.write( json.dumps( train_class_topk_accuracy ) )'''
+        self.save_as_csv( test_perf, "data/test_data_performance_80.csv" )
 
-    
 
 if __name__ == "__main__":
 

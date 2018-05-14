@@ -114,6 +114,8 @@ class ExtractWorkflows:
 
         # create flow paths from all workflows and write them as sentences
         wf_steps_sentences = ""
+        workflow_paths = list()
+        print( "Processing workflows..." )
         for item in workflow_json:
             flow_paths = list()
             parents_graph = item[ "parents" ]
@@ -127,11 +129,7 @@ class ExtractWorkflows:
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             all_tool_paths = self.tool_seq_toolnames( steps, flow_paths )
-            if wf_steps_sentences == "":
-                wf_steps_sentences = all_tool_paths
-            else:
-                wf_steps_sentences += all_tool_paths
-
+            workflow_paths.extend( all_tool_paths )
         workflows_to_json = dict()
         for item in workflow_json:
             workflows_to_json[ item[ "id" ] ] = item
@@ -139,14 +137,12 @@ class ExtractWorkflows:
         with open( "data/workflows.json", "w" ) as workflows_as_json:
             workflows_as_json.write( json.dumps( workflows_to_json ) )
             workflows_as_json.close()
-            
-        workflow_seqes = wf_steps_sentences.split( "\n" )
-        wf_steps_sentences = list( set( workflow_seqes ) )
-        wf_steps_sentences = "\n".join( wf_steps_sentences )
 
+        workflow_paths = list( set( workflow_paths ) )
+        workflow_paths = "\n".join( workflow_paths )
         # write all the paths from all the workflow to a text file
         with open( "data/workflow_steps.txt", "w" ) as steps_txt:
-            steps_txt.write( wf_steps_sentences )
+            steps_txt.write( workflow_paths )
             steps_txt.close()
 
     @classmethod
@@ -158,26 +154,22 @@ class ExtractWorkflows:
     @classmethod
     def tool_seq_toolnames( self, tool_dict, paths ):
         tool_seq = ""
+        paths_list = list()
         for path in paths:
             # create tool paths
-            sequence = ""
+            sequence = list()
             for tool in path:
                 tool_name = self.process_tool_names( tool_dict[ tool ] )
-                if sequence == "":
-                    sequence = tool_name
-                else:
-                    # merge the repeated tools into just one tool
-                    last_tool_name = sequence.split( " " )[ -1 ]
+                if len( sequence ) > 0:
+                    last_tool_name = sequence[ -1 ]
                     if last_tool_name != tool_name:
-                        sequence += " " + tool_name
-            sequence += "\n"
-            # exclude the duplicate tool paths
-            if sequence not in tool_seq:
-                if tool_seq == "":
-                    tool_seq = sequence
+                        sequence.append( tool_name )
                 else:
-                    tool_seq += sequence
-        return tool_seq
+                    sequence.append( tool_name )
+            sequence = ",".join( sequence )
+            if sequence not in paths_list:
+                paths_list.append( sequence )
+        return paths_list
 
     @classmethod
     def find_tool_paths_workflow( self, graph, start, end, path=[] ):

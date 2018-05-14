@@ -38,7 +38,7 @@ class PrepareData:
             data = f.readlines()
         raw_paths = [ x.replace( "\n", '' ) for x in data ]
         for item in raw_paths:
-            split_items = item.split( " " )
+            split_items = item.split( "," )
             for token in split_items:
                 if token not in tokens:
                     tokens.append( token )
@@ -71,7 +71,7 @@ class PrepareData:
         train_data_sequence = list()
         random.shuffle( train_paths )
         for index, item in enumerate( train_paths ):
-            tools = item.split(" ")
+            tools = item.split( "," )
             len_tools = len( tools )
             if len_tools <= self.max_tool_sequence_len:
                 for pos in range( len_tools ):
@@ -104,7 +104,7 @@ class PrepareData:
         test_data_sequence = list()
         random.shuffle( test_paths )
         for index, item in enumerate( test_paths ):
-            tools = item.split(" ")
+            tools = item.split( "," )
             len_tools = len( tools )
             if len_tools <= self.max_tool_sequence_len:
                 for window in range( 1, len_tools ):
