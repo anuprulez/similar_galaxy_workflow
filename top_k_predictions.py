@@ -20,7 +20,7 @@ class EvaluateTopResults:
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-150.hdf5"
+        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-20.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.train_labels_path = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.train_class_acc = self.current_working_dir + "/data/train_class_acc.txt"
@@ -55,7 +55,7 @@ class EvaluateTopResults:
         class_topk_accuracy = list()
         test_data_performance = list()
         min_seq_length = 1
-        #top_k = 1
+        top_k = 5
         for i in range( len( data ) ):
             topk_prediction = 0.0
             num_class_topk = dict()
@@ -92,6 +92,7 @@ class EvaluateTopResults:
                 test_seq_performance[ "input_sequence" ] = ",".join( sequence_tools )
                 test_seq_performance[ "actual_tools" ] = ",".join( actual_tools )
                 test_seq_performance[ "predicted_tools" ] = ",".join( predicted_tools )
+                test_seq_performance[ "top_k_predicted_tools" ] = ",".join( predicted_tools[ :top_k ] )
                 test_seq_performance[ "false_positives" ] = ",".join( false_positives )
                 test_seq_performance[ "precision" ] = topk_pred
                 adjusted_compatibility = topk_pred
@@ -123,7 +124,7 @@ class EvaluateTopResults:
         # supply actual 
         #keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision' ]
         #fieldnames = [ "Input tools sequence", "Actual next tools", "Predicted next tools", "False positives", "Compatible tools", "Precision" ]
-        keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', 'precision', "precision_adjusted_compatibility" ]
+        keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'top_k_predicted_tools', 'false_positives', 'compatible_tool_types', 'precision', "precision_adjusted_compatibility" ]
         #keys = [ 'input_sequence', 'actual_tools', 'predicted_tools', 'false_positives', 'compatible_tool_types', "precision_adjusted_compatibility" ]
         with open( file_name, 'wb' ) as output_file:
             dict_writer = csv.DictWriter( output_file, keys )
@@ -159,7 +160,7 @@ class EvaluateTopResults:
         train_perf.extend( test_perf )
         with open( self.train_class_topk_accuracy, 'w' ) as train_topk_file:
             train_topk_file.write( json.dumps( train_class_topk_accuracy ) )'''
-        self.save_as_csv( test_perf, "data/test_data_performance_150.csv" )
+        self.save_as_csv( test_perf, "data/test_data_performance_10.csv" )
 
 
 if __name__ == "__main__":

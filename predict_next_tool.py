@@ -38,10 +38,10 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 100
+        n_epochs = 10
         batch_size = 40
-        dropout = 0.5
-        lstm_units = 128
+        dropout = 0.25
+        lstm_units = 64
         # get training and test data and their labels
         data = prepare_data.PrepareData()
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()

@@ -2,6 +2,7 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
 
 def plot_data_distribution( file_path ):
@@ -45,19 +46,19 @@ def plot_labels_distribution( test_path, train_path ):
     print len( train_labels_count )
     font = { 'family' : 'sans serif', 'size': 22 }
     plt.rc('font', **font) 
-    plt.bar( comp_labels_index, train_seq_count, facecolor='r', align='center' )
+    plt.bar( np.arange( len( test_seq_count ) ), test_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
-    plt.ylabel( 'Number of tools in samples' )
-    plt.title( 'Distribution of number of tools in samples' )
+    plt.ylabel( 'Number of next compatible tools in samples' )
+    plt.title( 'Distribution of number of next tools in test samples' )
     plt.grid( True )
     plt.show()
 
-    plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
+    '''plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
-    plt.ylabel( 'Number of labels in samples' )
-    plt.title( 'Distribution of number of labels in samples' )
+    plt.ylabel( 'Number of next compatible tools in samples' )
+    plt.title( 'Distribution of number of next tools in train samples' )
     plt.grid( True )
-    plt.show()
+    plt.show()'''
 
 
 def plot_loss( file_path_train, file_path_test ):
@@ -113,7 +114,23 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
-#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
-plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
+def plot_next_tools_precision( file_path ):
+    next_tools = list()
+    precision = list()
+    with open( file_path, 'rb' ) as next_tools_precision:
+        test_data_performance = csv.reader( next_tools_precision, delimiter=',' )
+        for index, row in enumerate( test_data_performance ):
+            tools = row[ 1 ].split(",")
+            next_tools.append( len( tools ) )
+            precision.append( row[ 6 ] )
+    plt.bar( next_tools, precision )
+    plt.ylabel( 'Number of next tools' )
+    plt.xlabel( 'Precision' )
+    plt.title( 'Number of next tool vs precision' )
+    plt.grid( True )
+    plt.show()
 
+#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
+#plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
+#plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
+plot_next_tools_precision( "data/test_data_performance_10.csv" )
