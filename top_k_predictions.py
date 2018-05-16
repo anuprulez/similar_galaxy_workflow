@@ -54,8 +54,8 @@ class EvaluateTopResults:
         data = list( data.items() )
         class_topk_accuracy = list()
         test_data_performance = list()
-        min_seq_length = 1
         top_k = 5
+        min_seq_length = 0
         for i in range( len( data ) ):
             topk_prediction = 0.0
             num_class_topk = dict()

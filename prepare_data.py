@@ -216,7 +216,6 @@ class PrepareData:
         # randomize all the paths
         random.shuffle( raw_paths )
         filetype_compatibility = self.assign_filetype_compatibility( self.tool_filetypes, dictionary )
-        print len(filetype_compatibility)
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]

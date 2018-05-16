@@ -46,17 +46,28 @@ def plot_labels_distribution( test_path, train_path ):
     print len( train_labels_count )
     font = { 'family' : 'sans serif', 'size': 22 }
     plt.rc('font', **font) 
+<<<<<<< HEAD
     plt.bar( np.arange( len( test_seq_count ) ), test_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
     plt.ylabel( 'Number of next compatible tools in samples' )
+=======
+    plt.bar( comp_labels_index, test_labels_count, facecolor='r', align='center' )
+    plt.xlabel( 'Number of samples' )
+    plt.ylabel( 'Number of tools in samples' )
+>>>>>>> 34b5afa6b5d578ded9c3dc20f8d9046becc71339
     plt.title( 'Distribution of number of next tools in test samples' )
     plt.grid( True )
     plt.show()
 
     '''plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
+<<<<<<< HEAD
     plt.ylabel( 'Number of next compatible tools in samples' )
     plt.title( 'Distribution of number of next tools in train samples' )
+=======
+    plt.ylabel( 'Number of labels in samples' )
+    plt.title( 'Distribution of number of next tools in test samples' )
+>>>>>>> 34b5afa6b5d578ded9c3dc20f8d9046becc71339
     plt.grid( True )
     plt.show()'''
 
@@ -114,6 +125,7 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
+<<<<<<< HEAD
 def plot_next_tools_precision( file_path ):
     next_tools = list()
     precision = list()
@@ -129,6 +141,11 @@ def plot_next_tools_precision( file_path ):
     plt.title( 'Number of next tool vs precision' )
     plt.grid( True )
     plt.show()
+=======
+#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
+#plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
+plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
+>>>>>>> 34b5afa6b5d578ded9c3dc20f8d9046becc71339
 
 #plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
 #plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
