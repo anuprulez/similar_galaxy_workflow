@@ -198,7 +198,7 @@ class PrepareData:
                             compatible_filetypes = [ filetype for filetype in output_types if filetype in input_types ]
                             if len( compatible_filetypes ) > 0:
                                 if out_tool in dictionary and in_tool in dictionary:
-                                    if in_tool not in compatible_next_tools
+                                    if in_tool not in compatible_next_tools:
                                         compatible_next_tools.append( in_tool )
             tools_compatibility[ out_tool ] = ",".join( compatible_next_tools )
         with open( self.compatible_tools_filetypes, "w" ) as compatible_filetypes:
