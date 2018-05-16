@@ -140,22 +140,21 @@ class PrepareData:
         random.shuffle( paths )
         for item in paths:
             if item and item not in "":
+                all_labels = list()
                 tools = item.split( "," )
                 label = tools[ -1 ]
                 train_tools = tools[ :len( tools ) - 1 ]
                 last_tool = reverse_dictionary[ int( train_tools[ -1 ] ) ]
                 train_tools = ",".join( train_tools )
-                if train_tools in paths_labels:
-                    paths_labels[ train_tools ] += "," + label
-                else:
-                    paths_labels[ train_tools ] = label
-                    # encode the compatible next tools along with the labels
-                    if last_tool in dictionary and last_tool in filetype_compatibility:
-                        last_tool_name = dictionary[ last_tool ]
-                        compatible_next_tools = filetype_compatibility[ last_tool ].split( "," )
-                        for tool in compatible_next_tools:
-                            if tool in dictionary:
-                                paths_labels[ train_tools ] += "," + str( dictionary[ tool ] )
+                all_labels.append( label )
+                # encode the compatible next tools along with the labels
+                if last_tool in dictionary and last_tool in filetype_compatibility:
+                    last_tool_name = dictionary[ last_tool ]
+                    compatible_next_tools = filetype_compatibility[ last_tool ].split( "," )
+                    for tool in compatible_next_tools:
+                        if tool in dictionary:
+                            all_labels.append( str( dictionary[ tool ] ) )
+                paths_labels[ train_tools ] = ",".join( list( set( all_labels ) ) )
         with open( destination_file, 'w' ) as multilabel_file:
             multilabel_file.write( json.dumps( paths_labels ) )
         return paths_labels
@@ -184,12 +183,13 @@ class PrepareData:
         """
         Get the tools with compatible file types
         """
-        max_compatible = 3
+        max_compatible = len( dictionary ) - 1
         with open( filetypes_path, "r" ) as file_types:
             tools_filetypes = json.loads( file_types.read() )
         tools_compatibility = dict()
         for out_tool in tools_filetypes:
             output_types = tools_filetypes[ out_tool ][ "output_types" ]
+            compatible_next_tools = list()
             if len( output_types ) > 0:
                 for in_tool in tools_filetypes:
                     if out_tool != in_tool:
@@ -197,15 +197,10 @@ class PrepareData:
                         if len( input_types ) > 0:
                             compatible_filetypes = [ filetype for filetype in output_types if filetype in input_types ]
                             if len( compatible_filetypes ) > 0:
-                                if out_tool in tools_compatibility:
-                                    compatible_tools = tools_compatibility[ out_tool ]
-                                    # take only a fixed number of file type compatible tools
-                                    if len( compatible_tools.split( "," ) ) < max_compatible:
-                                        if out_tool in dictionary and in_tool in dictionary:
-                                            tools_compatibility[ out_tool ] += "," + in_tool
-                                else:
-                                    if out_tool in dictionary and in_tool in dictionary:
-                                        tools_compatibility[ out_tool ] = in_tool
+                                if out_tool in dictionary and in_tool in dictionary:
+                                    if in_tool not in compatible_next_tools
+                                        compatible_next_tools.append( in_tool )
+            tools_compatibility[ out_tool ] = ",".join( compatible_next_tools )
         with open( self.compatible_tools_filetypes, "w" ) as compatible_filetypes:
             compatible_filetypes.write( json.dumps( tools_compatibility ) )
         return tools_compatibility
@@ -221,6 +216,7 @@ class PrepareData:
         # randomize all the paths
         random.shuffle( raw_paths )
         filetype_compatibility = self.assign_filetype_compatibility( self.tool_filetypes, dictionary )
+        print len(filetype_compatibility)
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]

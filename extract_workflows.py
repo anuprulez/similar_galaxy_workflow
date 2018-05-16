@@ -220,10 +220,14 @@ class ExtractWorkflows:
             wf = workflows[ wf_id ]
             for step in wf[ "steps" ]:
                 tool_name = wf[ "steps" ][ step ]
+                # take tool names in lower case types
+                tool_name = tool_name.lower()
+                # insert "_" if there is a space in the tool name
+                if len( tool_name.split() ) > 1:
+                    tool_name = "_".join( tool_name.split() )
                 tool_input_types = list()
                 if not tool_name in tool_io_types:
                     tool_io_types[ tool_name ] = dict()
-
                 ip_types = wf[ "input_types" ][ step ]
                 parents = wf[ "parents" ][ step ]
                 for it in ip_types:

@@ -14,7 +14,7 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
 from keras import regularizers
 from keras.layers.core import SpatialDropout1D
-
+from keras.optimizers import RMSprop
 
 import prepare_data
 
@@ -38,15 +38,16 @@ class PredictNextTool:
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 30
+        n_epochs = 100
         batch_size = 40
-        dropout = 0.25
-        lstm_units = 64
+        dropout = 0.5
+        lstm_units = 128
         # get training and test data and their labels
         data = prepare_data.PrepareData()
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()
         dimensions = len( dictionary )
-        embedding_vec_size = 100
+        embedding_vec_size = 200
+        optimizer = RMSprop( lr=0.01 )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
@@ -54,7 +55,7 @@ class PredictNextTool:
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( 0.01 ) ) )
-        model.compile( loss="binary_crossentropy", optimizer='rmsprop' )
+        model.compile( loss="binary_crossentropy", optimizer=optimizer )
         # save the network as json
         model_json = model.to_json()
         with open( self.network_config_json_path, "w" ) as json_file:
