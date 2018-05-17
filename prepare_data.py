@@ -166,24 +166,23 @@ class PrepareData:
         """
         size_data = len( paths_dictionary )
         data_mat = np.zeros( [ size_data, self.max_tool_sequence_len ] )
-        label_mat = np.zeros( [ size_data, num_classes ] )
+        label_mat = np.zeros( [ size_data, num_classes + 1 ] )
         train_counter = 0
         for train_seq, train_label in list( paths_dictionary.items() ):
             positions = train_seq.split( "," )
             start_pos = self.max_tool_sequence_len - len( positions )
             for id_pos, pos in enumerate( positions ):
-                data_mat[ train_counter ][ start_pos + id_pos ] = int( pos ) - 1
+                data_mat[ train_counter ][ start_pos + id_pos ] = int( pos )
             for label_item in train_label.split( "," ):
-                label_mat[ train_counter ][ int( label_item ) - 1 ] = 1.0
+                label_mat[ train_counter ][ int( label_item ) ] = 1.0
             train_counter += 1
         return data_mat, label_mat
 
     @classmethod
     def assign_filetype_compatibility( self, filetypes_path, dictionary ):
         """
-        Get the tools with compatible file types
+        Get the next tools with compatible file types for each tool
         """
-        max_compatible = 100
         with open( filetypes_path, "r" ) as file_types:
             tools_filetypes = json.loads( file_types.read() )
         tools_compatibility = dict()
@@ -200,7 +199,7 @@ class PrepareData:
                                 if out_tool in dictionary and in_tool in dictionary:
                                     if in_tool not in compatible_next_tools:
                                         compatible_next_tools.append( in_tool )
-            tools_compatibility[ out_tool ] = ",".join( compatible_next_tools[ :max_compatible ] )
+            tools_compatibility[ out_tool ] = ",".join( compatible_next_tools )
         with open( self.compatible_tools_filetypes, "w" ) as compatible_filetypes:
             compatible_filetypes.write( json.dumps( tools_compatibility ) )
         return tools_compatibility
@@ -221,9 +220,8 @@ class PrepareData:
         test_paths = raw_paths[ :int( test_share ) ]
         train_paths = raw_paths[ int( test_share ): ]
         random.shuffle( train_paths )
-        print( "Processing train paths..." )
+        # process training and test paths in different ways
         self.process_train_paths( train_paths, dictionary )
-        print( "Processing test paths..." )
         self.process_test_paths( test_paths, dictionary )
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict, next_compatible_tools, dictionary, reverse_dictionary )

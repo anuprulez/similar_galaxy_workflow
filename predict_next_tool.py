@@ -35,28 +35,24 @@ class PredictNextTool:
         self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
 
     @classmethod
-    def evaluate_LSTM_network( self ):
+    def evaluate_LSTM_network( self, n_epochs=30, batch_size=40, dropout=0.1, lstm_units=64, embedding_vec_size=200, lr=0.01, reg_coeff=0.01 ):
         """
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
-        n_epochs = 10
-        batch_size = 40
-        dropout = 0.25
-        lstm_units = 64
         # get training and test data and their labels
         data = prepare_data.PrepareData()
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
-        dimensions = len( dictionary )
-        embedding_vec_size = 200
-        optimizer = RMSprop( lr=0.01 )
+        # Increase the dimension by 1 to mask the 0th position
+        dimensions = len( dictionary ) + 1
+        optimizer = RMSprop( lr=lr )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
         model.add( SpatialDropout1D( dropout ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, recurrent_dropout=dropout, activation='softsign' ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, recurrent_dropout=dropout, activation='softsign' ) )
-        model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( 0.01 ) ) )
+        model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( reg_coeff ) ) )
         model.compile( loss="binary_crossentropy", optimizer=optimizer )
         # save the network as json
         model_json = model.to_json()
@@ -111,9 +107,9 @@ class PredictCallback( Callback ):
             prediction_pos = np.argsort( prediction, axis=-1 )
             topk_prediction_pos = prediction_pos[ -topk: ]
             # read tool names using reverse dictionary
-            sequence_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in test_sample_tool_pos ]
-            actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in actual_classes_pos ]
-            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in topk_prediction_pos ]
+            sequence_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in test_sample_tool_pos ]
+            actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
+            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in topk_prediction_pos ]
             # find false positives
             false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
             absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
