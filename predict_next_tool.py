@@ -30,12 +30,13 @@ class PredictNextTool:
         self.loss_path = self.current_working_dir + "/data/loss_history.txt"
         self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
-        self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
-        self.test_top_pred_path = self.current_working_dir + "/data/test_top_pred.txt"
+        self.train_abs_top_pred_path = self.current_working_dir + "/data/train_abs_top_pred.txt"
+        self.train_top_compatibility_pred_path = self.current_working_dir + "/data/train_top_compatible_pred.txt"
+        self.test_abs_top_pred_path = self.current_working_dir + "/data/test_abs_top_pred.txt"
         self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=30, batch_size=40, dropout=0.1, lstm_units=64, embedding_vec_size=200, lr=0.01, reg_coeff=0.01 ):
+    def evaluate_LSTM_network( self, n_epochs=30, batch_size=40, dropout=0.25, lstm_units=64, embedding_vec_size=100, lr=0.01, reg_coeff=0.01 ):
         """
         Create LSTM network and evaluate performance
         """
@@ -61,7 +62,7 @@ class PredictNextTool:
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs )
+        #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
@@ -70,8 +71,9 @@ class PredictNextTool:
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        #np.savetxt( self.abs_top_pred_path, predict_callback_train.epochs_acc, delimiter="," )
-        np.savetxt( self.test_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
+        #np.savetxt( self.train_abs_top_pred_path, predict_callback_train.abs_precision, delimiter="," )
+        #np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
+        np.savetxt( self.test_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
         np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
         print ( "Training finished" )
 
