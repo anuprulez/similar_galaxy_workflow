@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import time
 import os
+import json
 
 # machine learning library
 from keras.models import Sequential
@@ -31,6 +32,7 @@ class PredictNextTool:
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.abs_top_pred_path = self.current_working_dir + "/data/abs_top_pred.txt"
         self.test_top_pred_path = self.current_working_dir + "/data/test_top_pred.txt"
+        self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
 
     @classmethod
     def evaluate_LSTM_network( self ):
@@ -44,7 +46,7 @@ class PredictNextTool:
         lstm_units = 64
         # get training and test data and their labels
         data = prepare_data.PrepareData()
-        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary = data.get_data_labels_mat()
+        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         dimensions = len( dictionary )
         embedding_vec_size = 200
         optimizer = RMSprop( lr=0.01 )
@@ -64,7 +66,7 @@ class PredictNextTool:
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs )
-        predict_callback_test = PredictCallback( test_data, test_labels, n_epochs )
+        predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
@@ -73,41 +75,64 @@ class PredictNextTool:
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
         #np.savetxt( self.abs_top_pred_path, predict_callback_train.epochs_acc, delimiter="," )
-        np.savetxt( self.test_top_pred_path, predict_callback_test.epochs_acc, delimiter="," )
+        np.savetxt( self.test_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
+        np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
         print ( "Training finished" )
 
 
 class PredictCallback( Callback ):
-    def __init__( self, test_data, test_labels, n_epochs ):
+    def __init__( self, test_data, test_labels, n_epochs, reverse_data_dictionary, next_compatible_tools ):
         self.test_data = test_data
         self.test_labels = test_labels
-        self.epochs_acc = np.zeros( [ n_epochs ] )
+        self.abs_precision = np.zeros( [ n_epochs ] )
+        self.abs_compatible_precision = np.zeros( [ n_epochs ] )
+        self.reverse_data_dictionary = reverse_data_dictionary
+        self.next_compatible_tools = next_compatible_tools
 
     def on_epoch_end( self, epoch, logs={} ):
         """
         Compute topk accuracy for each test sample
         """
-        x, y = self.test_data, self.test_labels
+        x, y, reverse_data_dictionary, next_compatible_tools = self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools
         size = y.shape[ 0 ]
         dimensions = y.shape[ 1 ]
-        topk_pred = np.zeros( [ size ] )
+        topk_abs_pred = np.zeros( [ size ] )
+        topk_compatible_pred = np.zeros( [ size ] )
+        # loop over all the test samples and find prediction precision
         for i in range( size ):
             correct_prediction_count = 0.0
-            actual_classes_pos = np.where( y[ i ] > 0.0 )[ 0 ]
+            actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
             topk = len( actual_classes_pos )
             test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
+            test_sample_pos = np.where( x[ i ] > 0 )[ 0 ]
+            test_sample_tool_pos = x[ i ][ test_sample_pos[ 0 ]: ]
             prediction = self.model.predict( test_sample, verbose=0 )
             prediction = np.reshape( prediction, ( dimensions, ) )
             prediction_pos = np.argsort( prediction, axis=-1 )
             topk_prediction_pos = prediction_pos[ -topk: ]
-            for item in topk_prediction_pos:
-                if item in actual_classes_pos:
-                    correct_prediction_count += 1.0
-            topk_prediction_sample = correct_prediction_count / float( topk )
-            topk_pred[ i ] = topk_prediction_sample
-        epoch_mean_acc = np.mean( topk_pred )
-        self.epochs_acc[ epoch ] = epoch_mean_acc
-        print( "Epoch %d topk accuracy: %.2f" % ( epoch + 1, epoch_mean_acc ) )
+            # read tool names using reverse dictionary
+            sequence_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in test_sample_tool_pos ]
+            actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in actual_classes_pos ]
+            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in topk_prediction_pos ]
+            # find false positives
+            false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
+            absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
+            adjusted_precision = absolute_precision
+            # adjust the precision for compatible tools
+            seq_last_tool = sequence_tool_names[ -1 ]
+            if seq_last_tool in next_compatible_tools:
+                next_tools = next_compatible_tools[ seq_last_tool ]
+                next_tools = next_tools.split( "," )
+                if len( next_tools ) > 0:
+                    for false_pos in false_positives:
+                        if false_pos in next_tools:
+                            adjusted_precision += 1 / float( len( actual_next_tool_names ) )
+            topk_abs_pred[ i ] = absolute_precision
+            topk_compatible_pred[ i ] = adjusted_precision
+        self.abs_precision[ epoch ] = np.mean( topk_abs_pred )
+        self.abs_compatible_precision[ epoch ] = np.mean( topk_compatible_pred )
+        print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, np.mean( topk_abs_pred ) ) )
+        print( "Epoch %d topk compatibility adjusted precision: %.2f" % ( epoch + 1, np.mean( topk_compatible_pred ) ) )
 
 
 if __name__ == "__main__":
