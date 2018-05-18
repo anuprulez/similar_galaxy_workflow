@@ -19,8 +19,8 @@ class EvaluateTopResults:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-15.hdf5"
+        self.network_config_json_path = self.current_working_dir + "/data/model_csv.json"
+        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch_csv.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.train_labels_path = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.train_class_acc = self.current_working_dir + "/data/train_class_acc.txt"
@@ -84,7 +84,6 @@ class EvaluateTopResults:
                 if str( pos ) in label_pos:
                     topk_prediction += 1.0
             topk_pred = topk_prediction / float( len( top_prediction_pos ) )
-
             if len( sequence ) > min_seq_length:
                 compatible_tool_types = list()
                 test_seq_performance[ "input_sequence" ] = ",".join( sequence_tools )
@@ -102,7 +101,7 @@ class EvaluateTopResults:
                     if len( next_tools ) > 0:
                         for false_pos in false_positives:
                             if false_pos in next_tools:
-                                adjusted_precision += 1 / float( len( actual_tools ) )
+                                adjusted_precision += 1 / float( len( top_prediction_pos ) )
                                 compatible_tool_types.append( false_pos )
                 test_seq_performance[ "precision_adjusted_compatibility" ] = adjusted_precision
                 test_seq_performance[ "compatible_tool_types" ] = ",".join( compatible_tool_types )
