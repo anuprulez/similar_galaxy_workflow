@@ -228,6 +228,7 @@ class ExtractWorkflows:
                 tool_input_types = list()
                 if not tool_name in tool_io_types:
                     tool_io_types[ tool_name ] = dict()
+                
                 ip_types = wf[ "input_types" ][ step ]
                 parents = wf[ "parents" ][ step ]
                 for it in ip_types:

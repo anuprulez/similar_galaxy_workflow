@@ -36,7 +36,7 @@ class PredictNextTool:
         self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=20, batch_size=40, dropout=0.0, lstm_units=64, embedding_vec_size=100, lr=0.01, reg_coeff=0.01 ):
+    def evaluate_LSTM_network( self, n_epochs=30, batch_size=40, dropout=0.1, lstm_units=64, embedding_vec_size=64, lr=0.01, reg_coeff=0.01 ):
         """
         Create LSTM network and evaluate performance
         """
@@ -50,7 +50,7 @@ class PredictNextTool:
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( SpatialDropout1D( 0.0 ) )
+        model.add( SpatialDropout1D( dropout ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, activation='softsign' ) )
         model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, activation='softsign' ) )
         model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( reg_coeff ) ) )
