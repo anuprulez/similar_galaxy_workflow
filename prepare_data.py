@@ -24,10 +24,9 @@ class PrepareData:
         self.test_sequence_file = self.current_working_dir + "/data/test_data_sequence.txt"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
-        self.tool_filetypes = self.current_working_dir + "/data/tools_file_types.json"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = 40
-        self.test_share = 0.4
+        self.test_share = 0.33
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -87,6 +86,38 @@ class PrepareData:
                                 train_data.append( tools_pos )
                             if data_seq not in train_data_sequence:
                                 train_data_sequence.append( data_seq )
+                print ( "Path %d processed" % ( index + 1 ) )
+            else:
+                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
+        with open( self.train_file, "w" ) as train_file:
+            for item in train_data:
+                train_file.write( "%s\n" % item )
+        with open( self.train_sequence_file, "w" ) as train_seq:
+            for item in train_data_sequence:
+                train_seq.write( "%s\n" % item )
+                
+    @classmethod
+    def process_train_paths_new( self, train_paths, dictionary ):
+        """
+        Process train paths using a variable length sliding window
+        """
+        train_data = list()
+        train_data_sequence = list()
+        random.shuffle( train_paths )
+        for index, item in enumerate( train_paths ):
+            tools = item.split( "," )
+            len_tools = len( tools )
+            if len_tools <= self.max_tool_sequence_len:
+                for window in range( 1, len_tools ):
+                    sequence = tools[ 0: window + 1 ]
+                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
+                    if len( tools_pos ) > 1:
+                        tools_pos = ",".join( tools_pos )
+                        data_seq = ",".join( sequence )
+                        if tools_pos not in train_data:
+                            train_data.append( tools_pos )
+                        if data_seq not in train_data_sequence:
+                            train_data_sequence.append( data_seq )
                 print ( "Path %d processed" % ( index + 1 ) )
             else:
                 print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
@@ -173,29 +204,12 @@ class PrepareData:
         return data_mat, label_mat
 
     @classmethod
-    def assign_filetype_compatibility( self, filetypes_path, dictionary ):
+    def get_filetype_compatibility( self, filetypes_path, dictionary ):
         """
         Get the next tools with compatible file types for each tool
         """
-        with open( filetypes_path, "r" ) as file_types:
-            tools_filetypes = json.loads( file_types.read() )
-        tools_compatibility = dict()
-        for out_tool in tools_filetypes:
-            output_types = tools_filetypes[ out_tool ][ "output_types" ]
-            compatible_next_tools = list()
-            if len( output_types ) > 0:
-                for in_tool in tools_filetypes:
-                    if out_tool != in_tool:
-                        input_types = tools_filetypes[ in_tool ][ "input_types" ]
-                        if len( input_types ) > 0:
-                            compatible_filetypes = [ filetype for filetype in output_types if filetype in input_types ]
-                            if len( compatible_filetypes ) > 0:
-                                if out_tool in dictionary and in_tool in dictionary:
-                                    if in_tool not in compatible_next_tools:
-                                        compatible_next_tools.append( in_tool )
-            tools_compatibility[ out_tool ] = ",".join( compatible_next_tools )
-        with open( self.compatible_tools_filetypes, "w" ) as compatible_filetypes:
-            compatible_filetypes.write( json.dumps( tools_compatibility ) )
+        with open( filetypes_path, "r" ) as compatible_tools_file:
+            tools_compatibility = json.loads( compatible_tools_file.read() )
         return tools_compatibility
 
     @classmethod
@@ -214,7 +228,7 @@ class PrepareData:
         train_paths = raw_paths[ int( test_share ): ]
         random.shuffle( train_paths )
         # process training and test paths in different ways
-        self.process_train_paths( train_paths, dictionary )
+        self.process_train_paths_new( train_paths, dictionary )
         self.process_test_paths( test_paths, dictionary )
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
@@ -222,5 +236,5 @@ class PrepareData:
         # create 0 padded sequences from train and test paths
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
-        next_compatible_tools = self.assign_filetype_compatibility( self.tool_filetypes, dictionary )
+        next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools

@@ -142,6 +142,7 @@ def plot_tools_compatible_tools( file_path ):
 
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/test_top_pred.txt", "data/test_top_compatible_pred.txt" )
+plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
+plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
 #plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 #plot_next_tools_precision( "data/test_data_performance_10.csv" )

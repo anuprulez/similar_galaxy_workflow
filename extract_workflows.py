@@ -139,11 +139,34 @@ class ExtractWorkflows:
             workflows_as_json.close()
 
         workflow_paths = list( set( workflow_paths ) )
+        print( "Processing next tools..." )
+        next_tools = self.set_compatible_next_tools( workflow_paths )
+        with open( "data/compatible_tools.json", "w" ) as compatible_tools_file:
+            compatible_tools_file.write( json.dumps( next_tools ) )
         workflow_paths = "\n".join( workflow_paths )
         # write all the paths from all the workflow to a text file
         with open( "data/workflow_steps.txt", "w" ) as steps_txt:
             steps_txt.write( workflow_paths )
-            steps_txt.close()
+         
+    @classmethod
+    def set_compatible_next_tools( self, workflow_paths ):
+        """
+        Find next tools for each tool
+        """
+        next_tools = dict()
+        for path in workflow_paths:
+            path_list = path.split( "," )
+            for window in range( 0, len( path_list ) - 1 ):
+                current_next_tools = path_list[ window: window + 2 ]
+                current_tool = current_next_tools[ 0 ]
+                next_tool = current_next_tools[ 1 ]
+                if current_tool in next_tools:
+                    next_tools[ current_tool ] += "," + next_tool
+                else:
+                    next_tools[ current_tool ] = next_tool
+        for tool in next_tools:
+            next_tools[ tool ] = ",".join( list( set( next_tools[ tool ].split( "," ) ) ) )
+        return next_tools
 
     @classmethod
     def process_tool_names( self, tool_name ):
@@ -207,57 +230,6 @@ class ExtractWorkflows:
         tool_id_split = tool_id.split( "." )
         return tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
 
-    @classmethod
-    def assign_input_output_types( self, wf_json_path ):
-        """
-        Assign input and output types to tools
-        """
-        workflows = list()
-        with open( wf_json_path, "r" ) as wf_json:
-            workflows = json.loads( wf_json.read() )
-        tool_io_types = dict()
-        for wf_id in workflows:
-            wf = workflows[ wf_id ]
-            for step in wf[ "steps" ]:
-                tool_name = wf[ "steps" ][ step ]
-                # take tool names in lower case types
-                tool_name = tool_name.lower()
-                # insert "_" if there is a space in the tool name
-                if len( tool_name.split() ) > 1:
-                    tool_name = "_".join( tool_name.split() )
-                tool_input_types = list()
-                if not tool_name in tool_io_types:
-                    tool_io_types[ tool_name ] = dict()
-                
-                ip_types = wf[ "input_types" ][ step ]
-                parents = wf[ "parents" ][ step ]
-                for it in ip_types:
-                    for parent_id in parents:
-                       ot = wf[ "output_types" ][ parent_id ]
-                       if len( ot ) > 0 and it == ot[ 0 ][ "name" ]:
-                           ip_type = ot[ 0 ][ "type" ]
-                           if ip_type != "input":
-                               tool_input_types.append( ip_type )
-                if "input_types" in tool_io_types[ tool_name ]:
-                    tool_io_types[ tool_name ][ "input_types" ].extend( tool_input_types )
-                else:
-                   tool_io_types[ tool_name ][ "input_types" ] = tool_input_types
-
-                # set output types. If there is "input" in the output types, copy all items from the input types
-                outtps = [ obj[ "type" ] for obj in wf[ "output_types" ][ step ] ]
-                if "input" in outtps:
-                    outtps.extend( tool_input_types )
-                outtps = [ tp for tp in outtps if tp != "input" ]
-                if "output_types" in tool_io_types[ tool_name ]:
-                    tool_io_types[ tool_name ][ "output_types" ].extend( outtps )
-                else:
-                    tool_io_types[ tool_name ][ "output_types" ] = outtps
-
-                tool_io_types[ tool_name ][ "input_types" ] = list( set( tool_io_types[ tool_name ][ "input_types" ] ) )
-                tool_io_types[ tool_name ][ "output_types" ] = list( set( tool_io_types[ tool_name ][ "output_types" ] ) )
-        with open( "data/tools_file_types.json", "w" ) as tool_types:
-            tool_types.write( json.dumps( tool_io_types ) ) 
-
 
 if __name__ == "__main__":
 
@@ -266,8 +238,8 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     extract_workflow = ExtractWorkflows()
+    print( "Reading workflows..." )
     extract_workflow.read_workflow_directory()
     print( "Finished extracting workflows" )
-    extract_workflow.assign_input_output_types( "data/workflows.json" )
     end_time = time.time()
     print ("Program finished in %d seconds" % int( end_time - start_time ) )
