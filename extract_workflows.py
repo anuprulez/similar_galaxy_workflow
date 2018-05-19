@@ -7,7 +7,6 @@ import json
 import time
 import pandas as pd
 import operator
-from itertools import groupby
 
 
 class ExtractWorkflows:
@@ -76,7 +75,7 @@ class ExtractWorkflows:
                         workflow_json[ "original_steps" ] = steps
                         workflow_json[ "input_types" ] = tool_input_connections
                         workflow_json[ "output_types" ] = tool_output_connections
-            except Exception as exception:
+            except Exception:
                 pass
         return workflow_json, workflow_tools
 
@@ -113,7 +112,6 @@ class ExtractWorkflows:
         all_workflows_dataframe.to_csv( self.workflows_filename, encoding='utf-8' )
 
         # create flow paths from all workflows and write them as sentences
-        wf_steps_sentences = ""
         workflow_paths = list()
         print( "Processing workflows..." )
         for item in workflow_json:
@@ -147,7 +145,7 @@ class ExtractWorkflows:
         # write all the paths from all the workflow to a text file
         with open( "data/workflow_steps.txt", "w" ) as steps_txt:
             steps_txt.write( workflow_paths )
-         
+
     @classmethod
     def set_compatible_next_tools( self, workflow_paths ):
         """
@@ -176,7 +174,6 @@ class ExtractWorkflows:
 
     @classmethod
     def tool_seq_toolnames( self, tool_dict, paths ):
-        tool_seq = ""
         paths_list = list()
         for path in paths:
             # create tool paths
@@ -219,7 +216,7 @@ class ExtractWorkflows:
         for item in graph:
             if len( graph[ item ] ) == 0 and item in all_parents:
                 roots.append( item )
-            if  len( graph[ item ] ) > 0 and item not in all_parents:
+            if len( graph[ item ] ) > 0 and item not in all_parents:
                 leaves.append( item )
         return roots, leaves
 

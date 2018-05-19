@@ -1,5 +1,5 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Recurrent Neural Network (LSTM)
+Prepare the workflows to be used by downstream machine learning algorithms
 """
 
 import os
@@ -64,47 +64,13 @@ class PrepareData:
         return dictionary, reverse_dictionary
 
     @classmethod
-    def process_train_paths( self, train_paths, dictionary ):
+    def decompose_paths( self, paths, dictionary, file_pos, file_names ):
         """
-        Process train paths using a variable length sliding window
+        Decompose the paths to variable length sub-paths keeping the first tool fixed
         """
-        train_data = list()
-        train_data_sequence = list()
-        random.shuffle( train_paths )
-        for index, item in enumerate( train_paths ):
-            tools = item.split( "," )
-            len_tools = len( tools )
-            if len_tools <= self.max_tool_sequence_len:
-                for pos in range( len_tools ):
-                    for window in range( 1, len_tools ):
-                        sequence = tools[ pos: window + pos + 1 ]
-                        tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
-                        if len( tools_pos ) > 1:
-                            tools_pos = ",".join( tools_pos )
-                            data_seq = ",".join( sequence )
-                            if tools_pos not in train_data:
-                                train_data.append( tools_pos )
-                            if data_seq not in train_data_sequence:
-                                train_data_sequence.append( data_seq )
-                print ( "Path %d processed" % ( index + 1 ) )
-            else:
-                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
-        with open( self.train_file, "w" ) as train_file:
-            for item in train_data:
-                train_file.write( "%s\n" % item )
-        with open( self.train_sequence_file, "w" ) as train_seq:
-            for item in train_data_sequence:
-                train_seq.write( "%s\n" % item )
-                
-    @classmethod
-    def process_train_paths_new( self, train_paths, dictionary ):
-        """
-        Process train paths using a variable length sliding window
-        """
-        train_data = list()
-        train_data_sequence = list()
-        random.shuffle( train_paths )
-        for index, item in enumerate( train_paths ):
+        sub_paths_pos = list()
+        sub_paths_names = list()
+        for index, item in enumerate( paths ):
             tools = item.split( "," )
             len_tools = len( tools )
             if len_tools <= self.max_tool_sequence_len:
@@ -114,51 +80,19 @@ class PrepareData:
                     if len( tools_pos ) > 1:
                         tools_pos = ",".join( tools_pos )
                         data_seq = ",".join( sequence )
-                        if tools_pos not in train_data:
-                            train_data.append( tools_pos )
-                        if data_seq not in train_data_sequence:
-                            train_data_sequence.append( data_seq )
+                        if tools_pos not in sub_paths_pos:
+                            sub_paths_pos.append( tools_pos )
+                        if data_seq not in sub_paths_names:
+                            sub_paths_names.append( data_seq )
                 print ( "Path %d processed" % ( index + 1 ) )
             else:
                 print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
-        with open( self.train_file, "w" ) as train_file:
-            for item in train_data:
-                train_file.write( "%s\n" % item )
-        with open( self.train_sequence_file, "w" ) as train_seq:
-            for item in train_data_sequence:
-                train_seq.write( "%s\n" % item )
-
-    @classmethod
-    def process_test_paths( self, test_paths, dictionary ):
-        """
-        Process test paths of variable length keeping the first tool/node fixed
-        """
-        test_data = list()
-        test_data_sequence = list()
-        random.shuffle( test_paths )
-        for index, item in enumerate( test_paths ):
-            tools = item.split( "," )
-            len_tools = len( tools )
-            if len_tools <= self.max_tool_sequence_len:
-                for window in range( 1, len_tools ):
-                    sequence = tools[ 0: window + 1 ]
-                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
-                    if len( tools_pos ) > 1:
-                        tools_pos = ",".join( tools_pos )
-                        data_seq = ",".join( sequence )
-                        if tools_pos not in test_data:
-                            test_data.append( tools_pos )
-                        if data_seq not in test_data_sequence:
-                            test_data_sequence.append( data_seq )
-                print ( "Path %d processed" % ( index + 1 ) )
-            else:
-                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
-        with open( self.test_file, "w" ) as test_file:
-            for item in test_data:
-                test_file.write( "%s\n" % item )
-        with open( self.test_sequence_file, "w" ) as test_seq:
-            for item in test_data_sequence:
-                test_seq.write( "%s\n" % item )
+        with open( file_pos, "w" ) as sub_paths_file_pos:
+            for item in sub_paths_pos:
+                sub_paths_file_pos.write( "%s\n" % item )
+        with open( file_names, "w" ) as sub_paths_file_names:
+            for item in sub_paths_names:
+                sub_paths_file_names.write( "%s\n" % item )
 
     @classmethod
     def prepare_paths_labels_dictionary( self, read_file, destination_file ):
@@ -168,10 +102,8 @@ class PrepareData:
         paths = open( read_file, "r" )
         paths = paths.read().split( "\n" )
         paths_labels = dict()
-        random.shuffle( paths )
         for item in paths:
             if item and item not in "":
-                all_labels = list()
                 tools = item.split( "," )
                 label = tools[ -1 ]
                 train_tools = tools[ :len( tools ) - 1 ]
@@ -220,16 +152,15 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
-        # randomize all the paths
+        # randomize all the paths before dividing them into train and test parts
         random.shuffle( raw_paths )
         # divide train and test paths
         test_share = self.test_share * len( raw_paths )
         test_paths = raw_paths[ :int( test_share ) ]
         train_paths = raw_paths[ int( test_share ): ]
-        random.shuffle( train_paths )
         # process training and test paths in different ways
-        self.process_train_paths_new( train_paths, dictionary )
-        self.process_test_paths( test_paths, dictionary )
+        self.decompose_paths( train_paths, dictionary, self.train_file, self.train_sequence_file )
+        self.decompose_paths( test_paths, dictionary, self.test_file, self.test_sequence_file )
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
