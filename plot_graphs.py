@@ -77,23 +77,31 @@ def plot_loss( file_path_train, file_path_test ):
     plt.show()
 
 
-def plot_accuracy( complete_data_file, test_data_file ):
-    acc_values_train = list()
-    acc_values_test = list()
-    with open( complete_data_file, 'r' ) as acc_complete:
-        complete_data_acc = acc_complete.read().split( "\n" )
-    complete_data_acc = [ float( item ) for item in complete_data_acc if item ]
-    with open( test_data_file, 'r' ) as acc_test:
-        test_data_acc = acc_test.read().split( "\n" )    
-    test_data_acc = [ float( item ) for item in test_data_acc if item ]
-    font = { 'family' : 'sans serif', 'size': 22 }
-    plt.rc('font', **font) 
-    plt.plot( complete_data_acc )
-    plt.plot( test_data_acc )
+def plot_accuracy( abs_test_file, compatible_test_file, abs_train_file, compatible_train_file ):
+    with open( abs_test_file, 'r' ) as abs_test:
+        abs_test_acc = abs_test.read().split( "\n" )
+    abs_test_acc = [ float( item ) for item in abs_test_acc if item ]
+    with open( compatible_test_file, 'r' ) as compatible_test:
+        compatible_test_acc = compatible_test.read().split( "\n" )    
+    compatible_test_acc = [ float( item ) for item in compatible_test_acc if item ]
+    
+    with open( abs_train_file, 'r' ) as abs_train:
+        abs_train_acc = abs_train.read().split( "\n" )
+    abs_train_acc = [ float( item ) for item in abs_train_acc if item ]
+    with open( compatible_train_file, 'r' ) as compatible_train:
+        compatible_train_acc = compatible_train.read().split( "\n" )    
+    compatible_train_acc = [ float( item ) for item in compatible_train_acc if item ]
+    
+    #font = { 'family' : 'sans serif', 'size': 22 }
+    #plt.rc('font', **font) 
+    plt.plot( abs_test_acc )
+    plt.plot( compatible_test_acc )
+    plt.plot( abs_train_acc )
+    plt.plot( compatible_train_acc )
     plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )
     plt.title( 'Next tools prediction' )
-    plt.legend( [ "Absolute precision", "Compatible tools adjusted precision" ] )
+    plt.legend( [ "Test absolute accuracy", "Test compatible accuracy", "Train absolute accuracy", "Train compatible accuracy" ] )
     plt.grid( True )
     plt.show()
 
@@ -141,8 +149,8 @@ def plot_tools_compatible_tools( file_path ):
     plt.show()
 
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
-#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
-plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
+plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt",  "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+#plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
 #plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 #plot_next_tools_precision( "data/test_data_performance_10.csv" )

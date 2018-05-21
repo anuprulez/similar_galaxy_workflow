@@ -9,7 +9,7 @@ import os
 # machine learning library
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.layers import LSTM
+from keras.layers import LSTM, GRU
 from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
 from keras import regularizers
@@ -43,7 +43,7 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=5, batch_size=40, dropout=0.1, lstm_units=64, embedding_vec_size=64, lr=0.01, reg_coeff=0.01 ):
+    def evaluate_LSTM_network( self, n_epochs=30, batch_size=40, in_dropout=0.2, dropout=0.05, lstm_units=128, embedding_vec_size=150, lr=0.01, decay=1e-6 ):
         """
         Create LSTM network and evaluate performance
         """
@@ -53,23 +53,23 @@ class PredictNextTool:
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
-        optimizer = RMSprop( lr=lr )
+        optimizer = RMSprop( lr=lr, decay=decay )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( SpatialDropout1D( dropout ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=True, activation='softsign' ) )
-        model.add( LSTM( lstm_units, dropout=dropout, return_sequences=False, activation='softsign' ) )
-        model.add( Dense( dimensions, activation='sigmoid', activity_regularizer=regularizers.l2( reg_coeff ) ) )
+        model.add( SpatialDropout1D( in_dropout ) )
+        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation='tanh' ) )
+        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation='tanh' ) )
+        model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss="binary_crossentropy", optimizer=optimizer )
         # save the network as json
         self.save_network( model.to_json() )
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
-        predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
+        #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
-        callbacks_list = [ checkpoint, predict_callback_test, predict_callback_train ] #predict_callback_train
+        callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
@@ -77,8 +77,8 @@ class PredictNextTool:
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
         np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        np.savetxt( self.train_abs_top_pred_path, predict_callback_train.abs_precision, delimiter="," )
-        np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
+        #np.savetxt( self.train_abs_top_pred_path, predict_callback_train.abs_precision, delimiter="," )
+        #np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
         np.savetxt( self.test_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
         np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
         print ( "Training finished" )

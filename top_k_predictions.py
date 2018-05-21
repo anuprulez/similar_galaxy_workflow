@@ -19,8 +19,8 @@ class EvaluateTopResults:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.weights_path = self.current_working_dir + "/data/weights/weights-epoch-30.hdf5"
+        self.network_config_json_path = self.current_working_dir + "/data/best_model.json"
+        self.weights_path = self.current_working_dir + "/data/weights/best_weights.hdf5"
         self.test_labels_path = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.train_labels_path = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.train_class_acc = self.current_working_dir + "/data/train_class_acc.txt"
@@ -72,7 +72,7 @@ class EvaluateTopResults:
             prediction = np.reshape( prediction, ( dimensions, ) )
             prediction_pos = np.argsort( prediction, axis=0 )
             label_pos = data[ i ][ 1 ].split( "," )
-            len_label_pos = len( label_pos )
+            len_label_pos = 2 #len( label_pos )
             top_prediction_pos = prediction_pos[ -len_label_pos: ]
             top_prediction_pos = [ item for item in reversed( top_prediction_pos ) ]
             actual_tools = [ reverse_data_dictionary[ ps ] for ps in label_pos ]
@@ -139,8 +139,6 @@ class EvaluateTopResults:
             data_dict = json.loads( data_dict.read() )
         with open( self.data_dictionary_rev_path, 'r' ) as rev_data_dict:
             reverse_data_dictionary = json.loads( rev_data_dict.read() )
-        with open( self.tools_filetypes, 'r' ) as filetypes:
-            tools_filetypes = json.loads( filetypes.read() )
         with open( self.compatible_tools_filetypes, 'r' ) as compatible_file:
             compatible_filetypes = json.loads( compatible_file.read() )
         dimensions = len( data_dict ) + 1
