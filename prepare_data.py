@@ -84,9 +84,6 @@ class PrepareData:
                             sub_paths_pos.append( tools_pos )
                         if data_seq not in sub_paths_names:
                             sub_paths_names.append( data_seq )
-                print ( "Path %d processed" % ( index + 1 ) )
-            else:
-                print ( "Path %d excluded due to exceeded length" % ( index + 1 ) )
         with open( file_pos, "w" ) as sub_paths_file_pos:
             for item in sub_paths_pos:
                 sub_paths_file_pos.write( "%s\n" % item )

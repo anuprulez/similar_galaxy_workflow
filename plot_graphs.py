@@ -106,6 +106,26 @@ def plot_accuracy( abs_test_file, compatible_test_file, abs_train_file, compatib
     plt.show()
 
 
+def plot_test_accuracy( abs_test_file, compatible_test_file ):
+    with open( abs_test_file, 'r' ) as abs_test:
+        abs_test_acc = abs_test.read().split( "\n" )
+    abs_test_acc = [ float( item ) for item in abs_test_acc if item ]
+    with open( compatible_test_file, 'r' ) as compatible_test:
+        compatible_test_acc = compatible_test.read().split( "\n" )    
+    compatible_test_acc = [ float( item ) for item in compatible_test_acc if item ]
+    
+    #font = { 'family' : 'sans serif', 'size': 22 }
+    #plt.rc('font', **font) 
+    plt.plot( abs_test_acc )
+    plt.plot( compatible_test_acc )
+    plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
+    plt.xlabel( 'Training epochs' )
+    plt.title( 'Next tools prediction' )
+    plt.legend( [ "Test absolute accuracy", "Test compatible accuracy" ] )
+    plt.grid( True )
+    plt.show()
+
+
 def plot_top_prediction( abs_file_path ):
     loss_values = list()
     with open( abs_file_path, 'r' ) as _abs_top_pred:
@@ -150,7 +170,8 @@ def plot_tools_compatible_tools( file_path ):
 
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt",  "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+#plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt", "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+plot_test_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
 #plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
 #plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 #plot_next_tools_precision( "data/test_data_performance_10.csv" )
