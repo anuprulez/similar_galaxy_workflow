@@ -104,15 +104,17 @@ In order to run the visualizer, please follow these steps:
 7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools (probability in percentage). 
 8. If the given combination is not present, no tools or paths are shown.
 
+
 ## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - [A Beginner’s Guide to Recurrent Networks and LSTMs](https://deeplearning4j.org/lstm.html)
 - [LSTM by Example using Tensorflow](https://towardsdatascience.com/lstm-by-example-using-tensorflow-feb0c1968537)
 - [Learning to diagnose with LSTM Recurrent Neural Networks](https://arxiv.org/pdf/1511.03677.pdf)
 - [CNN-RNN: A Unified Framework for Multi-label Image Classification](https://arxiv.org/pdf/1604.04573.pdf)
+- [A Theoretically Grounded Application of Dropout in Recurrent Neural Network](https://arxiv.org/pdf/1512.05287.pdf)
+
 
 ## Citations:
-
 Cytoscape.js: a graph theory library for visualisation and analysis
 Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
 Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)
