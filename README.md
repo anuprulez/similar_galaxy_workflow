@@ -101,7 +101,7 @@ In order to run the visualizer, please follow these steps:
 4. Run the python server: `python viz_server.py 8001`
 5. Browse the URL: "http://localhost:8001/"
 6. Choose a tool and see the next possible tools
-7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools (probability in percentage). 
+7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools (probability in percentage).
 8. If the given combination is not present, no tools or paths are shown.
 
 
@@ -112,6 +112,9 @@ In order to run the visualizer, please follow these steps:
 - [Learning to diagnose with LSTM Recurrent Neural Networks](https://arxiv.org/pdf/1511.03677.pdf)
 - [CNN-RNN: A Unified Framework for Multi-label Image Classification](https://arxiv.org/pdf/1604.04573.pdf)
 - [A Theoretically Grounded Application of Dropout in Recurrent Neural Network](https://arxiv.org/pdf/1512.05287.pdf)
+- [Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling](https://arxiv.org/pdf/1412.3555v1.pdf)
+- [Fast and Accurate deep network learning by exponential linear units(ELU)](https://arxiv.org/pdf/1511.07289.pdf)
+- [Recurrent Neural Network Regularization](https://arxiv.org/pdf/1409.2329.pdf)
 
 
 ## Citations:
