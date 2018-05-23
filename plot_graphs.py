@@ -168,10 +168,23 @@ def plot_tools_compatible_tools( file_path ):
     plt.grid( True )
     plt.show()
 
+
+def plot_lr():
+    lr = 0.001
+    decay = 1e-4
+    iterations = 200
+    lr_rates = list()
+    for i in range( iterations ):
+        lr_rates.append( lr )
+        lr = lr * ( 1 / ( 1 + decay * i ))
+    plt.plot( lr_rates )
+    plt.show()
+ 
+#plot_lr()
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-#plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt", "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
-plot_test_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
+plot_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt", "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+#plot_test_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
 #plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
 #plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 #plot_next_tools_precision( "data/test_data_performance_10.csv" )
