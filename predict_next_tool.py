@@ -42,7 +42,7 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=30, batch_size=128, in_dropout=0.1, dropout=0.1, recurr_dropout=0.1, lstm_units=128, embedding_vec_size=128, lr=0.01, decay=1e-4 ):
+    def evaluate_LSTM_network( self, n_epochs=10, batch_size=10, in_dropout=0.05, dropout=0.05, recurr_dropout=0.05, lstm_units=32, embedding_vec_size=64, lr=0.001, decay=1e-4 ):
         """
         Create LSTM network and evaluate performance
         """
@@ -52,14 +52,14 @@ class PredictNextTool:
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
-        optimizer = RMSprop( lr=lr, decay=decay )
+        optimizer = RMSprop( lr=lr )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( SpatialDropout1D( in_dropout ) )
-        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=recurr_dropout, return_sequences=True, activation='relu' ) )
+        model.add( SpatialDropout1D( dropout ) )
+        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation='elu' ) )
         model.add( Dropout( dropout ) )
-        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=recurr_dropout, return_sequences=False, activation='relu' ) )
+        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation='elu' ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss="binary_crossentropy", optimizer=optimizer )
