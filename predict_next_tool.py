@@ -44,7 +44,7 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=10, batch_size=20, dropout=0.2, lstm_units=128, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
+    def evaluate_LSTM_network( self, n_epochs=20, batch_size=20, dropout=0.2, lstm_units=128, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
         """
         Create LSTM network and evaluate performance
         """
