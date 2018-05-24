@@ -22,11 +22,14 @@ class PrepareData:
         self.train_sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.test_file = self.current_working_dir + "/data/test_data.txt"
         self.test_sequence_file = self.current_working_dir + "/data/test_data_sequence.txt"
+        self.test_actual_file = self.current_working_dir + "/data/test_actual_data.txt"
+        self.test_actual_sequence_file = self.current_working_dir + "/data/test_actual_data_sequence.txt"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
+        self.test_actual_data_labels_dict = self.current_working_dir + "/data/test_actual_data_labels_dict.txt"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = 40
-        self.test_share = 0.20
+        self.test_share = 0.33
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -92,9 +95,9 @@ class PrepareData:
                 sub_paths_file_names.write( "%s\n" % item )
 
     @classmethod
-    def decompose_train_paths( self, paths, dictionary, file_pos, file_names ):
+    def take_actual_paths( self, paths, dictionary, file_pos, file_names ):
         """
-        Decompose the paths to variable length sub-paths keeping the first tool fixed
+        Take paths as such. No decomposition.
         """
         sub_paths_pos = list()
         sub_paths_names = list()
@@ -179,13 +182,16 @@ class PrepareData:
         test_paths = raw_paths[ :int( test_share ) ]
         train_paths = raw_paths[ int( test_share ): ]
         # process training and test paths in different ways
-        self.decompose_train_paths( train_paths, dictionary, self.train_file, self.train_sequence_file )
+        self.decompose_paths( train_paths, dictionary, self.train_file, self.train_sequence_file )
         self.decompose_paths( test_paths, dictionary, self.test_file, self.test_sequence_file )
+        self.take_actual_paths( test_paths, dictionary, self.test_actual_file, self.test_actual_sequence_file )
         # create sequences with labels for train and test paths
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
+        test_actual_paths_dict = self.prepare_paths_labels_dictionary( self.test_actual_file, self.test_actual_data_labels_dict )
         # create 0 padded sequences from train and test paths
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
+        test_actual_data, test_actual_labels = self.pad_paths( test_actual_paths_dict, num_classes )
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
+        return train_data, train_labels, test_data, test_labels, test_actual_data, test_actual_labels, dictionary, reverse_dictionary, next_compatible_tools

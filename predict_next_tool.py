@@ -32,6 +32,8 @@ class PredictNextTool:
         self.train_top_compatibility_pred_path = self.current_working_dir + "/data/train_top_compatible_pred.txt"
         self.test_abs_top_pred_path = self.current_working_dir + "/data/test_abs_top_pred.txt"
         self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
+        self.test_actual_abs_top_pred_path = self.current_working_dir + "/data/test_actual_abs_top_pred.txt"
+        self.test_actual_top_compatibility_pred_path = self.current_working_dir + "/data/test_actual_top_compatible_pred.txt"
 
     @classmethod
     def save_network( self, model ):
@@ -42,14 +44,14 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=10, batch_size=10, in_dropout=0.05, dropout=0.05, recurr_dropout=0.05, lstm_units=32, embedding_vec_size=64, lr=0.001, decay=1e-4 ):
+    def evaluate_LSTM_network( self, n_epochs=10, batch_size=20, dropout=0.2, lstm_units=128, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
         """
         Create LSTM network and evaluate performance
         """
         print ( "Dividing data..." )
         # get training and test data and their labels
         data = prepare_data.PrepareData()
-        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
+        train_data, train_labels, test_data, test_labels, test_actual_data, test_actual_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
         optimizer = RMSprop( lr=lr )
@@ -69,9 +71,9 @@ class PredictNextTool:
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
+        predict_callback_test_actual = PredictCallback( test_actual_data, test_actual_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
-        callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
-        
+        callbacks_list = [ checkpoint, predict_callback_test_actual, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -82,6 +84,8 @@ class PredictNextTool:
         #np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
         np.savetxt( self.test_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
         np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
+        np.savetxt( self.test_actual_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
+        np.savetxt( self.test_actual_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
         print ( "Training finished" )
 
 
@@ -137,6 +141,7 @@ class PredictCallback( Callback ):
         self.abs_compatible_precision[ epoch ] = np.mean( topk_compatible_pred )
         print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, np.mean( topk_abs_pred ) ) )
         print( "Epoch %d topk compatibility adjusted precision: %.2f" % ( epoch + 1, np.mean( topk_compatible_pred ) ) )
+        print( "-------" )
 
 
 if __name__ == "__main__":
