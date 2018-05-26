@@ -1,6 +1,7 @@
 """
-Predict nodes in graphichal data (Galaxy workflows) using Machine Learning
+Predict next tools in graphichal data (Galaxy workflows) using Machine Learning (Recurrent neural network)
 """
+
 import sys
 import numpy as np
 import time
@@ -21,7 +22,7 @@ import prepare_data
 class PredictNextTool:
 
     @classmethod
-    def __init__( self ):
+    def __init__( self, epochs ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
@@ -34,6 +35,11 @@ class PredictNextTool:
         self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
         self.test_actual_abs_top_pred_path = self.current_working_dir + "/data/test_actual_abs_top_pred.txt"
         self.test_actual_top_compatibility_pred_path = self.current_working_dir + "/data/test_actual_top_compatible_pred.txt"
+        self.mean_test_absolute_precision = self.current_working_dir + "/data/mean_test_absolute_precision.txt"
+        self.mean_test_compatibility_precision = self.current_working_dir + "/data/mean_test_compatibility_precision.txt"
+        self.mean_test_actual_absolute_precision = self.current_working_dir + "/data/mean_test_actual_absolute_precision.txt"
+        self.mean_test_actual_compatibility_precision =  self.current_working_dir + "/data/mean_test_actual_compatibility_precision.txt"
+        self.n_epochs = epochs
 
     @classmethod
     def save_network( self, model ):
@@ -44,10 +50,11 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_LSTM_network( self, n_epochs=20, batch_size=20, dropout=0.2, lstm_units=128, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
+    def evaluate_recurrent_network( self, run, batch_size=20, dropout=0.2, memory_units=30, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
         """
         Create LSTM network and evaluate performance
         """
+        print( "Experiment run: %d" % ( run + 1 ) )
         print ( "Dividing data..." )
         # get training and test data and their labels
         data = prepare_data.PrepareData()
@@ -59,9 +66,9 @@ class PredictNextTool:
         model = Sequential()
         model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
         model.add( SpatialDropout1D( dropout ) )
-        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation='elu' ) )
+        model.add( GRU( memory_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation='elu' ) )
         model.add( Dropout( dropout ) )
-        model.add( GRU( lstm_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation='elu' ) )
+        model.add( GRU( memory_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation='elu' ) )
         model.add( Dropout( dropout ) )
         model.add( Dense( dimensions, activation='sigmoid' ) )
         model.compile( loss="binary_crossentropy", optimizer=optimizer )
@@ -75,7 +82,7 @@ class PredictNextTool:
         predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test_actual, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
@@ -84,8 +91,14 @@ class PredictNextTool:
         #np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
         np.savetxt( self.test_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
         np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
-        np.savetxt( self.test_actual_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
-        np.savetxt( self.test_actual_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
+        np.savetxt( self.test_actual_abs_top_pred_path, predict_callback_test_actual.abs_precision, delimiter="," )
+        np.savetxt( self.test_actual_top_compatibility_pred_path, predict_callback_test_actual.abs_compatible_precision, delimiter="," )
+        return { 
+            "test_absolute_precision": predict_callback_test.abs_precision, 
+            "test_compatibility_precision" : predict_callback_test.abs_compatible_precision,
+            "test_actual_absolute_precision": predict_callback_test_actual.abs_precision,
+            "test_actual_compatibility_precision": predict_callback_test_actual.abs_compatible_precision
+        }
         print ( "Training finished" )
 
 
@@ -150,7 +163,22 @@ if __name__ == "__main__":
         print( "Usage: python predict_next_tool.py" )
         exit( 1 )
     start_time = time.time()
-    predict_tool = PredictNextTool()
-    predict_tool.evaluate_LSTM_network()
+    experiment_runs = 1
+    n_epochs = 1
+    predict_tool = PredictNextTool( n_epochs )
+    test_abs_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    test_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    test_actual_absolute_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    test_actual_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    for run in range( experiment_runs ):
+        results = predict_tool.evaluate_recurrent_network( run )
+        test_abs_precision[ run ] = results[ "test_absolute_precision" ]
+        test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
+        test_actual_absolute_precision[ run ] = results[ "test_actual_absolute_precision" ]
+        test_actual_compatibility_precision[ run ] = results[ "test_actual_compatibility_precision" ]
+    np.savetxt( predict_tool.mean_test_absolute_precision, np.mean( test_abs_precision, axis=0 ), delimiter="," )
+    np.savetxt( predict_tool.mean_test_compatibility_precision, np.mean( test_compatibility_precision, axis=0 ), delimiter="," )
+    np.savetxt( predict_tool.mean_test_actual_absolute_precision, np.mean( test_actual_absolute_precision, axis=0 ), delimiter="," )
+    np.savetxt( predict_tool.mean_test_actual_compatibility_precision, np.mean( test_actual_compatibility_precision, axis=0 ), delimiter="," )
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
