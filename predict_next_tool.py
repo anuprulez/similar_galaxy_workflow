@@ -29,16 +29,12 @@ class PredictNextTool:
         self.loss_path = self.current_working_dir + "/data/loss_history.txt"
         self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
-        self.train_abs_top_pred_path = self.current_working_dir + "/data/train_abs_top_pred.txt"
-        self.train_top_compatibility_pred_path = self.current_working_dir + "/data/train_top_compatible_pred.txt"
-        self.test_abs_top_pred_path = self.current_working_dir + "/data/test_abs_top_pred.txt"
-        self.test_top_compatibility_pred_path = self.current_working_dir + "/data/test_top_compatible_pred.txt"
-        self.test_actual_abs_top_pred_path = self.current_working_dir + "/data/test_actual_abs_top_pred.txt"
-        self.test_actual_top_compatibility_pred_path = self.current_working_dir + "/data/test_actual_top_compatible_pred.txt"
         self.mean_test_absolute_precision = self.current_working_dir + "/data/mean_test_absolute_precision.txt"
         self.mean_test_compatibility_precision = self.current_working_dir + "/data/mean_test_compatibility_precision.txt"
         self.mean_test_actual_absolute_precision = self.current_working_dir + "/data/mean_test_actual_absolute_precision.txt"
         self.mean_test_actual_compatibility_precision =  self.current_working_dir + "/data/mean_test_actual_compatibility_precision.txt"
+        self.mean_train_loss = self.current_working_dir + "/data/mean_train_loss.txt"
+        self.mean_test_loss = self.current_working_dir + "/data/mean_test_loss.txt"
         self.n_epochs = epochs
 
     @classmethod
@@ -85,15 +81,9 @@ class PredictNextTool:
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
-        np.savetxt( self.loss_path, np.array( loss_values ), delimiter="," )
-        np.savetxt( self.val_loss_path, np.array( validation_loss ), delimiter="," )
-        #np.savetxt( self.train_abs_top_pred_path, predict_callback_train.abs_precision, delimiter="," )
-        #np.savetxt( self.train_top_compatibility_pred_path, predict_callback_train.abs_compatible_precision, delimiter="," )
-        np.savetxt( self.test_abs_top_pred_path, predict_callback_test.abs_precision, delimiter="," )
-        np.savetxt( self.test_top_compatibility_pred_path, predict_callback_test.abs_compatible_precision, delimiter="," )
-        np.savetxt( self.test_actual_abs_top_pred_path, predict_callback_test_actual.abs_precision, delimiter="," )
-        np.savetxt( self.test_actual_top_compatibility_pred_path, predict_callback_test_actual.abs_compatible_precision, delimiter="," )
-        return { 
+        return {
+            "train_loss": np.array( loss_values ),
+            "test_loss": np.array( validation_loss ),
             "test_absolute_precision": predict_callback_test.abs_precision, 
             "test_compatibility_precision" : predict_callback_test.abs_compatible_precision,
             "test_actual_absolute_precision": predict_callback_test_actual.abs_precision,
@@ -170,15 +160,21 @@ if __name__ == "__main__":
     test_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_actual_absolute_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_actual_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    training_loss = np.zeros( [ experiment_runs, n_epochs ] )
+    test_loss = np.zeros( [ experiment_runs, n_epochs ] )
     for run in range( experiment_runs ):
         results = predict_tool.evaluate_recurrent_network( run )
         test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
         test_actual_absolute_precision[ run ] = results[ "test_actual_absolute_precision" ]
         test_actual_compatibility_precision[ run ] = results[ "test_actual_compatibility_precision" ]
+        training_loss[ run ] = results[ "train_loss" ]
+        test_loss[ run ] = results[ "test_loss" ]
     np.savetxt( predict_tool.mean_test_absolute_precision, np.mean( test_abs_precision, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_test_compatibility_precision, np.mean( test_compatibility_precision, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_test_actual_absolute_precision, np.mean( test_actual_absolute_precision, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_test_actual_compatibility_precision, np.mean( test_actual_compatibility_precision, axis=0 ), delimiter="," )
+    np.savetxt( predict_tool.mean_train_loss, np.mean( training_loss, axis=0 ), delimiter="," )
+    np.savetxt( predict_tool.mean_test_loss, np.mean( test_loss, axis=0 ), delimiter="," )
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
