@@ -90,7 +90,6 @@ class EvaluateTopResults:
                 test_seq_performance[ "input_sequence" ] = ",".join( sequence_tools )
                 test_seq_performance[ "actual_tools" ] = ",".join( actual_tools )
                 test_seq_performance[ "predicted_tools" ] = ",".join( predicted_tools )
-                #test_seq_performance[ "top_k_predicted_tools" ] = ",".join( predicted_tools )
                 test_seq_performance[ "false_positives" ] = ",".join( false_positives )
                 test_seq_performance[ "precision" ] = topk_pred
                 adjusted_precision = topk_pred
