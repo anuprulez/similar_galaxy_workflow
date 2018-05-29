@@ -72,7 +72,7 @@ def plot_loss( file_path_train, file_path_test ):
     plt.ylabel( 'Loss' )
     plt.xlabel( 'Epochs' )
     plt.title( 'Loss drop vs epochs' )
-    plt.legend( [ "train", "test" ] )
+    plt.legend( [ "Train data", "Test data" ] )
     plt.grid( True )
     plt.show()
 
@@ -175,7 +175,7 @@ def plot_lr():
  
 #plot_lr()
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
-plot_loss( "data/mean_test_loss.txt", "data/mean_train_loss.txt" )
+plot_loss( "data/mean_train_loss.txt", "data/mean_test_loss.txt" )
 plot_accuracy( "data/mean_test_absolute_precision.txt", "data/mean_test_compatibility_precision.txt" )
 plot_accuracy( "data/mean_test_actual_absolute_precision.txt", "data/mean_test_actual_compatibility_precision.txt" )
 #plot_test_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )

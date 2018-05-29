@@ -9,13 +9,13 @@ import os
 
 # machine learning library
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, GRU, Dropout
+from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
-from keras import regularizers
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
+import extract_workflows
 import prepare_data
 
 
@@ -26,8 +26,6 @@ class PredictNextTool:
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.network_config_json_path = self.current_working_dir + "/data/model.json"
-        self.loss_path = self.current_working_dir + "/data/loss_history.txt"
-        self.val_loss_path = self.current_working_dir + "/data/val_loss_history.txt"
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.mean_test_absolute_precision = self.current_working_dir + "/data/mean_test_absolute_precision.txt"
         self.mean_test_compatibility_precision = self.current_working_dir + "/data/mean_test_compatibility_precision.txt"
@@ -46,39 +44,39 @@ class PredictNextTool:
             json_file.write( model )
 
     @classmethod
-    def evaluate_recurrent_network( self, run, batch_size=20, dropout=0.2, memory_units=30, embedding_vec_size=128, lr=0.001, decay=1e-4 ):
+    def evaluate_recurrent_network( self, run, network_config ):
         """
-        Create LSTM network and evaluate performance
+        Define recurrent neural network and train sequential data
         """
-        print( "Experiment run: %d" % ( run + 1 ) )
+        print( "Experiment run: %d/%d" % ( ( run + 1 ), network_config[ "experiment_runs" ] ) )
         print ( "Dividing data..." )
         # get training and test data and their labels
-        data = prepare_data.PrepareData()
+        data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
         train_data, train_labels, test_data, test_labels, test_actual_data, test_actual_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
-        optimizer = RMSprop( lr=lr )
+        optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
         # define recurrent network
         model = Sequential()
-        model.add( Embedding( dimensions, embedding_vec_size, mask_zero=True ) )
-        model.add( SpatialDropout1D( dropout ) )
-        model.add( GRU( memory_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation='elu' ) )
-        model.add( Dropout( dropout ) )
-        model.add( GRU( memory_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation='elu' ) )
-        model.add( Dropout( dropout ) )
-        model.add( Dense( dimensions, activation='sigmoid' ) )
-        model.compile( loss="binary_crossentropy", optimizer=optimizer )
+        model.add( Embedding( dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )
+        model.add( SpatialDropout1D( network_config[ "dropout" ] ) )
+        model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=True, activation=network_config[ "activation_recurrent" ] ) )
+        model.add( Dropout( network_config[ "dropout" ] ) )
+        model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=False, activation=network_config[ "activation_recurrent" ] ) )
+        model.add( Dropout( network_config[ "dropout" ] ) )
+        model.add( Dense( dimensions, activation=network_config[ "activation_output" ] ) )
+        model.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
         # save the network as json
         self.save_network( model.to_json() )
         model.summary()
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
-        predict_callback_test_actual = PredictCallback( test_actual_data, test_actual_labels, n_epochs, reverse_dictionary, next_compatible_tools )
-        predict_callback_test = PredictCallback( test_data, test_labels, n_epochs, reverse_dictionary, next_compatible_tools )
+        predict_callback_test_actual = PredictCallback( test_actual_data, test_actual_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
+        predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test_actual, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=batch_size, epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         return {
@@ -153,8 +151,26 @@ if __name__ == "__main__":
         print( "Usage: python predict_next_tool.py" )
         exit( 1 )
     start_time = time.time()
-    experiment_runs = 1
-    n_epochs = 1
+    network_config = {
+        "experiment_runs": 2,
+        "n_epochs": 200,
+        "batch_size": 20,
+        "dropout": 0.2,
+        "memory_units": 128,
+        "embedding_vec_size": 128,
+        "learning_rate": 0.001,
+        "max_seq_len": 40,
+        "test_share": 0.33,
+        "activation_recurrent": 'elu',
+        "activation_output": 'sigmoid',
+        "loss_type": "binary_crossentropy"
+    }
+    extract_workflow = extract_workflows.ExtractWorkflows()
+    print( "Reading workflows..." )
+    extract_workflow.read_workflow_directory()
+    print( "Finished extracting workflows" )
+    n_epochs = network_config[ "n_epochs" ]
+    experiment_runs = network_config[ "experiment_runs" ]
     predict_tool = PredictNextTool( n_epochs )
     test_abs_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
@@ -163,7 +179,7 @@ if __name__ == "__main__":
     training_loss = np.zeros( [ experiment_runs, n_epochs ] )
     test_loss = np.zeros( [ experiment_runs, n_epochs ] )
     for run in range( experiment_runs ):
-        results = predict_tool.evaluate_recurrent_network( run )
+        results = predict_tool.evaluate_recurrent_network( run, network_config )
         test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
         test_actual_absolute_precision[ run ] = results[ "test_actual_absolute_precision" ]

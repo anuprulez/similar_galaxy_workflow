@@ -12,7 +12,7 @@ import random
 class PrepareData:
 
     @classmethod
-    def __init__( self ):
+    def __init__( self, max_seq_length, test_data_share ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
@@ -28,8 +28,8 @@ class PrepareData:
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
         self.test_actual_data_labels_dict = self.current_working_dir + "/data/test_actual_data_labels_dict.txt"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
-        self.max_tool_sequence_len = 40
-        self.test_share = 0.33
+        self.max_tool_sequence_len = max_seq_length
+        self.test_share = test_data_share
 
     @classmethod
     def process_processed_data( self, fname ):

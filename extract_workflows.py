@@ -14,9 +14,10 @@ class ExtractWorkflows:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.workflow_directory = 'data/workflows/'
-        self.tools_filename = "data/all_tools.csv"
-        self.workflows_filename = "data/processed_workflows.csv"
+        self.current_working_dir = os.getcwd()
+        self.workflow_directory = self.current_working_dir + "/data/workflows/"
+        self.tools_filename = self.current_working_dir + "/data/all_tools.csv"
+        self.workflows_filename = self.current_working_dir + "/data/processed_workflows.csv"
 
     @classmethod
     def read_workflow_file( self, workflow_file_path, file_id ):
@@ -226,17 +227,3 @@ class ExtractWorkflows:
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
         tool_id_split = tool_id.split( "." )
         return tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
-
-
-if __name__ == "__main__":
-
-    if len(sys.argv) != 1:
-        print( "Usage: python extract_workflows.py" )
-        exit( 1 )
-    start_time = time.time()
-    extract_workflow = ExtractWorkflows()
-    print( "Reading workflows..." )
-    extract_workflow.read_workflow_directory()
-    print( "Finished extracting workflows" )
-    end_time = time.time()
-    print ("Program finished in %d seconds" % int( end_time - start_time ) )
