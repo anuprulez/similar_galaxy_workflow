@@ -18,6 +18,9 @@ class ExtractWorkflows:
         self.workflow_directory = self.current_working_dir + "/data/workflows/"
         self.tools_filename = self.current_working_dir + "/data/all_tools.csv"
         self.workflows_filename = self.current_working_dir + "/data/processed_workflows.csv"
+        self.workflows_json = self.current_working_dir + "/data/workflows.json"
+        self.workflows_steps = self.current_working_dir + "/data/workflow_steps.txt"
+        self.compatible_tools = self.current_working_dir + "/data/compatible_tools.json"
 
     @classmethod
     def read_workflow_file( self, workflow_file_path, file_id ):
@@ -97,21 +100,18 @@ class ExtractWorkflows:
                     workflow_json.append( wf )
                 all_workflow_tools.extend( tools )
         all_workflow_tools = list( set( all_workflow_tools ) )
-
         # extract ids from the tool ids link
         for item in all_workflow_tools:
             tool_id = self.extract_tool_id( item )
             if tool_id not in tools:
                 all_workflow_tools_id.append( { "Original id": item, "Tool id": tool_id } )
                 tools.append( tool_id )
-
         # write all the unique tools to a tabular file
         all_tools_dataframe = pd.DataFrame( all_workflow_tools_id )
         all_tools_dataframe.to_csv( self.tools_filename, encoding='utf-8' )
         # write all the workflows to a tabular file
         all_workflows_dataframe = pd.DataFrame( workflow_json )
         all_workflows_dataframe.to_csv( self.workflows_filename, encoding='utf-8' )
-
         # create flow paths from all workflows and write them as sentences
         workflow_paths = list()
         print( "Processing workflows..." )
@@ -132,19 +132,17 @@ class ExtractWorkflows:
         workflows_to_json = dict()
         for item in workflow_json:
             workflows_to_json[ item[ "id" ] ] = item
-
-        with open( "data/workflows.json", "w" ) as workflows_as_json:
+        with open( self.workflows_json, "w" ) as workflows_as_json:
             workflows_as_json.write( json.dumps( workflows_to_json ) )
             workflows_as_json.close()
-
         workflow_paths = list( set( workflow_paths ) )
         print( "Processing next tools..." )
         next_tools = self.set_compatible_next_tools( workflow_paths )
-        with open( "data/compatible_tools.json", "w" ) as compatible_tools_file:
+        with open( self.compatible_tools, "w" ) as compatible_tools_file:
             compatible_tools_file.write( json.dumps( next_tools ) )
         workflow_paths = "\n".join( workflow_paths )
         # write all the paths from all the workflow to a text file
-        with open( "data/workflow_steps.txt", "w" ) as steps_txt:
+        with open( self.workflows_steps, "w" ) as steps_txt:
             steps_txt.write( workflow_paths )
 
     @classmethod
