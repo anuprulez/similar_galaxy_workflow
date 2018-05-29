@@ -117,12 +117,14 @@ class PredictCallback( Callback ):
             test_sample_tool_pos = x[ i ][ test_sample_pos[ 0 ]: ]
             prediction = self.model.predict( test_sample, verbose=0 )
             prediction = np.reshape( prediction, ( dimensions, ) )
+            # remove the 0th position as there is no tool at this index
+            prediction = prediction[ 1: ]
             prediction_pos = np.argsort( prediction, axis=-1 )
             topk_prediction_pos = prediction_pos[ -topk: ]
             # read tool names using reverse dictionary
             sequence_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in test_sample_tool_pos ]
             actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
-            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in topk_prediction_pos ]
+            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in topk_prediction_pos ]
             # find false positives
             false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
             absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
@@ -152,9 +154,9 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     network_config = {
-        "experiment_runs": 2,
+        "experiment_runs": 1,
         "n_epochs": 200,
-        "batch_size": 20,
+        "batch_size": 50,
         "dropout": 0.2,
         "memory_units": 128,
         "embedding_vec_size": 128,
