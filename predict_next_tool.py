@@ -29,8 +29,6 @@ class PredictNextTool:
         self.epoch_weights_path = self.current_working_dir + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
         self.mean_test_absolute_precision = self.current_working_dir + "/data/mean_test_absolute_precision.txt"
         self.mean_test_compatibility_precision = self.current_working_dir + "/data/mean_test_compatibility_precision.txt"
-        self.mean_test_actual_absolute_precision = self.current_working_dir + "/data/mean_test_actual_absolute_precision.txt"
-        self.mean_test_actual_compatibility_precision =  self.current_working_dir + "/data/mean_test_actual_compatibility_precision.txt"
         self.mean_train_loss = self.current_working_dir + "/data/mean_train_loss.txt"
         self.mean_test_loss = self.current_working_dir + "/data/mean_test_loss.txt"
         self.n_epochs = epochs
@@ -52,7 +50,7 @@ class PredictNextTool:
         print ( "Dividing data..." )
         # get training and test data and their labels
         data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
-        train_data, train_labels, test_data, test_labels, test_actual_data, test_actual_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
+        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
         optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
@@ -72,9 +70,8 @@ class PredictNextTool:
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( self.epoch_weights_path, verbose=2, mode='max' )
         #predict_callback_train = PredictCallback( train_data, train_labels, n_epochs, reverse_dictionary, next_compatible_tools )
-        predict_callback_test_actual = PredictCallback( test_actual_data, test_actual_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
         predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
-        callbacks_list = [ checkpoint, predict_callback_test_actual, predict_callback_test ] #predict_callback_train
+        callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
         model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -83,9 +80,7 @@ class PredictNextTool:
             "train_loss": np.array( loss_values ),
             "test_loss": np.array( validation_loss ),
             "test_absolute_precision": predict_callback_test.abs_precision, 
-            "test_compatibility_precision" : predict_callback_test.abs_compatible_precision,
-            "test_actual_absolute_precision": predict_callback_test_actual.abs_precision,
-            "test_actual_compatibility_precision": predict_callback_test_actual.abs_compatible_precision
+            "test_compatibility_precision" : predict_callback_test.abs_compatible_precision
         }
         print ( "Training finished" )
 
@@ -154,7 +149,7 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     network_config = {
-        "experiment_runs": 1,
+        "experiment_runs": 2,
         "n_epochs": 200,
         "batch_size": 50,
         "dropout": 0.2,
@@ -184,14 +179,10 @@ if __name__ == "__main__":
         results = predict_tool.evaluate_recurrent_network( run, network_config )
         test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
-        test_actual_absolute_precision[ run ] = results[ "test_actual_absolute_precision" ]
-        test_actual_compatibility_precision[ run ] = results[ "test_actual_compatibility_precision" ]
         training_loss[ run ] = results[ "train_loss" ]
         test_loss[ run ] = results[ "test_loss" ]
     np.savetxt( predict_tool.mean_test_absolute_precision, np.mean( test_abs_precision, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_test_compatibility_precision, np.mean( test_compatibility_precision, axis=0 ), delimiter="," )
-    np.savetxt( predict_tool.mean_test_actual_absolute_precision, np.mean( test_actual_absolute_precision, axis=0 ), delimiter="," )
-    np.savetxt( predict_tool.mean_test_actual_compatibility_precision, np.mean( test_actual_compatibility_precision, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_train_loss, np.mean( training_loss, axis=0 ), delimiter="," )
     np.savetxt( predict_tool.mean_test_loss, np.mean( test_loss, axis=0 ), delimiter="," )
     end_time = time.time()

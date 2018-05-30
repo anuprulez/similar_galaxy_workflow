@@ -93,38 +93,15 @@ class PrepareData:
         with open( file_names, "w" ) as sub_paths_file_names:
             for item in sub_paths_names:
                 sub_paths_file_names.write( "%s\n" % item )
+        return sub_paths_pos
 
     @classmethod
-    def take_actual_paths( self, paths, dictionary, file_pos, file_names ):
-        """
-        Take paths as such. No decomposition.
-        """
-        sub_paths_pos = list()
-        sub_paths_names = list()
-        for index, item in enumerate( paths ):
-            sequence = item.split( "," )
-            if len( sequence ) <= self.max_tool_sequence_len:
-                tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
-                if len( tools_pos ) > 1:
-                    tools_pos = ",".join( tools_pos )
-                    data_seq = ",".join( sequence )
-                    sub_paths_pos.append( tools_pos )
-                    sub_paths_names.append( data_seq )
-        with open( file_pos, "w" ) as sub_paths_file_pos:
-            for item in sub_paths_pos:
-                sub_paths_file_pos.write( "%s\n" % item )
-        with open( file_names, "w" ) as sub_paths_file_names:
-            for item in sub_paths_names:
-                sub_paths_file_names.write( "%s\n" % item )
-
-    @classmethod
-    def prepare_paths_labels_dictionary( self, read_file, destination_file ):
+    def prepare_paths_labels_dictionary( self, reverse_dictionary, paths, paths_file_pos, paths_file_names, destination_file ):
         """
         Create a dictionary of sequences with their labels for training and test paths
         """
-        paths = open( read_file, "r" )
-        paths = paths.read().split( "\n" )
         paths_labels = dict()
+        random.shuffle( paths )
         for item in paths:
             if item and item not in "":
                 tools = item.split( "," )
@@ -135,6 +112,12 @@ class PrepareData:
                     paths_labels[ train_tools ] += "," + label
                 else:
                     paths_labels[ train_tools ] = label
+        with open( paths_file_pos, "w" ) as write_paths_file_pos:
+            for item in paths:
+                write_paths_file_pos.write( "%s\n" % item )
+        with open( paths_file_names, "w" ) as write_paths_file_names:
+            for item in paths:
+                write_paths_file_names.write( "%s\n" % ",".join( [ reverse_dictionary[ int( pos ) ] for pos in item.split( "," ) ] ) )
         with open( destination_file, 'w' ) as multilabel_file:
             multilabel_file.write( json.dumps( paths_labels ) )
         return paths_labels
@@ -175,23 +158,16 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
-        # randomize all the paths before dividing them into train and test parts
-        random.shuffle( raw_paths )
-        # divide train and test paths
         test_share = self.test_share * len( raw_paths )
-        test_paths = raw_paths[ :int( test_share ) ]
-        train_paths = raw_paths[ int( test_share ): ]
         # process training and test paths in different ways
-        self.decompose_paths( train_paths, dictionary, self.train_file, self.train_sequence_file )
-        self.decompose_paths( test_paths, dictionary, self.test_file, self.test_sequence_file )
-        self.take_actual_paths( test_paths, dictionary, self.test_actual_file, self.test_actual_sequence_file )
-        # create sequences with labels for train and test paths
-        train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file, self.train_data_labels_dict )
-        test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file, self.test_data_labels_dict )
-        test_actual_paths_dict = self.prepare_paths_labels_dictionary( self.test_actual_file, self.test_actual_data_labels_dict )
-        # create 0 padded sequences from train and test paths
+        all_unique_paths = self.decompose_paths( raw_paths, dictionary, "data/raw_paths_decomposed_pos.txt", "data/raw_paths_decomposed_names.txt" )
+        random.shuffle( all_unique_paths )
+        test_paths = all_unique_paths[ :int( test_share ) ]
+        train_paths = all_unique_paths[ int( test_share ): ]
+        train_paths_dict = self.prepare_paths_labels_dictionary( reverse_dictionary, train_paths, self.train_file, self.train_sequence_file, self.train_data_labels_dict )
+        test_paths_dict = self.prepare_paths_labels_dictionary( reverse_dictionary, test_paths, self.test_file, self.test_sequence_file, self.test_data_labels_dict )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
-        test_actual_data, test_actual_labels = self.pad_paths( test_actual_paths_dict, num_classes )
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-        return train_data, train_labels, test_data, test_labels, test_actual_data, test_actual_labels, dictionary, reverse_dictionary, next_compatible_tools
+       
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
