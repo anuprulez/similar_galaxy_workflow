@@ -14,19 +14,18 @@ class PrepareData:
     @classmethod
     def __init__( self, max_seq_length, test_data_share ):
         """ Init method. """
-        self.current_working_dir = os.getcwd()
+        self.current_working_dir = os.getcwd() #"/home/fr/fr_fr/fr_ak548/thesis/code/workflows/divide_dictionary/similar_galaxy_workflow"
         self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
+        self.complete_file = self.current_working_dir + "/data/raw_paths_decomposed_pos.txt"
+        self.complete_sequence_file = self.current_working_dir + "/data/aw_paths_decomposed_names.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.train_sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.test_file = self.current_working_dir + "/data/test_data.txt"
         self.test_sequence_file = self.current_working_dir + "/data/test_data_sequence.txt"
-        self.test_actual_file = self.current_working_dir + "/data/test_actual_data.txt"
-        self.test_actual_sequence_file = self.current_working_dir + "/data/test_actual_data_sequence.txt"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.txt"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.txt"
-        self.test_actual_data_labels_dict = self.current_working_dir + "/data/test_actual_data_labels_dict.txt"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
@@ -160,7 +159,7 @@ class PrepareData:
         num_classes = len( dictionary )
         test_share = self.test_share * len( raw_paths )
         # process training and test paths in different ways
-        all_unique_paths = self.decompose_paths( raw_paths, dictionary, "data/raw_paths_decomposed_pos.txt", "data/raw_paths_decomposed_names.txt" )
+        all_unique_paths = self.decompose_paths( raw_paths, dictionary, self.complete_file, self.complete_sequence_file )
         random.shuffle( all_unique_paths )
         test_paths = all_unique_paths[ :int( test_share ) ]
         train_paths = all_unique_paths[ int( test_share ): ]
@@ -169,5 +168,4 @@ class PrepareData:
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-       
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
