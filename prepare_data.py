@@ -19,7 +19,7 @@ class PrepareData:
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
         self.complete_file = self.current_working_dir + "/data/raw_paths_decomposed_pos.txt"
-        self.complete_sequence_file = self.current_working_dir + "/data/aw_paths_decomposed_names.txt"
+        self.complete_sequence_file = self.current_working_dir + "/data/raw_paths_decomposed_names.txt"
         self.train_file = self.current_working_dir + "/data/train_data.txt"
         self.train_sequence_file = self.current_working_dir + "/data/train_data_sequence.txt"
         self.test_file = self.current_working_dir + "/data/test_data.txt"
@@ -110,7 +110,7 @@ class PrepareData:
                 if train_tools in paths_labels:
                     paths_labels[ train_tools ] += "," + label
                 else:
-                    paths_labels[ train_tools ] = label
+                    paths_labels[ train_tools ] = label            
         with open( paths_file_pos, "w" ) as write_paths_file_pos:
             for item in paths:
                 write_paths_file_pos.write( "%s\n" % item )
@@ -157,10 +157,10 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
-        test_share = self.test_share * len( raw_paths )
         # process training and test paths in different ways
         all_unique_paths = self.decompose_paths( raw_paths, dictionary, self.complete_file, self.complete_sequence_file )
         random.shuffle( all_unique_paths )
+        test_share = self.test_share * len( all_unique_paths )
         test_paths = all_unique_paths[ :int( test_share ) ]
         train_paths = all_unique_paths[ int( test_share ): ]
         train_paths_dict = self.prepare_paths_labels_dictionary( reverse_dictionary, train_paths, self.train_file, self.train_sequence_file, self.train_data_labels_dict )
