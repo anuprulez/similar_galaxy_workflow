@@ -25,7 +25,9 @@ class PrepareData:
         self.complete_paths_pos_dict = self.current_working_dir + "/data/complete_paths_pos_dict.json"
         self.complete_paths_names_dict = self.current_working_dir + "/data/complete_paths_names_dict.json"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.json"
+        self.train_data_labels_names_dict = self.current_working_dir + "/data/train_data_labels_names_dict.json"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.json"
+        self.test_data_labels_names_dict = self.current_working_dir + "/data/test_data_labels_names_dict.json"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
@@ -157,12 +159,19 @@ class PrepareData:
         return tools_compatibility
 
     @classmethod
-    def write_to_file( self, file_path, dictionary ):
+    def write_to_file( self, file_path, file_names_path, dictionary, reverse_dictionary ):
         """
         Write to file
         """
+        path_seq_names = dict()
         with open( file_path, "w" ) as dict_file:
             dict_file.write( json.dumps( dictionary ) )
+        for item in dictionary:
+            path_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in item.split( "," ) ] )
+            path_label_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in dictionary[ item ].split( "," ) ] )
+            path_seq_names[ path_names ] = path_label_names
+        with open( file_names_path, "w" ) as multilabel_file:
+            multilabel_file.write( json.dumps( path_seq_names ) )
 
     @classmethod
     def split_test_train_data( self, multilabels_paths ):
@@ -192,8 +201,8 @@ class PrepareData:
         random.shuffle( all_unique_paths )
         multilabels_paths = self.prepare_paths_labels_dictionary( reverse_dictionary, all_unique_paths, self.complete_paths_pos, self.complete_paths_names, self.complete_paths_pos_dict, self.complete_paths_names_dict )
         train_paths_dict, test_paths_dict = self.split_test_train_data( multilabels_paths )
-        self.write_to_file( self.test_data_labels_dict, test_paths_dict )
-        self.write_to_file( self.train_data_labels_dict, train_paths_dict )
+        self.write_to_file( self.test_data_labels_dict, self.test_data_labels_names_dict, test_paths_dict, reverse_dictionary )
+        self.write_to_file( self.train_data_labels_dict, self.train_data_labels_names_dict, train_paths_dict, reverse_dictionary )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
