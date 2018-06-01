@@ -165,6 +165,21 @@ class PrepareData:
             dict_file.write( json.dumps( dictionary ) )
 
     @classmethod
+    def split_test_train_data( self, multilabels_paths ):
+        """
+        Split into test and train data
+        """
+        train_dict = dict()
+        test_dict = dict()
+        split_number = int( self.test_share * len( multilabels_paths ) )
+        for index, item in enumerate( list( multilabels_paths ) ):
+            if index < split_number:
+                test_dict[ item ] = multilabels_paths[ item ]
+            else:
+                train_dict[ item ] = multilabels_paths[ item ]
+        return train_dict, test_dict
+
+    @classmethod
     def get_data_labels_mat( self ):
         """
         Convert the training and test paths into corresponding numpy matrices
@@ -176,9 +191,7 @@ class PrepareData:
         all_unique_paths = self.decompose_paths( raw_paths, dictionary, self.complete_file, self.complete_file_sequence )
         random.shuffle( all_unique_paths )
         multilabels_paths = self.prepare_paths_labels_dictionary( reverse_dictionary, all_unique_paths, self.complete_paths_pos, self.complete_paths_names, self.complete_paths_pos_dict, self.complete_paths_names_dict )
-        test_share = int( self.test_share * len( multilabels_paths ) )
-        test_paths_dict = dict( multilabels_paths.items()[ :test_share ] )
-        train_paths_dict = dict( multilabels_paths.items()[ test_share: ] )
+        train_paths_dict, test_paths_dict = self.split_test_train_data( multilabels_paths )
         self.write_to_file( self.test_data_labels_dict, test_paths_dict )
         self.write_to_file( self.train_data_labels_dict, train_paths_dict )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
