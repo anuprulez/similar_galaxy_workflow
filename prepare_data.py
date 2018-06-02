@@ -181,9 +181,9 @@ class PrepareData:
         train_dict = dict()
         test_dict = dict()
         all_paths = multilabels_paths.keys()
-        random.shuffle( all_paths )
+        random.shuffle( list( all_paths ) )
         split_number = int( self.test_share * len( all_paths ) )
-        for index, path in enumerate( all_paths ):
+        for index, path in enumerate( list( all_paths ) ):
             if index < split_number:
                 test_dict[ path ] = multilabels_paths[ path ]
             else:
