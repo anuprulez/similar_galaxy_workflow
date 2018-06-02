@@ -151,10 +151,10 @@ if __name__ == "__main__":
         exit( 1 )
     start_time = time.time()
     network_config = {
-        "experiment_runs": 1,
-        "n_epochs": 50,
-        "batch_size": 50,
-        "dropout": 0.3,
+        "experiment_runs": 3,
+        "n_epochs": 10,
+        "batch_size": 20,
+        "dropout": 0.2,
         "memory_units": 128,
         "embedding_vec_size": 128,
         "learning_rate": 0.001,

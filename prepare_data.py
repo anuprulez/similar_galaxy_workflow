@@ -176,16 +176,18 @@ class PrepareData:
     @classmethod
     def split_test_train_data( self, multilabels_paths ):
         """
-        Split into test and train data
+        Split into test and train data randomly for each run
         """
         train_dict = dict()
         test_dict = dict()
-        split_number = int( self.test_share * len( multilabels_paths ) )
-        for index, item in enumerate( list( multilabels_paths ) ):
+        all_paths = multilabels_paths.keys()
+        random.shuffle( all_paths )
+        split_number = int( self.test_share * len( all_paths ) )
+        for index, path in enumerate( all_paths ):
             if index < split_number:
-                test_dict[ item ] = multilabels_paths[ item ]
+                test_dict[ path ] = multilabels_paths[ path ]
             else:
-                train_dict[ item ] = multilabels_paths[ item ]
+                train_dict[ path ] = multilabels_paths[ path ]
         return train_dict, test_dict
 
     @classmethod
