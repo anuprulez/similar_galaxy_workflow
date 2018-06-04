@@ -55,7 +55,7 @@ class PredictNextTool:
         train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
-        optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
+        optimizer = RMSprop( lr=network_config[ "learning_rate" ], clipnorm=network_config[ "clipnorm" ] )
         # define recurrent network
         model = Sequential()
         model.add( Embedding( dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )
@@ -152,12 +152,13 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 150,
-        "batch_size": 20,
-        "dropout": 0.2,
+        "n_epochs": 200,
+        "batch_size": 50,
+        "dropout": 0.25,
         "memory_units": 128,
         "embedding_vec_size": 128,
         "learning_rate": 0.001,
+        "clipnorm": 0.5,
         "max_seq_len": 40,
         "test_share": 0.20,
         "activation_recurrent": 'elu',

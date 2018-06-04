@@ -5,18 +5,6 @@ import numpy as np
 import csv
 
 
-def plot_data_distribution( file_path ):
-    with open( file_path, 'r' ) as dist_file:
-        data = json.loads( dist_file.read() )
-    freq = [ len( item.split( "," ) ) for item in data ]
-    plt.bar( [ index for index, item in enumerate( freq ) ], height=freq, facecolor='g' )
-    plt.xlabel( 'Class number (tools that become labels for the sequence)' )
-    plt.ylabel( 'Frequency (number of sequences having the same class)' )
-    plt.title( 'Workflows: sequence - classes distribution' )
-    plt.grid( True )
-    plt.show()
-
-
 def plot_labels_distribution( test_path, train_path ):
     with open( test_path, 'r' ) as test_labels:
         test_labels_distribution = json.loads( test_labels.read() )
@@ -148,20 +136,6 @@ def plot_next_tools_precision( file_path ):
     plt.grid( True )
     plt.show()
 
-def plot_tools_compatible_tools( file_path ):
-    next_tools = list()
-    with open( file_path, 'r' ) as file_next_tools:
-        next_tools_list = json.loads( file_next_tools.read() )
-    for tool in next_tools_list:
-        next_tools.append( len( next_tools_list[ tool ].split( "," ) ) )
-    plt.bar( np.arange( len( next_tools ) ), next_tools )
-    plt.ylabel( 'Number of next compatible tools' )
-    plt.xlabel( 'Tools' )
-    plt.title( 'Distribution of next compatible tools for all the tools' )
-    plt.grid( True )
-    plt.show()
-
-
 def plot_lr():
     lr = 0.001
     decay = 1e-4
@@ -174,7 +148,6 @@ def plot_lr():
     plt.show()
  
 #plot_lr()
-#plot_tools_compatible_tools( "data/compatible_tools.json" )
 plot_loss( "data/mean_train_loss.txt", "data/mean_test_loss.txt" )
 plot_accuracy( "data/mean_test_absolute_precision.txt", "data/mean_test_compatibility_precision.txt" )
 #plot_accuracy( "data/mean_test_actual_absolute_precision.txt", "data/mean_test_actual_compatibility_precision.txt" )
