@@ -204,6 +204,10 @@ class PrepareData:
         self.write_to_file( test_paths_dict, self.test_data_labels_dict )
         # convert to train and test labels
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
+        augmented_train_data = np.concatenate( ( train_data, train_data ), axis=0 )
+        augmented_train_labels = np.concatenate( ( train_labels, train_labels ), axis=0 )
+        print augmented_train_data.shape
+        print augmented_train_labels.shape
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
+        return augmented_train_data, augmented_train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools

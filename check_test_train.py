@@ -12,6 +12,7 @@ def verify_data( test_path, train_path ):
     print len(train_data)
     for path in test_data:
         if path in train_data:
+            print path
             counter += 1
     print( "Percentage overlap in train and test data: %.2f" % ( counter ) )
     print "================"
@@ -37,7 +38,8 @@ def randomize_dictionary( path ):
         if counter == 5:
             break
 
-randomize_dictionary( "data/complete_paths_pos_dict.json" )
+verify_data( "data/test_data_labels_dict.json", "data/train_data_labels_dict.json" )
+#randomize_dictionary( "data/complete_paths_pos_dict.json" )
 
         
 '''verify_data( "data/test_data_labels_dict.json", "data/train_data_labels_dict.json" )
