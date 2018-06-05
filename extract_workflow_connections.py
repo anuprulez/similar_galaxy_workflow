@@ -12,6 +12,7 @@ import csv
 
 CURRENT_DIR = os.getcwd()
 WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflows_connections/workflow_connections.tsv"
+WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
 
 
 class ExtractWorkflowConnections:
@@ -61,12 +62,19 @@ class ExtractWorkflowConnections:
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
+            break
         unique_paths = list()
-        print( "Paths processed" )
+        print( "Workflows processed" )
         for path in workflow_paths:
             if path not in unique_paths:
                 unique_paths.append( path )
+        print( "Writing workflows to a text file..." )
         print len( unique_paths )
+        workflow_paths = ""
+        for path in unique_paths:
+            workflow_paths += ",".join( path ) + "\n"
+        with open( WORKFLOW_PATHS_FILE, "w" ) as workflows_file:
+            workflows_file.write( workflow_paths )
 
     @classmethod
     def read_workflow( self, wf_id, workflow_rows ):
