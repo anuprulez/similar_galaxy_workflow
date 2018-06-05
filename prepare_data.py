@@ -175,11 +175,11 @@ class PrepareData:
         """
         Remove duplicate paths from test paths
         """
-        clean_test_dict = dict()
-        for path in test_dict:
-            if path not in train_dict:
-                clean_test_dict[ path ] = test_dict[ path ]
-        return clean_test_dict 
+        clean_train_dict = dict()
+        for path in train_dict:
+            if path not in test_dict:
+                clean_train_dict[ path ] = train_dict[ path ]
+        return clean_train_dict 
 
     @classmethod
     def get_data_labels_mat( self ):
@@ -198,7 +198,7 @@ class PrepareData:
         # convert train and test into dictionary
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file )
-        test_paths_dict = self.remove_duplicate_paths( train_paths_dict, test_paths_dict )
+        train_paths_dict = self.remove_duplicate_paths( train_paths_dict, test_paths_dict )
         # write to files
         self.write_to_file( train_paths_dict, self.train_data_labels_dict )
         self.write_to_file( test_paths_dict, self.test_data_labels_dict )

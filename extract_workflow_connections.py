@@ -29,7 +29,7 @@ class ExtractWorkflowConnections:
         """
         print( "Reading workflows..." )
         workflows = {}
-        with open( WORKFLOW_FILE_PATH, 'rb' ) as workflow_connections_file:
+        with open( WORKFLOW_FILE_PATH, 'rt', encoding='utf-8' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
                 if not index:
