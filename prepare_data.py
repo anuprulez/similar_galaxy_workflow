@@ -15,7 +15,7 @@ class PrepareData:
     def __init__( self, max_seq_length, test_data_share ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.raw_file = self.current_working_dir + "/data/workflow_steps.txt"
+        self.raw_file = self.current_working_dir + "/data/workflow_connections_paths.txt"
         self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
         self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
         self.train_file = self.current_working_dir + "/data/train_file.txt"
@@ -23,9 +23,7 @@ class PrepareData:
         self.test_file = self.current_working_dir + "/data/test_file.txt"
         self.test_sequence_file = self.current_working_dir + "/data/test_sequence_file.txt"
         self.train_data_labels_dict = self.current_working_dir + "/data/train_data_labels_dict.json"
-        self.train_data_labels_names_dict = self.current_working_dir + "/data/train_data_labels_names_dict.json"
         self.test_data_labels_dict = self.current_working_dir + "/data/test_data_labels_dict.json"
-        self.test_data_labels_names_dict = self.current_working_dir + "/data/test_data_labels_names_dict.json"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
@@ -181,7 +179,7 @@ class PrepareData:
         for path in test_dict:
             if path not in train_dict:
                 clean_test_dict[ path ] = test_dict[ path ]
-        return clean_test_dict
+        return clean_test_dict 
 
     @classmethod
     def get_data_labels_mat( self ):
@@ -193,21 +191,21 @@ class PrepareData:
         num_classes = len( dictionary )
         split_number = int( self.test_share * len( raw_paths ) )
         random.shuffle( raw_paths )
-        train_paths = raw_paths[ split_number:]
+        train_paths = raw_paths[ split_number: ]
         test_paths = raw_paths[ :split_number ]
         self.take_actual_paths( train_paths, dictionary, self.train_file, self.train_sequence_file )
         self.decompose_paths( test_paths, dictionary, self.test_file, self.test_sequence_file )
+        # convert train and test into dictionary
         train_paths_dict = self.prepare_paths_labels_dictionary( self.train_file )
-        self.write_to_file( train_paths_dict, self.train_data_labels_dict )
         test_paths_dict = self.prepare_paths_labels_dictionary( self.test_file )
         test_paths_dict = self.remove_duplicate_paths( train_paths_dict, test_paths_dict )
+        # write to files
+        self.write_to_file( train_paths_dict, self.train_data_labels_dict )
         self.write_to_file( test_paths_dict, self.test_data_labels_dict )
         # convert to train and test labels
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
-        augmented_train_data = np.concatenate( ( train_data, train_data ), axis=0 )
-        augmented_train_labels = np.concatenate( ( train_labels, train_labels ), axis=0 )
-        print augmented_train_data.shape
-        print augmented_train_labels.shape
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
+        print train_data.shape
+        print test_data.shape
         next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-        return augmented_train_data, augmented_train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools

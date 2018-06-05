@@ -11,8 +11,9 @@ import csv
 
 
 CURRENT_DIR = os.getcwd()
-WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflows_connections/workflow_connections.tsv"
+WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflow_connections.tsv"
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
+COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/compatible_tools.json"
 
 
 class ExtractWorkflowConnections:
@@ -58,23 +59,44 @@ class ExtractWorkflowConnections:
                 for leaf in leaves:
                     paths = self.find_tool_paths_workflow( parents_graph, root, leaf )
                     # reverse the paths as they are computed from leaves to roots
-                    paths = [ list( reversed( tool_path ) ) for tool_path in paths ]
+                    paths = [ list( tool_path ) for tool_path in paths ]
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
-            break
         unique_paths = list()
         print( "Workflows processed" )
         for path in workflow_paths:
             if path not in unique_paths:
                 unique_paths.append( path )
+        print( "Finding compatible next tools..." )
+        next_tools = self.set_compatible_next_tools( unique_paths )
+        with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
+            compatible_tools_file.write( json.dumps( next_tools ) )
         print( "Writing workflows to a text file..." )
-        print len( unique_paths )
         workflow_paths = ""
         for path in unique_paths:
             workflow_paths += ",".join( path ) + "\n"
         with open( WORKFLOW_PATHS_FILE, "w" ) as workflows_file:
             workflows_file.write( workflow_paths )
+            
+    @classmethod
+    def set_compatible_next_tools( self, workflow_paths ):
+        """
+        Find next tools for each tool
+        """
+        next_tools = dict()
+        for path in workflow_paths:
+            for window in range( 0, len( path ) - 1 ):
+                current_next_tools = path[ window: window + 2 ]
+                current_tool = current_next_tools[ 0 ]
+                next_tool = current_next_tools[ 1 ]
+                if current_tool in next_tools:
+                    next_tools[ current_tool ] += "," + next_tool
+                else:
+                    next_tools[ current_tool ] = next_tool
+        for tool in next_tools:
+            next_tools[ tool ] = ",".join( list( set( next_tools[ tool ].split( "," ) ) ) )
+        return next_tools
 
     @classmethod
     def read_workflow( self, wf_id, workflow_rows ):
@@ -130,14 +152,3 @@ class ExtractWorkflowConnections:
         tool_id = tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
         tool_id = tool_id.replace( " ", "_" )
         return tool_id.lower()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 1:
-        print( "Usage: python extract_workflow_connections.py" )
-        exit( 1 )
-    start_time = time.time()
-    connections = ExtractWorkflowConnections()
-    connections.read_tabular_file()
-    end_time = time.time()
-    print ("Program finished in %s seconds" % str( end_time - start_time ))

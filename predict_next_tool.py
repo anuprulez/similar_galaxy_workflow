@@ -15,7 +15,7 @@ from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
-import extract_workflows
+import extract_workflow_connections
 import prepare_data
 
 
@@ -152,22 +152,20 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 30,
+        "n_epochs": 10,
         "batch_size": 50,
-        "dropout": 0.2,
+        "dropout": 0.3,
         "memory_units": 128,
         "embedding_vec_size": 128,
         "learning_rate": 0.001,
         "max_seq_len": 40,
-        "test_share": 0.10,
+        "test_share": 0.2,
         "activation_recurrent": 'elu',
         "activation_output": 'sigmoid',
         "loss_type": "binary_crossentropy"
     }
-    '''extract_workflow = extract_workflows.ExtractWorkflows()
-    print( "Reading workflows..." )
-    extract_workflow.read_workflow_directory()
-    print( "Finished extracting workflows" )'''
+    connections = extract_workflow_connections.ExtractWorkflowConnections()
+    connections.read_tabular_file()
     n_epochs = network_config[ "n_epochs" ]
     experiment_runs = network_config[ "experiment_runs" ]
     predict_tool = PredictNextTool( n_epochs )
