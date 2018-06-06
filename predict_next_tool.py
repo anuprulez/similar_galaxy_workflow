@@ -152,8 +152,8 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 10,
-        "batch_size": 50,
+        "n_epochs": 100,
+        "batch_size": 128,
         "dropout": 0.3,
         "memory_units": 128,
         "embedding_vec_size": 128,
