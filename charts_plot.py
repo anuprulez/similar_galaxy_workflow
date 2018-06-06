@@ -47,4 +47,4 @@ def plot_data_distribution( file_path ):
 
 
 ##plot_tools_compatible_tools( "data/compatible_tools.json" )
-plot_data_distribution( "data/workflow_steps.txt" )
+plot_data_distribution( "data/workflow_connections_paths.txt" )

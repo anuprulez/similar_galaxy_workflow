@@ -88,6 +88,7 @@ class PrepareData:
                             sub_paths_pos.append( tools_pos )
                         if data_seq not in sub_paths_names:
                             sub_paths_names.append( data_seq )
+            print( "Path %d processed" % ( index + 1 ) )
         with open( file_pos, "w" ) as sub_paths_file_pos:
             for item in sub_paths_pos:
                 sub_paths_file_pos.write( "%s\n" % item )
@@ -198,7 +199,10 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
+        print( "Raw paths: %d" % len( raw_paths ) )
+        random.shuffle( raw_paths )
         # process training and test paths in different ways
+        print( "Raw paths: %d" % len( raw_paths ) )
         print( "Decomposing paths..." )
         all_unique_paths = self.decompose_paths( raw_paths, dictionary, self.complete_file, self.complete_file_sequence )
         random.shuffle( all_unique_paths )

@@ -8,10 +8,11 @@ import time
 import pandas as pd
 import operator
 import csv
+import random
 
 
 CURRENT_DIR = os.getcwd()
-WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflow_connections.tsv"
+WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflow_connections_merged.tsv"
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
 COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/compatible_tools.json"
 
@@ -34,12 +35,11 @@ class ExtractWorkflowConnections:
             for index, row in enumerate( workflow_connections ):
                 if not index:
                     continue  
-                row_split = row[ 0 ].split( "\t" )
-                wf_id = str( row_split[ 0 ] ) 
+                wf_id = str( row[ 0 ] ) 
                 if wf_id not in workflows:
                     workflows[ wf_id ] = list()
-                in_tool = row_split[ 2 ]
-                out_tool = row_split[ 5 ]
+                in_tool = row[ 2 ]
+                out_tool = row[ 5 ]
                 if out_tool and in_tool and out_tool != in_tool:
                     in_tool = self.format_tool_id( in_tool )
                     out_tool = self.format_tool_id( out_tool )
@@ -65,14 +65,18 @@ class ExtractWorkflowConnections:
             workflow_paths.extend( flow_paths )
         unique_paths = list()
         print( "Workflows processed" )
+        print( "Removing duplicate paths..." )
+        print( "All paths: %d" % len( workflow_paths ) )
         for path in workflow_paths:
             if path not in unique_paths:
                 unique_paths.append( path )
+        print( "Unique paths: %d" % len( unique_paths ) )
         print( "Finding compatible next tools..." )
         next_tools = self.set_compatible_next_tools( unique_paths )
         with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
             compatible_tools_file.write( json.dumps( next_tools ) )
         print( "Writing workflows to a text file..." )
+        random.shuffle( unique_paths )
         workflow_paths = ""
         for path in unique_paths:
             workflow_paths += ",".join( path ) + "\n"
