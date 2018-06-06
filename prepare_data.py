@@ -201,8 +201,6 @@ class PrepareData:
         num_classes = len( dictionary )
         print( "Raw paths: %d" % len( raw_paths ) )
         random.shuffle( raw_paths )
-        # process training and test paths in different ways
-        print( "Raw paths: %d" % len( raw_paths ) )
         print( "Decomposing paths..." )
         all_unique_paths = self.decompose_paths( raw_paths, dictionary, self.complete_file, self.complete_file_sequence )
         random.shuffle( all_unique_paths )
