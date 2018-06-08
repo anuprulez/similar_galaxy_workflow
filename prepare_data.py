@@ -175,22 +175,6 @@ class PrepareData:
             multilabel_file.write( json.dumps( path_seq_names ) )
 
     @classmethod
-    def randomize_data( self, train_data, train_labels ):
-        """
-        Randomize the train data after its inflation
-        """
-        size_data = train_data.shape
-        size_labels = train_labels.shape
-        rand_train_data = np.zeros( [ size_data[ 0 ], size_data[ 1 ] ] )
-        rand_train_labels = np.zeros( [ size_labels[ 0 ], size_labels[ 1 ] ] )
-        indices = np.arange( size_data[ 0 ] )
-        random.shuffle( indices )
-        for index, random_index in enumerate( indices ):
-            rand_train_data[ index ] = train_data[ random_index ]
-            rand_train_labels[ index ] = train_labels[ random_index ]
-        return rand_train_data, rand_train_labels
-
-    @classmethod
     def split_test_train_data( self, multilabels_paths ):
         """
         Split into test and train data randomly for each run
@@ -206,6 +190,22 @@ class PrepareData:
             else:
                 train_dict[ path ] = multilabels_paths[ path ]
         return train_dict, test_dict
+
+    @classmethod
+    def randomize_data( self, train_data, train_labels ):
+        """
+        Randomize the train data after its inflation
+        """
+        size_data = train_data.shape
+        size_labels = train_labels.shape
+        rand_train_data = np.zeros( [ size_data[ 0 ], size_data[ 1 ] ] )
+        rand_train_labels = np.zeros( [ size_labels[ 0 ], size_labels[ 1 ] ] )
+        indices = np.arange( size_data[ 0 ] )
+        random.shuffle( indices )
+        for index, random_index in enumerate( indices ):
+            rand_train_data[ index ] = train_data[ random_index ]
+            rand_train_labels[ index ] = train_labels[ random_index ]
+        return rand_train_data, rand_train_labels
 
     @classmethod
     def reconstruct_original_distribution( self, reverse_dictionary, train_data, train_labels ):

@@ -120,6 +120,7 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
+
 def plot_next_tools_precision( file_path ):
     next_tools = list()
     precision = list()
@@ -136,6 +137,7 @@ def plot_next_tools_precision( file_path ):
     plt.grid( True )
     plt.show()
 
+
 def plot_lr():
     lr = 0.001
     decay = 1e-4
@@ -146,7 +148,26 @@ def plot_lr():
         lr = lr * ( 1 / ( 1 + decay * i ))
     plt.plot( lr_rates )
     plt.show()
- 
+
+
+def plot_input_seq_prediction( file_path ):
+    next_tools = list()
+    precision = list()
+    with open( file_path, 'r' ) as tool_seq_prediction:
+        topk_acc = json.loads(tool_seq_prediction.read())
+    input_length = list()
+    acc = list()
+    for seq_len in topk_acc:
+        acc.append( np.mean( topk_acc[ seq_len ] ))
+        input_length.append( seq_len )
+    plt.bar( input_length, acc )
+    plt.ylabel( 'Accuracy' )
+    plt.xlabel( 'Size of input tools sequences' )
+    plt.title( 'Accuracy with the size of input tools sequences' )
+    plt.grid( True )
+    plt.show()
+
+
 #plot_lr()
 plot_loss( "data/mean_train_loss.txt", "data/mean_test_loss.txt" )
 plot_accuracy( "data/mean_test_absolute_precision.txt", "data/mean_test_compatibility_precision.txt" )
