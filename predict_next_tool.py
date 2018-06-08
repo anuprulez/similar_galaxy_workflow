@@ -75,7 +75,7 @@ class PredictNextTool:
         predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=0.2, batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         return {
@@ -152,14 +152,15 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 25,
+        "n_epochs": 40,
         "batch_size": 128,
         "dropout": 0.3,
         "memory_units": 128,
         "embedding_vec_size": 128,
         "learning_rate": 0.001,
-        "max_seq_len": 40,
+        "max_seq_len": 25,
         "test_share": 0.2,
+        "validation_split": 0.2,
         "activation_recurrent": 'elu',
         "activation_output": 'sigmoid',
         "loss_type": "binary_crossentropy"

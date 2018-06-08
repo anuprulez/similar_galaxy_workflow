@@ -20,7 +20,7 @@ class EvaluateTopResults:
         """ Init method. """
         self.current_working_dir = os.getcwd() + "/data"
         self.network_config_json_path = self.current_working_dir + "/model.json"
-        self.weights_path = self.current_working_dir + "/weights/weights-epoch-200.hdf5"
+        self.weights_path = self.current_working_dir + "/weights/weights-epoch-25.hdf5"
         self.test_labels_path = self.current_working_dir + "/test_data_labels_dict.json"
         self.train_labels_path = self.current_working_dir + "/train_data_labels_dict.json"
         self.data_dictionary_path = self.current_working_dir + "/data_dictionary.txt"
