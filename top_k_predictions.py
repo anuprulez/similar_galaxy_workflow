@@ -50,7 +50,7 @@ class EvaluateTopResults:
         data = list( data.items() )
         test_data_performance = list()
         min_seq_length = 0
-        top1 = 1
+        top1 = 2
         input_seq_topk = dict()
         input_seq_topk_compatible = dict()
         for i in range( len( data ) ):

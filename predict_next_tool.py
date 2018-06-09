@@ -6,6 +6,8 @@ import sys
 import numpy as np
 import time
 import os
+import json
+import h5py
 
 # machine learning library
 from keras.models import Sequential
@@ -33,6 +35,11 @@ class PredictNextTool:
         self.mean_test_actual_compatibility_precision = self.current_working_dir + "/data/mean_test_actual_compatibility_precision.txt"
         self.mean_train_loss = self.current_working_dir + "/data/mean_train_loss.txt"
         self.mean_test_loss = self.current_working_dir + "/data/mean_test_loss.txt"
+        self.data_rev_dict = self.current_working_dir + "/data/data_rev_dict.txt"
+        self.data_dictionary = self.current_working_dir + "/data/data_dictionary.txt"
+        self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
+        self.train_data = self.current_working_dir + "/data/train_data.h5"
+        self.test_data = self.current_working_dir + "/data/test_data.h5"
         self.n_epochs = epochs
 
     @classmethod
@@ -42,17 +49,30 @@ class PredictNextTool:
         """
         with open( self.network_config_json_path, "w" ) as json_file:
             json_file.write( model )
-
+            
     @classmethod
-    def evaluate_recurrent_network( self, run, network_config ):
+    def read_file( self, file_path ):
+        """
+        Read a file
+        """
+        with open( file_path, "r" ) as json_file:
+            file_content = json.loads( json_file.read() )
+        return file_content
+        
+    @classmethod
+    def get_h5_data( self, file_name ):
+        """
+        Read h5 file to get train and test data
+        """
+        hf = h5py.File( file_name, 'r' )
+        return hf.get( "data" ), hf.get( "data_labels" )
+        
+    @classmethod
+    def evaluate_recurrent_network( self, run, network_config, dictionary, reverse_dictionary, train_data, train_labels, test_data, test_labels, next_compatible_tools ):
         """
         Define recurrent neural network and train sequential data
         """
         print( "Experiment run: %d/%d" % ( ( run + 1 ), network_config[ "experiment_runs" ] ) )
-        print ( "Dividing data..." )
-        # get training and test data and their labels
-        data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
-        train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools = data.get_data_labels_mat()
         # Increase the dimension by 1 to mask the 0th position
         dimensions = len( dictionary ) + 1
         optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
@@ -75,7 +95,7 @@ class PredictNextTool:
         predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
         callbacks_list = [ checkpoint, predict_callback_test ] #predict_callback_train
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle=True )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle="batch" )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         return {
@@ -119,9 +139,9 @@ class PredictCallback( Callback ):
             prediction_pos = np.argsort( prediction, axis=-1 )
             topk_prediction_pos = prediction_pos[ -topk: ]
             # read tool names using reverse dictionary
-            sequence_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in test_sample_tool_pos ]
-            actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
-            top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) + 1 ] for tool_pos in topk_prediction_pos ]
+            sequence_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in test_sample_tool_pos ]
+            actual_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in actual_classes_pos ]
+            top_predicted_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) + 1 ) ] for tool_pos in topk_prediction_pos ]
             # find false positives
             false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
             absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
@@ -167,9 +187,17 @@ if __name__ == "__main__":
     }
     connections = extract_workflow_connections.ExtractWorkflowConnections()
     connections.read_tabular_file()
+    print ( "Dividing data..." )
+    data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
+    data.get_data_labels_mat()
     n_epochs = network_config[ "n_epochs" ]
     experiment_runs = network_config[ "experiment_runs" ]
     predict_tool = PredictNextTool( n_epochs )
+    data_dict = predict_tool.read_file( predict_tool.data_dictionary )
+    reverse_data_dictionary = predict_tool.read_file( predict_tool.data_rev_dict )
+    train_data, train_labels = predict_tool.get_h5_data( predict_tool.train_data )
+    test_data, test_labels = predict_tool.get_h5_data( predict_tool.test_data )
+    next_compatible_tools = predict_tool.read_file( predict_tool.compatible_tools_filetypes )
     test_abs_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_actual_absolute_precision = np.zeros( [ experiment_runs, n_epochs ] )
@@ -177,7 +205,7 @@ if __name__ == "__main__":
     training_loss = np.zeros( [ experiment_runs, n_epochs ] )
     test_loss = np.zeros( [ experiment_runs, n_epochs ] )
     for run in range( experiment_runs ):
-        results = predict_tool.evaluate_recurrent_network( run, network_config )
+        results = predict_tool.evaluate_recurrent_network( run, network_config, data_dict, reverse_data_dictionary, train_data, train_labels, test_data, test_labels, next_compatible_tools )
         test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
         training_loss[ run ] = results[ "train_loss" ]

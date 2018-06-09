@@ -7,6 +7,7 @@ import collections
 import numpy as np
 import json
 import random
+import h5py
 
 
 class PrepareData:
@@ -30,6 +31,8 @@ class PrepareData:
         self.test_data_labels_names_dict = self.current_working_dir + "/data/test_data_labels_names_dict.json"
         self.compatible_tools_filetypes = self.current_working_dir + "/data/compatible_tools.json"
         self.paths_frequency = self.current_working_dir + "/data/workflow_paths_freq.txt"
+        self.train_data = self.current_working_dir + "/data/train_data.h5"
+        self.test_data = self.current_working_dir + "/data/test_data.h5"
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
 
@@ -151,15 +154,6 @@ class PrepareData:
         return data_mat, label_mat
 
     @classmethod
-    def get_filetype_compatibility( self, filetypes_path, dictionary ):
-        """
-        Get the next tools with compatible file types for each tool
-        """
-        with open( filetypes_path, "r" ) as compatible_tools_file:
-            tools_compatibility = json.loads( compatible_tools_file.read() )
-        return tools_compatibility
-
-    @classmethod
     def write_to_file( self, file_path, file_names_path, dictionary, reverse_dictionary ):
         """
         Write to file
@@ -259,6 +253,16 @@ class PrepareData:
             test_samples.append( sample_tool_names )
         intersection = list( set( train_samples ).intersection( set( test_samples ) ) )
         print( "Overlap in train and test: %d" % len( intersection ) )
+        
+    @classmethod
+    def save_as_h5py( self, data, label, file_path ):
+        """
+        Save the samples and their labels as h5 files
+        """
+        hf = h5py.File( file_path, 'w' )
+        hf.create_dataset( 'data', data=data, compression="gzip", compression_opts=9 )
+        hf.create_dataset( 'data_labels', data=label, compression="gzip", compression_opts=9 )
+        hf.close()
 
     @classmethod
     def get_data_labels_mat( self ):
@@ -268,7 +272,6 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
-
         print( "Raw paths: %d" % len( raw_paths ) )
         random.shuffle( raw_paths )
 
@@ -299,7 +302,6 @@ class PrepareData:
 
         print( "Randomizing the train data..." )
         train_data, train_labels = self.randomize_data( train_data, train_labels )
-
-        # get the list of compatible tools
-        next_compatible_tools = self.get_filetype_compatibility( self.compatible_tools_filetypes, dictionary )
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, next_compatible_tools
+        
+        self.save_as_h5py( train_data, train_labels, self.train_data )
+        self.save_as_h5py( test_data, test_labels, self.test_data )
