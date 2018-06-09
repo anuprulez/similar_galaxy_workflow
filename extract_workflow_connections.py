@@ -71,15 +71,12 @@ class ExtractWorkflowConnections:
             workflow_paths.extend( flow_paths )
         print( "Workflows processed" )
         print( "All paths: %d" % len( workflow_paths ) )
-        path_counter = 0
         print( "Counting frequency of paths..." )
         for path in workflow_paths:
             path_names = ",".join( path )
             if path_names not in workflow_paths_freq:
                   workflow_paths_freq[ path_names ] = 0
             workflow_paths_freq[ path_names ] += 1
-            path_counter += 1
-            print( "Path counted: %d" % path_counter )
         with open( WORKFLOW_PATHS_FREQ , "w" ) as workflow_paths_freq_file:
             workflow_paths_freq_file.write( json.dumps( workflow_paths_freq ) )
         # collect duplicate paths
