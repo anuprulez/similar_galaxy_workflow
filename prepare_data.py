@@ -86,12 +86,11 @@ class PrepareData:
                     sequence = tools[ 0: window + 1 ]
                     tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
                     if len( tools_pos ) > 1:
-                        tools_pos = ",".join( tools_pos )
-                        data_seq = ",".join( sequence )
-                        if tools_pos not in sub_paths_pos:
-                            sub_paths_pos.append( tools_pos )
-                        if data_seq not in sub_paths_names:
-                            sub_paths_names.append( data_seq )
+                        sub_paths_pos.append( ",".join( tools_pos ) )
+                        sub_paths_names.append(  ",".join( sequence ) )
+            print( "Path processed: %d" % index )
+        sub_paths_pos = list( set( sub_paths_pos ) )
+        sub_paths_names = list( set( sub_paths_names ) )
         with open( file_pos, "w" ) as sub_paths_file_pos:
             for item in sub_paths_pos:
                 sub_paths_file_pos.write( "%s\n" % item )
