@@ -206,8 +206,8 @@ class PrepareData:
         Reconstruct the original distribution in training data
         """
         paths_frequency = dict()
-        repeated_train_sample = None
-        repeated_train_sample_label = None
+        repeated_train_sample = list()
+        repeated_train_sample_label = list()
         train_data_size = train_data.shape[ 0 ]
         with open( self.paths_frequency, "r" ) as frequency:
             paths_frequency = json.loads( frequency.read() )
@@ -220,20 +220,27 @@ class PrepareData:
             label_tool_names = [ reverse_dictionary[ int( tool_pos ) ] for tool_pos in label_tool_pos ]
             for label in label_tool_names:
                 reconstructed_path = sample_tool_names + "," + label
-                if reconstructed_path in paths_frequency:
-                    # subtract by one
-                    adjusted_freq = paths_frequency[ reconstructed_path ] - 1
-                    tr_data = np.tile( train_data[ i ], ( adjusted_freq, 1 ) )
-                    tr_label = np.tile( train_labels[ i ], ( adjusted_freq, 1 ) )
-                    if repeated_train_sample is not None: 
-                        repeated_train_sample = np.vstack( ( repeated_train_sample, tr_data  ) )
-                        repeated_train_sample_label = np.vstack( ( repeated_train_sample_label, tr_label  ) )
-                    else:
-                        repeated_train_sample = tr_data
-                        repeated_train_sample_label = tr_label
+                try:
+                    freq = int( paths_frequency[ reconstructed_path ] ) - 1
+                    if freq > 1:
+                        adjusted_freq = int( paths_frequency[ reconstructed_path ] - 1 )
+                        tr_data = np.tile( train_data[ i ], ( adjusted_freq, 1 ) )
+                        tr_label = np.tile( train_labels[ i ], ( adjusted_freq, 1 ) )
+                        repeated_train_sample.extend( tr_data )
+                        repeated_train_sample_label.extend( tr_label )
+                except Exception as key_error:
+                    continue
             print( "Path reconstructed: %d" % i )
-        train_data = np.vstack( ( train_data, repeated_train_sample ) )
-        train_labels = np.vstack( ( train_labels, repeated_train_sample_label ) )
+        new_data_len = len( repeated_train_sample )
+        tr_data_array = np.zeros( [ new_data_len, train_data.shape[ 1 ] ] )
+        tr_label_array = np.zeros( [ new_data_len, train_labels.shape[ 1 ] ] )
+        for ctr, item in enumerate( repeated_train_sample ):
+            tr_data_array[ ctr ] = item
+            tr_label_array[ ctr ] = repeated_train_sample_label[ ctr ]
+        print tr_data_array.shape
+        print tr_label_array.shape
+        train_data = np.vstack( ( train_data, tr_data_array  ) )
+        train_labels = np.vstack( ( train_labels, tr_label_array ) )
         return train_data, train_labels
 
     @classmethod
@@ -278,6 +285,7 @@ class PrepareData:
         processed_data, raw_paths = self.process_processed_data( self.raw_file )
         dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
         num_classes = len( dictionary )
+
         print( "Raw paths: %d" % len( raw_paths ) )
         random.shuffle( raw_paths )
 
