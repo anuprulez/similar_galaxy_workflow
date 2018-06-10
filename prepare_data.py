@@ -49,8 +49,9 @@ class PrepareData:
         for item in raw_paths:
             split_items = item.split( "," )
             for token in split_items:
-                if token not in tokens:
+                if token is not "":
                     tokens.append( token )
+        tokens = list( set( tokens ) )
         tokens = np.array( tokens )
         tokens = np.reshape( tokens, [ -1, ] )
         return tokens, raw_paths
@@ -88,7 +89,6 @@ class PrepareData:
                     if len( tools_pos ) > 1:
                         sub_paths_pos.append( ",".join( tools_pos ) )
                         sub_paths_names.append(  ",".join( sequence ) )
-            print( "Path processed: %d" % index )
         sub_paths_pos = list( set( sub_paths_pos ) )
         sub_paths_names = list( set( sub_paths_names ) )
         with open( file_pos, "w" ) as sub_paths_file_pos:
@@ -206,8 +206,9 @@ class PrepareData:
         Reconstruct the original distribution in training data
         """
         paths_frequency = dict()
+        repeated_train_sample = None
+        repeated_train_sample_label = None
         train_data_size = train_data.shape[ 0 ]
-        increase_factor = 0
         with open( self.paths_frequency, "r" ) as frequency:
             paths_frequency = json.loads( frequency.read() )
         for i in range( train_data_size ):
@@ -222,11 +223,17 @@ class PrepareData:
                 if reconstructed_path in paths_frequency:
                     # subtract by one
                     adjusted_freq = paths_frequency[ reconstructed_path ] - 1
-                    repeated_train_sample = np.tile( train_data[ i ], ( adjusted_freq, 1 ) )
-                    repeated_train_sample_label = np.tile( train_labels[ i ], ( adjusted_freq, 1 ) )
-                    train_data = np.vstack( ( train_data, repeated_train_sample ) )
-                    train_labels = np.vstack( ( train_labels, repeated_train_sample_label ) )
-                    increase_factor += adjusted_freq
+                    tr_data = np.tile( train_data[ i ], ( adjusted_freq, 1 ) )
+                    tr_label = np.tile( train_labels[ i ], ( adjusted_freq, 1 ) )
+                    if repeated_train_sample is not None: 
+                        repeated_train_sample = np.vstack( ( repeated_train_sample, tr_data  ) )
+                        repeated_train_sample_label = np.vstack( ( repeated_train_sample_label, tr_label  ) )
+                    else:
+                        repeated_train_sample = tr_data
+                        repeated_train_sample_label = tr_label
+            print( "Path reconstructed: %d" % i )
+        train_data = np.vstack( ( train_data, repeated_train_sample ) )
+        train_labels = np.vstack( ( train_labels, repeated_train_sample_label ) )
         return train_data, train_labels
 
     @classmethod
