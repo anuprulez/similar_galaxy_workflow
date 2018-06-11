@@ -311,8 +311,8 @@ class PrepareData:
         print( "Verifying overlap in train and test data..." )
         self.verify_overlap( train_data, test_data, reverse_dictionary )
 
-        print( "Restoring the original data distribution in training data..." )
-        train_data, train_labels = self.reconstruct_original_distribution( reverse_dictionary, train_data, train_labels )
+        #print( "Restoring the original data distribution in training data..." )
+        #train_data, train_labels = self.reconstruct_original_distribution( reverse_dictionary, train_data, train_labels )
 
         print( "Randomizing the train data..." )
         train_data, train_labels = self.randomize_data( train_data, train_labels )
