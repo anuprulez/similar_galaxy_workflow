@@ -237,8 +237,6 @@ class PrepareData:
         for ctr, item in enumerate( repeated_train_sample ):
             tr_data_array[ ctr ] = item
             tr_label_array[ ctr ] = repeated_train_sample_label[ ctr ]
-        print tr_data_array.shape
-        print tr_label_array.shape
         train_data = np.vstack( ( train_data, tr_data_array  ) )
         train_labels = np.vstack( ( train_labels, tr_label_array ) )
         return train_data, train_labels
