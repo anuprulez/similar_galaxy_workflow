@@ -52,8 +52,7 @@ class ExtractWorkflowConnections:
                 if out_tool and in_tool and out_tool != in_tool:
                     in_tool = self.format_tool_id( in_tool )
                     out_tool = self.format_tool_id( out_tool )
-                    if ( in_tool, out_tool ) not in workflows:
-                        workflows[ wf_id ].append( ( in_tool, out_tool ) )
+                    workflows[ wf_id ].append( ( in_tool, out_tool ) )
         print( "Processing workflows..." )
         for wf_id in workflows:
             workflow_parents[ wf_id ] = self.read_workflow( wf_id, workflows[ wf_id ] )
@@ -65,7 +64,7 @@ class ExtractWorkflowConnections:
                 for leaf in leaves:
                     paths = self.find_tool_paths_workflow( parents_graph, root, leaf )
                     # reverse the paths as they are computed from leaves to roots
-                    paths = [ list( tool_path ) for tool_path in paths ]
+                    paths = [ list( reversed( tool_path ) ) for tool_path in paths ]
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
@@ -142,13 +141,9 @@ class ExtractWorkflowConnections:
         for item in graph:
             all_parents.extend( graph[ item ] )
         all_parents = list( set( all_parents ) )
-        keys = graph.keys()
-        for parent in all_parents:
-            if parent not in keys:
-                roots.append( parent )
-        for key in keys:
-            if key not in all_parents:
-                leaves.append( key )       
+        children = graph.keys()
+        roots = list( set( all_parents).difference( set( children ) ) )
+        leaves = list( set( children ).difference( set( all_parents ) ) )
         return roots, leaves 
 
     @classmethod
@@ -163,6 +158,7 @@ class ExtractWorkflowConnections:
                     new_tools_paths = self.find_tool_paths_workflow( graph, start, node, path )
                     for tool_path in new_tools_paths:
                         path_list.append( tool_path )
+        
         return path_list
 
     @classmethod
