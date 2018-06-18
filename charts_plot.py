@@ -26,7 +26,7 @@ def plot_tools_compatible_tools( file_path ):
         next_tools_list = json.loads( file_next_tools.read() )
     for tool in next_tools_list:
         next_tools.append( len( next_tools_list[ tool ].split( "," ) ) )
-    plt.bar( np.arange( len( next_tools ) ), next_tools )
+    plt.bar( np.arange( len( next_tools ) ), next_tools, color='r' )
     plt.ylabel( 'Number of next compatible tools' )
     plt.xlabel( 'Tools' )
     plt.title( 'Distribution of next compatible tools for all the tools' )
@@ -47,7 +47,6 @@ def plot_data_distribution( file_path ):
         size = len( path.split( "," ) )
         tools_freq.append( size )
         count.append( index )
-    print len(tools_freq)
     plt.bar( count, tools_freq, color='r' )
     plt.xlabel( 'Workflow paths' )
     plt.ylabel( 'Number of tools (size)' )
@@ -521,11 +520,6 @@ def plot_dropout_perf():
 def plot_embedding_sizes_perf():
     NEW_FONT_SIZE = FONT_SIZE - 6
 
-    mean_test_abs_precision_16 = read_file( "thesis_results/embeddinglayersize/16/mean_test_absolute_precision.txt" )
-    mean_test_comp_precision_16 = read_file( "thesis_results/embeddinglayersize/16/mean_test_compatibility_precision.txt" )
-    mean_train_loss_16 = read_file( "thesis_results/embeddinglayersize/16/mean_train_loss.txt" )
-    mean_val_loss_16 = read_file( "thesis_results/embeddinglayersize/16/mean_test_loss.txt" )
-
     mean_test_abs_precision_32 = read_file( "thesis_results/embeddinglayersize/32/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_32 = read_file( "thesis_results/embeddinglayersize/32/mean_test_compatibility_precision.txt" )
     mean_train_loss_32 = read_file( "thesis_results/embeddinglayersize/32/mean_train_loss.txt" )
@@ -536,10 +530,10 @@ def plot_embedding_sizes_perf():
     mean_train_loss_64 = read_file( "thesis_results/embeddinglayersize/64/mean_train_loss.txt" )
     mean_val_loss_64 = read_file( "thesis_results/embeddinglayersize/64/mean_test_loss.txt" )
 
-    '''mean_test_abs_precision_128 = read_file( "thesis_results/embeddinglayersize/128/mean_test_absolute_precision.txt" )
+    mean_test_abs_precision_128 = read_file( "thesis_results/embeddinglayersize/128/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_128 = read_file( "thesis_results/embeddinglayersize/128/mean_test_compatibility_precision.txt" )
     mean_train_loss_128 = read_file( "thesis_results/embeddinglayersize/128/mean_train_loss.txt" )
-    mean_val_loss_128 = read_file( "thesis_results/embeddinglayersize/128/mean_test_loss.txt" )'''
+    mean_val_loss_128 = read_file( "thesis_results/embeddinglayersize/128/mean_test_loss.txt" )
 
     mean_test_abs_precision_256 = read_file( "thesis_results/embeddinglayersize/256/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_256 = read_file( "thesis_results/embeddinglayersize/256/mean_test_compatibility_precision.txt" )
@@ -551,33 +545,38 @@ def plot_embedding_sizes_perf():
     mean_train_loss_512 = read_file( "thesis_results/embeddinglayersize/512/mean_train_loss.txt" )
     mean_val_loss_512 = read_file( "thesis_results/embeddinglayersize/512/mean_test_loss.txt" )
 
+    mean_test_abs_precision_1024 = read_file( "thesis_results/embeddinglayersize/1024/mean_test_absolute_precision.txt" )
+    mean_test_comp_precision_1024 = read_file( "thesis_results/embeddinglayersize/1024/mean_test_compatibility_precision.txt" )
+    mean_train_loss_1024 = read_file( "thesis_results/embeddinglayersize/1024/mean_train_loss.txt" )
+    mean_val_loss_1024 = read_file( "thesis_results/embeddinglayersize/1024/mean_test_loss.txt" )
+
     title = "Precision and loss for various sizes of embedding layer"
     subtitles = [ "Absolute precision (a)", "Compatible precision (b)", "Training loss (c)", "Validation loss (d)" ]
     subxtitles = "Training epochs"
     subytitles = [ "Precision", "Cross-entropy loss" ]
-    legend = [ "16", '32', '64', '256', '512' ]
+    legend = [ '64', '128', '256', '512', '1024' ]
     fig, axes = plt.subplots( nrows=2, ncols=2 )
     for row, axis in enumerate( axes ):
         if row == 0:
             # plot top left
-            axis[ 0 ].plot( mean_test_abs_precision_16 )
-            axis[ 0 ].plot( mean_test_abs_precision_32 )
+            #axis[ 0 ].plot( mean_test_abs_precision_32 )
             axis[ 0 ].plot( mean_test_abs_precision_64 )
-            #axis[ 0 ].plot( mean_test_abs_precision_128 )
+            axis[ 0 ].plot( mean_test_abs_precision_128 )
             axis[ 0 ].plot( mean_test_abs_precision_256 )
             axis[ 0 ].plot( mean_test_abs_precision_512 )
+            axis[ 0 ].plot( mean_test_abs_precision_1024 )
             axis[ 0 ].set_title( subtitles[ 0 ], fontsize = NEW_FONT_SIZE )
             axis[ 0 ].set_ylabel( subytitles[ 0 ], fontsize = NEW_FONT_SIZE )
             axis[ 0 ].legend( legend, fontsize = NEW_FONT_SIZE )
             axis[ 0 ].grid( True )
 
             # plot top right
-            axis[ 1 ].plot( mean_test_comp_precision_16 )
-            axis[ 1 ].plot( mean_test_comp_precision_32 )
+            #axis[ 1 ].plot( mean_test_comp_precision_32 )
             axis[ 1 ].plot( mean_test_comp_precision_64 )
-            #axis[ 1 ].plot( mean_test_comp_precision_128 )
+            axis[ 1 ].plot( mean_test_comp_precision_128 )
             axis[ 1 ].plot( mean_test_comp_precision_256 )
             axis[ 1 ].plot( mean_test_comp_precision_512 )
+            axis[ 1 ].plot( mean_test_comp_precision_1024 )
             axis[ 1 ].set_title( subtitles[ 1 ], fontsize = NEW_FONT_SIZE )
             axis[ 1 ].legend( legend, fontsize = NEW_FONT_SIZE )
             axis[ 1 ].grid( True )
@@ -593,12 +592,12 @@ def plot_embedding_sizes_perf():
 
         if row == 1:
             # plot bottom left
-            axis[ 0 ].plot( mean_train_loss_16 )
-            axis[ 0 ].plot( mean_train_loss_32 )
+            #axis[ 0 ].plot( mean_train_loss_32 )
             axis[ 0 ].plot( mean_train_loss_64 )
-            #axis[ 0 ].plot( mean_train_loss_128 )
+            axis[ 0 ].plot( mean_train_loss_128 )
             axis[ 0 ].plot( mean_train_loss_256 )
             axis[ 0 ].plot( mean_train_loss_512 )
+            axis[ 0 ].plot( mean_train_loss_1024 )
             axis[ 0 ].set_title( subtitles[ 2 ], fontsize = NEW_FONT_SIZE )
             axis[ 0 ].set_xlabel( subxtitles, fontsize = NEW_FONT_SIZE )
             axis[ 0 ].legend( legend, fontsize = NEW_FONT_SIZE )
@@ -606,12 +605,12 @@ def plot_embedding_sizes_perf():
             axis[ 0 ].grid( True )
 
             # plot bottom right
-            axis[ 1 ].plot( mean_val_loss_16 )
-            axis[ 1 ].plot( mean_val_loss_32 )
+            #axis[ 1 ].plot( mean_val_loss_32 )
             axis[ 1 ].plot( mean_val_loss_64 )
-            #axis[ 1 ].plot( mean_val_loss_128 )
+            axis[ 1 ].plot( mean_val_loss_128 )
             axis[ 1 ].plot( mean_val_loss_256 )
             axis[ 1 ].plot( mean_val_loss_512 )
+            axis[ 1 ].plot( mean_val_loss_1024 )
             axis[ 1 ].set_title( subtitles[ 3 ], fontsize = NEW_FONT_SIZE )
             axis[ 1 ].set_xlabel( subxtitles, fontsize = NEW_FONT_SIZE )
             axis[ 1 ].legend( legend, fontsize = NEW_FONT_SIZE )
@@ -899,15 +898,15 @@ def plot_train_long_test_decomposed():
     plt.suptitle( title )
     plt.show()
 
-plot_activation_perf()
-plot_optimiser_perf()
-plot_lr_perf()
+#plot_activation_perf()
+#plot_optimiser_perf()
+#plot_lr_perf()
 #plot_batchsize_perf()
-#plot_dropout_perf()
+plot_dropout_perf()
 #plot_embedding_sizes_perf()
-plot_num_units_perf()
-plot_extreme_paths()
-plot_longer_paths()
-plot_train_long_test_decomposed()
-##plot_tools_compatible_tools( "data/compatible_tools.json" )
-##plot_data_distribution( "data/workflow_connections_paths.txt" )
+#plot_num_units_perf()
+#plot_extreme_paths()
+#plot_longer_paths()
+#plot_train_long_test_decomposed()
+plot_tools_compatible_tools( "data/compatible_tools.json" )
+#plot_data_distribution( "data/workflow_connections_paths.txt" )
