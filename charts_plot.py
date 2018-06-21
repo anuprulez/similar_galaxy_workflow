@@ -93,7 +93,7 @@ def plot_activation_perf(  ):
             axis[ 0 ].plot( mean_test_abs_precision_relu )
             axis[ 0 ].plot( mean_test_abs_precision_tanh )
             axis[ 0 ].plot( mean_test_abs_precision_sigmoid )
-            axis[ 0 ].plot( mean_test_abs_precision_relu )
+            axis[ 0 ].plot( mean_test_abs_precision_elu )
             axis[ 0 ].set_title( subtitles[ 0 ], fontsize = NEW_FONT_SIZE )
             axis[ 0 ].set_ylabel( subytitles[ 0 ], fontsize = NEW_FONT_SIZE )
             axis[ 0 ].legend( legend, fontsize = NEW_FONT_SIZE )
@@ -960,7 +960,7 @@ def plot_other_classifier():
     mean_train_loss = read_file( "thesis_results_reverse/other_classifier/data/mean_train_loss.txt" )
     mean_val_loss = read_file( "thesis_results_reverse/other_classifier/data/mean_test_loss.txt" )
 
-    title = "Precision and loss decomposing train and test paths (deep network with dense layers)"
+    title = "Precision and loss decomposing train and test paths (neural network with dense layers)"
     subtitles = [ "Absolute precision (a)", "Compatible precision (b)", "Training loss (c)", "Validation loss (d)" ]
     subxtitles = "Training epochs"
     subytitles = [ "Precision", "Cross-entropy loss" ]
@@ -1012,7 +1012,7 @@ def plot_other_classifier():
     plt.show()
 
 
-#plot_activation_perf()
+plot_activation_perf()
 #plot_optimiser_perf()
 #plot_lr_perf()
 #plot_batchsize_perf()
@@ -1024,6 +1024,6 @@ def plot_other_classifier():
 #plot_train_long_test_decomposed()
 #plot_top1_top2_accuracy()
 #plot_input_length_precision()
-plot_other_classifier()
+#plot_other_classifier()
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
