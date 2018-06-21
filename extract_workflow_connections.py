@@ -64,7 +64,7 @@ class ExtractWorkflowConnections:
                 for leaf in leaves:
                     paths = self.find_tool_paths_workflow( parents_graph, root, leaf )
                     # reverse the paths as they are computed from leaves to roots
-                    paths = [ list( reversed( tool_path ) ) for tool_path in paths ]
+                    paths = [ tool_path for tool_path in paths ]
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
