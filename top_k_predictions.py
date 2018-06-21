@@ -20,7 +20,7 @@ class EvaluateTopResults:
         """ Init method. """
         self.current_working_dir = os.getcwd() + "/data"
         self.network_config_json_path = self.current_working_dir + "/model.json"
-        self.weights_path = self.current_working_dir + "/weights/weights-epoch-100.hdf5"
+        self.weights_path = self.current_working_dir + "/weights/weights-epoch-40.hdf5"
         self.test_labels_path = self.current_working_dir + "/test_data_labels_dict.json"
         self.train_labels_path = self.current_working_dir + "/train_data_labels_dict.json"
         self.data_dictionary_path = self.current_working_dir + "/data_dictionary.txt"
@@ -48,14 +48,15 @@ class EvaluateTopResults:
         """
         # iterate over all the samples in the data
         data = list( data.items() )
+        len_data = len( data )
         test_data_performance = list()
         min_seq_length = 0
-        top1 = 2
+        top1 = 1
         input_seq_topk = dict()
         input_seq_topk_compatible = dict()
-        for i in range( len( data ) ):
+        for i in range( len_data ):
+            print( "Index: %d" % i )
             topk_prediction = 0.0
-            
             test_seq_performance = dict()
             sequence = list()
             train_seq_padded = np.zeros( [ self.max_seq_length ] )
@@ -68,10 +69,9 @@ class EvaluateTopResults:
             train_seq_padded = np.reshape( train_seq_padded, ( 1, self.max_seq_length ) )
             prediction = model.predict( train_seq_padded, verbose=0 )
             prediction = np.reshape( prediction, ( dimensions, ) )
-            #prediction = prediction[ 1: ]
             prediction_pos = np.argsort( prediction, axis=-1 )
             label_pos = data[ i ][ 1 ].split( "," )
-            len_label_pos = top1 #len( label_pos )
+            len_label_pos = len( label_pos )
             top_prediction_pos = prediction_pos[ -len_label_pos: ]
             top_prediction_pos = [ item for item in reversed( top_prediction_pos ) ]
             actual_tools = [ reverse_data_dictionary[ ps ] for ps in label_pos ]
@@ -148,9 +148,12 @@ class EvaluateTopResults:
         with open( "data/test_input_seq_topk_compatible.json", "w" ) as test_input_seq_topk_compatible:
             test_input_seq_topk_compatible.write( json.dumps( is_topk_compatible ) )
         self.save_as_csv( test_perf, "data/test_data_performance.csv" )
-
         print ( "Get topn predictions for %d train samples" % len( train_labels ) )
-        train_perf = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary, compatible_filetypes )
+        train_perf, is_topk_train, is_topk_compatible_train = self.get_per_class_topk_acc( train_labels, loaded_model, dimensions, reverse_data_dictionary, compatible_filetypes )
+        with open( "data/train_input_seq_topk.json", "w" ) as test_input_seq_topk_file:
+            test_input_seq_topk_file.write( json.dumps( is_topk_train ) )
+        with open( "data/train_input_seq_topk_compatible.json", "w" ) as test_input_seq_topk_compatible:
+            test_input_seq_topk_compatible.write( json.dumps( is_topk_compatible_train ) )
         self.save_as_csv( train_perf, "data/train_data_performance.csv" )
 
 if __name__ == "__main__":
