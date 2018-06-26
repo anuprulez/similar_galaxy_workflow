@@ -1012,7 +1012,67 @@ def plot_other_classifier():
     plt.show()
 
 
-plot_activation_perf()
+def plot_less_data():
+    NEW_FONT_SIZE = FONT_SIZE - 6
+
+    mean_test_abs_precision = read_file( "thesis_results_reverse/less_data/data/mean_test_absolute_precision.txt" )
+    mean_test_comp_precision = read_file( "thesis_results_reverse/less_data/data/mean_test_compatibility_precision.txt" )
+    mean_train_loss = read_file( "thesis_results_reverse/less_data/data/mean_train_loss.txt" )
+    mean_val_loss = read_file( "thesis_results_reverse/less_data/data/mean_test_loss.txt" )
+
+    title = "Precision and loss using less data"
+    subtitles = [ "Absolute precision (a)", "Compatible precision (b)", "Training loss (c)", "Validation loss (d)" ]
+    subxtitles = "Training epochs"
+    subytitles = [ "Precision", "Cross-entropy loss" ]
+    fig, axes = plt.subplots( nrows=2, ncols=2 )
+    for row, axis in enumerate( axes ):
+        if row == 0:
+            # plot top left
+            axis[ 0 ].plot( mean_test_abs_precision, color='r' )
+            axis[ 0 ].set_title( subtitles[ 0 ], fontsize = NEW_FONT_SIZE )
+            axis[ 0 ].set_ylabel( subytitles[ 0 ], fontsize = NEW_FONT_SIZE )
+            axis[ 0 ].grid( True )
+
+            # plot top right
+            axis[ 1 ].plot( mean_test_comp_precision, color='r' )
+            axis[ 1 ].set_title( subtitles[ 1 ], fontsize = NEW_FONT_SIZE )
+            axis[ 1 ].grid( True )
+
+            for tick in axis[ 0 ].xaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 1 ].xaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 0 ].yaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 1 ].yaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+
+        if row == 1:
+            # plot bottom left
+            axis[ 0 ].plot( mean_train_loss, color='r' )
+            axis[ 0 ].set_title( subtitles[ 2 ], fontsize = NEW_FONT_SIZE )
+            axis[ 0 ].set_xlabel( subxtitles, fontsize = NEW_FONT_SIZE )
+            axis[ 0 ].set_ylabel( subytitles[ 1 ], fontsize = NEW_FONT_SIZE )
+            axis[ 0 ].grid( True )
+
+            # plot bottom right
+            axis[ 1 ].plot( mean_val_loss, color='r' )
+            axis[ 1 ].set_title( subtitles[ 3 ], fontsize = NEW_FONT_SIZE )
+            axis[ 1 ].set_xlabel( subxtitles, fontsize = NEW_FONT_SIZE )
+            axis[ 1 ].grid( True )
+            for tick in axis[ 0 ].xaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 1 ].xaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 0 ].yaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+            for tick in axis[ 1 ].yaxis.get_major_ticks():
+                tick.label.set_fontsize( NEW_FONT_SIZE )
+    plt.suptitle( title )
+    plt.show()
+
+
+#plot_activation_perf()
 #plot_optimiser_perf()
 #plot_lr_perf()
 #plot_batchsize_perf()
@@ -1027,3 +1087,4 @@ plot_activation_perf()
 #plot_other_classifier()
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
+plot_less_data()

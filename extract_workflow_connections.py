@@ -1,13 +1,10 @@
 """
-Extract steps, tools and input and output types of workflows.
+Extract workflow paths from the tabular file containing
+input and output tools
 """
 
-import sys
 import os
 import json
-import time
-import pandas as pd
-import operator
 import csv
 import random
 
@@ -43,8 +40,8 @@ class ExtractWorkflowConnections:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
                 if not index:
-                    continue  
-                wf_id = str( row[ 0 ] ) 
+                    continue
+                wf_id = str( row[ 0 ] )
                 if wf_id not in workflows:
                     workflows[ wf_id ] = list()
                 in_tool = row[ 2 ]
@@ -74,7 +71,7 @@ class ExtractWorkflowConnections:
         for path in workflow_paths:
             path_names = ",".join( path )
             if path_names not in workflow_paths_freq:
-                  workflow_paths_freq[ path_names ] = 0
+                workflow_paths_freq[ path_names ] = 0
             workflow_paths_freq[ path_names ] += 1
         with open( WORKFLOW_PATHS_FREQ , "w" ) as workflow_paths_freq_file:
             workflow_paths_freq_file.write( json.dumps( workflow_paths_freq ) )
@@ -97,7 +94,7 @@ class ExtractWorkflowConnections:
             workflow_paths_unique += path + "\n"
         with open( WORKFLOW_PATHS_FILE, "w" ) as workflows_file:
             workflows_file.write( workflow_paths_unique )
-            
+
     @classmethod
     def set_compatible_next_tools( self, workflow_paths ):
         """
@@ -144,7 +141,7 @@ class ExtractWorkflowConnections:
         children = graph.keys()
         roots = list( set( all_parents).difference( set( children ) ) )
         leaves = list( set( children ).difference( set( all_parents ) ) )
-        return roots, leaves 
+        return roots, leaves
 
     @classmethod
     def find_tool_paths_workflow( self, graph, start, end, path=[] ):
@@ -158,7 +155,6 @@ class ExtractWorkflowConnections:
                     new_tools_paths = self.find_tool_paths_workflow( graph, start, node, path )
                     for tool_path in new_tools_paths:
                         path_list.append( tool_path )
-        
         return path_list
 
     @classmethod
