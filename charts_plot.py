@@ -32,9 +32,9 @@ def plot_tools_compatible_tools( file_path ):
     for tool in next_tools_list:
         next_tools.append( len( next_tools_list[ tool ].split( "," ) ) )
     plt.bar( np.arange( len( next_tools ) ), next_tools, color='r' )
-    plt.ylabel( 'Number of next compatible tools' )
+    plt.ylabel( 'Number of tools' )
     plt.xlabel( 'Tools' )
-    plt.title( 'Distribution of next compatible tools for all the tools' )
+    plt.title( 'Distribution of number of next compatible tools' )
     plt.grid( True )
     plt.show()
 
@@ -53,15 +53,15 @@ def plot_data_distribution( file_path ):
         tools_freq.append( size )
         count.append( index )
     plt.bar( count, tools_freq, color='r' )
-    plt.xlabel( 'Workflow paths' )
-    plt.ylabel( 'Number of tools (size)' )
-    plt.title( 'Distribution of the size of workflow paths' )
+    plt.xlabel( 'Count of workflow paths' )
+    plt.ylabel( 'Number of tools' )
+    plt.title( 'Distribution of number of tools in workflow paths' )
     plt.grid( True )
     plt.show()
 
 
 def plot_activation_perf(  ):
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
     mean_test_abs_precision_relu = read_file( "thesis_results_reverse/activations/relu/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_relu = read_file( "thesis_results_reverse/activations/relu/mean_test_compatibility_precision.txt" )
     mean_train_loss_relu = read_file( "thesis_results_reverse/activations/relu/mean_train_loss.txt" )
@@ -152,7 +152,7 @@ def plot_activation_perf(  ):
 
 
 def plot_optimiser_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
     mean_test_abs_precision_sgd = read_file( "thesis_results_reverse/optimiser/sgd/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_sgd = read_file( "thesis_results_reverse/optimiser/sgd/mean_test_compatibility_precision.txt" )
     mean_train_loss_sgd = read_file( "thesis_results_reverse/optimiser/sgd/mean_train_loss.txt" )
@@ -243,7 +243,7 @@ def plot_optimiser_perf():
 
 
 def plot_lr_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
     mean_test_abs_precision_01 = read_file( "thesis_results_reverse/lr/0.01/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_01 = read_file( "thesis_results_reverse/lr/0.01/mean_test_compatibility_precision.txt" )
     mean_train_loss_01 = read_file( "thesis_results_reverse/lr/0.01/mean_train_loss.txt" )
@@ -333,7 +333,7 @@ def plot_lr_perf():
 
 
 def plot_batchsize_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
     mean_test_abs_precision_64 = read_file( "thesis_results_reverse/batchsize/64/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_64 = read_file( "thesis_results_reverse/batchsize/64/mean_test_compatibility_precision.txt" )
     mean_train_loss_64 = read_file( "thesis_results_reverse/batchsize/64/mean_train_loss.txt" )
@@ -423,7 +423,7 @@ def plot_batchsize_perf():
 
 
 def plot_dropout_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
     mean_test_abs_precision_00 = read_file( "thesis_results_reverse/dropout/0.0/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_00 = read_file( "thesis_results_reverse/dropout/0.0/mean_test_compatibility_precision.txt" )
     mean_train_loss_00 = read_file( "thesis_results_reverse/dropout/0.0/mean_train_loss.txt" )
@@ -523,7 +523,7 @@ def plot_dropout_perf():
 
 
 def plot_embedding_sizes_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision_32 = read_file( "thesis_results_reverse/embeddinglayersize/32/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_32 = read_file( "thesis_results_reverse/embeddinglayersize/32/mean_test_compatibility_precision.txt" )
@@ -633,7 +633,7 @@ def plot_embedding_sizes_perf():
 
 
 def plot_num_units_perf():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision_64 = read_file( "thesis_results_reverse/#units/64/mean_test_absolute_precision.txt" )
     mean_test_comp_precision_64 = read_file( "thesis_results_reverse/#units/64/mean_test_compatibility_precision.txt" )
@@ -725,7 +725,7 @@ def plot_num_units_perf():
 
 
 def plot_extreme_paths():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision = read_file( "thesis_results_reverse/extreme_paths/data/mean_test_absolute_precision.txt" )
     mean_test_comp_precision = read_file( "thesis_results_reverse/extreme_paths/data/mean_test_compatibility_precision.txt" )
@@ -785,7 +785,7 @@ def plot_extreme_paths():
 
 
 def plot_longer_paths():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision = read_file( "thesis_results_reverse/longer_train_paths/data/mean_test_absolute_precision.txt" )
     mean_test_comp_precision = read_file( "thesis_results_reverse/longer_train_paths/data/mean_test_compatibility_precision.txt" )
@@ -845,7 +845,7 @@ def plot_longer_paths():
 
 
 def plot_train_long_test_decomposed():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision = read_file( "thesis_results_reverse/train_long_test_decomposed/data/mean_test_absolute_precision.txt" )
     mean_test_comp_precision = read_file( "thesis_results_reverse/train_long_test_decomposed/data/mean_test_compatibility_precision.txt" )
@@ -915,7 +915,7 @@ def plot_top1_top2_accuracy():
     plt.bar( xpos_1, data_top1_top2_test, width = barWidth, label='Test set' )
     plt.bar( xpos_2, data_top1_top2_train, width = barWidth, label='Train set' )
     plt.ylabel( 'Accuracy (in percentage)' )
-    plt.xticks( [ item + 1 for item in range( len( xticks_repeated ) ) ], xticks_repeated, fontsize=18, rotation=30 )
+    plt.xticks( [ item + 1 for item in range( len( xticks_repeated ) ) ], xticks_repeated, rotation=30 )
     plt.title( 'Absolute and compatible accuracies (top1 and top2) for train and test sets' )
     plt.legend( loc=4 )
     plt.grid( True )
@@ -953,7 +953,7 @@ def plot_input_length_precision():
 
 
 def plot_other_classifier():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision = read_file( "thesis_results_reverse/other_classifier/data/mean_test_absolute_precision.txt" )
     mean_test_comp_precision = read_file( "thesis_results_reverse/other_classifier/data/mean_test_compatibility_precision.txt" )
@@ -1013,7 +1013,7 @@ def plot_other_classifier():
 
 
 def plot_less_data():
-    NEW_FONT_SIZE = FONT_SIZE - 6
+    NEW_FONT_SIZE = FONT_SIZE - 2
 
     mean_test_abs_precision = read_file( "thesis_results_reverse/less_data/data/mean_test_absolute_precision.txt" )
     mean_test_comp_precision = read_file( "thesis_results_reverse/less_data/data/mean_test_compatibility_precision.txt" )
@@ -1072,19 +1072,19 @@ def plot_less_data():
     plt.show()
 
 
-#plot_activation_perf()
-#plot_optimiser_perf()
-#plot_lr_perf()
-#plot_batchsize_perf()
-#plot_dropout_perf()
-#plot_embedding_sizes_perf()
-#plot_num_units_perf()
-#plot_extreme_paths()
-#plot_longer_paths()
-#plot_train_long_test_decomposed()
-#plot_top1_top2_accuracy()
-#plot_input_length_precision()
-#plot_other_classifier()
-#plot_tools_compatible_tools( "data/compatible_tools.json" )
-#plot_data_distribution( "data/workflow_connections_paths.txt" )
-plot_less_data()
+'''plot_activation_perf()
+plot_optimiser_perf()
+plot_lr_perf()
+plot_batchsize_perf()
+plot_dropout_perf()
+plot_embedding_sizes_perf()
+plot_num_units_perf()
+plot_extreme_paths()
+plot_longer_paths()
+plot_train_long_test_decomposed()
+plot_top1_top2_accuracy()
+plot_input_length_precision()
+plot_other_classifier()'''
+plot_tools_compatible_tools( "data/compatible_tools.json" )
+plot_data_distribution( "data/workflow_connections_paths.txt" )
+#plot_less_data()
