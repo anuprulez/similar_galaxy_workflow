@@ -102,7 +102,7 @@ class PredictNextTool:
 
         # fit the model
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_data=( test_data, test_labels ), batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle="batch" )
+        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=network_config[ "validation_split" ], batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle="batch" )
         loss_values = model_fit_callbacks.history[ "loss" ]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
 
