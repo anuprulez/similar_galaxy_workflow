@@ -916,7 +916,7 @@ def plot_top1_top2_accuracy():
     plt.bar( xpos_2, data_top1_top2_train, width = barWidth, label='Train set' )
     plt.ylabel( 'Accuracy (in percentage)' )
     plt.xticks( [ item + 1 for item in range( len( xticks_repeated ) ) ], xticks_repeated, rotation=30 )
-    plt.title( 'Absolute and compatible accuracies (top1 and top2) for train and test sets' )
+    plt.title( 'Absolute and compatible top-1 and top-2 accuracies' )
     plt.legend( loc=4 )
     plt.grid( True )
     plt.show()
@@ -1071,7 +1071,7 @@ def plot_less_data():
     plt.suptitle( title )
     plt.show()
 
-
+plot_top1_top2_accuracy()
 '''plot_activation_perf()
 plot_optimiser_perf()
 plot_lr_perf()
@@ -1085,6 +1085,6 @@ plot_train_long_test_decomposed()
 plot_top1_top2_accuracy()
 plot_input_length_precision()
 plot_other_classifier()'''
-plot_tools_compatible_tools( "data/compatible_tools.json" )
-plot_data_distribution( "data/workflow_connections_paths.txt" )
+#plot_tools_compatible_tools( "data/compatible_tools.json" )
+#plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_less_data()
