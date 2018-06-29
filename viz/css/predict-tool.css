@@ -52,3 +52,9 @@
     color: #e81717;
     cursor: pointer;
 }
+
+.load-graph {
+    margin-left: 45%;
+    margin-top: 2%;
+    font-weight: bold;
+}

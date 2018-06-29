@@ -16,12 +16,12 @@ class PredictNextNode:
     def __init__( self ):
         """ Init method. """
         self.current_working_dir = os.getcwd()
-        self.raw_paths = "data/train_data_sequence.txt"
+        self.raw_paths = "data/workflow_connections_paths.txt"
         self.network_config_json_path = "data/model.json"
-        self.trained_model_path = "data/weights-epoch-120.hdf5"
+        self.trained_model_path = "data/trained_model.hdf5"
         self.data_dictionary = "data/data_dictionary.txt"
         self.data_rev_dict = "data/data_rev_dict.txt"
-        self.train_test_labels = "data/multi_labels.txt"
+        self.train_test_labels = "data/complete_paths_pos_dict.json"
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
@@ -37,7 +37,7 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=50 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=5 ):
         """
         Predict next nodes for a path using a trained model
         """
@@ -46,7 +46,8 @@ class PredictNextNode:
         path_vec_reshaped = np.reshape( path_vec, ( 1, max_seq_len ) )
         # predict the next tool using the trained model
         prediction = trained_model.predict( path_vec_reshaped, verbose=0 )
-        prediction = np.reshape( prediction, ( dimensions, ) )
+        prediction = prediction[0]
+        #prediction = prediction[1:]
         # take prediction in reverse order, best ones first
         prediction_pos = np.argsort( prediction, axis=0 )
         top_prediction_pos = prediction_pos[ -top_n: ]
@@ -57,11 +58,8 @@ class PredictNextNode:
         for index, item in enumerate( reversed( top_prediction_pos ) ):
             top_prediction_prob[ index ] = str( prediction[ item ] )
         # get tool names for the predicted positions
-        predicted_nodes = [ nodes_rev_dict[ str( item + 1 ) ] for item in reversed( top_prediction_pos ) ]
+        predicted_nodes = [ nodes_rev_dict[ str( item ) ] for item in reversed( top_prediction_pos ) ]
         predicted_nodes = ",".join( predicted_nodes )
-        path_vec_pos = np.where( path_vec > 0 )[ 0 ]
-        path_vec_pos_list = [ str( int( path_vec[ item ] + 1 ) ) for item in path_vec_pos ]
-        path_vec_pos_list = ",".join( path_vec_pos_list )
         return predicted_nodes, top_prediction_prob
 
     @classmethod
@@ -78,7 +76,7 @@ class PredictNextNode:
         """
         Find a set of possible next nodes
         """
-        max_seq_len = 40
+        max_seq_len = 25
         all_paths_train = list()
         all_input_seq_paths = list()
         actual_predicted_nodes = dict()
@@ -107,10 +105,12 @@ class PredictNextNode:
         input_seq_split = input_sequence.split( "," )
         start_pos = max_seq_len - len( input_seq_split )
         for index, item in enumerate( input_seq_split ):
-            input_seq_padded[ start_pos + index ] = nodes_dict[ item ] - 1
+            input_seq_padded[ start_pos + index ] = nodes_dict[ item ]
 	predicted_nodes, predicted_prob = self.predict_node( loaded_model, input_seq_padded, nodes_rev_dict, max_seq_len )
+        return { "predicted_nodes": predicted_nodes, "predicted_prob": predicted_prob }
 	# find which predicted nodes are present as next nodes
-	for item in predicted_nodes.split( "," ):
+        
+	'''for item in predicted_nodes.split( "," ):
             next_seq = input_sequence + "," + item
 	    for path in all_input_seq_paths:
 		if next_seq in path:
@@ -138,4 +138,4 @@ class PredictNextNode:
 	for item in actual_labels_distribution:
 	    actual_labels_distribution[ item ] = actual_labels_distribution[ item ] / float( distribution_sum )    
 	actual_labels_distribution = sorted( actual_labels_distribution.items(), key=operator.itemgetter( 1 ), reverse=True )
-        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels, "actual_labels_distribution": actual_labels_distribution }
+        return { "predicted_nodes": predicted_nodes, "all_input_paths": all_input_seq_paths, "predicted_prob": predicted_prob, "actual_predicted_nodes": actual_predicted_nodes, "actual_labels": actual_labels, "actual_labels_distribution": actual_labels_distribution }'''
