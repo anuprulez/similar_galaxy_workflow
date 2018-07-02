@@ -944,10 +944,10 @@ def plot_input_length_precision():
     plt.plot( x_pos_test, test_comp_topk_average )
     plt.plot( x_pos_test, train_abs_topk_average )
     plt.plot( x_pos_test, train_comp_topk_average )
-    plt.xlabel( 'Length of tool sequences' )
-    plt.ylabel( 'Average precision' )
-    plt.title( 'Variation of average precision with the length of tool sequences' )
-    plt.legend( [ "Absolute precision (test set)", "Compatible precision (test set)", "Absolute precision (train set)", "Compatible precision (train set)" ], loc=4 )
+    plt.xlabel( 'Length of paths' )
+    plt.ylabel( 'Precision' )
+    plt.title( 'Variation of precision with the length of paths' )
+    plt.legend( [ "Absolute precision (test paths)", "Compatible precision (test paths)", "Absolute precision (train paths)", "Compatible precision (train paths)" ], loc=4 )
     plt.grid( True )
     plt.show()
 
@@ -960,7 +960,7 @@ def plot_other_classifier():
     mean_train_loss = read_file( "thesis_results_reverse/other_classifier/data/mean_train_loss.txt" )
     mean_val_loss = read_file( "thesis_results_reverse/other_classifier/data/mean_test_loss.txt" )
 
-    title = "Precision and loss decomposing train and test paths (neural network with dense layers)"
+    title = "Precision and loss using neural network with dense layers"
     subtitles = [ "Absolute precision (a)", "Compatible precision (b)", "Training loss (c)", "Validation loss (d)" ]
     subxtitles = "Training epochs"
     subytitles = [ "Precision", "Cross-entropy loss" ]
@@ -1071,7 +1071,8 @@ def plot_less_data():
     plt.suptitle( title )
     plt.show()
 
-plot_top1_top2_accuracy()
+plot_other_classifier()
+#plot_top1_top2_accuracy()
 '''plot_activation_perf()
 plot_optimiser_perf()
 plot_lr_perf()
@@ -1088,3 +1089,4 @@ plot_other_classifier()'''
 #plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_less_data()
+#plot_input_length_precision()
