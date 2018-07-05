@@ -81,11 +81,12 @@ def plot_activation_perf(  ):
     mean_test_comp_precision_elu = read_file( "thesis_results_reverse/activations/elu/mean_test_compatibility_precision.txt" )
     mean_train_loss_elu = read_file( "thesis_results_reverse/activations/elu/mean_train_loss.txt" )
     mean_val_loss_precision_elu = read_file( "thesis_results_reverse/activations/elu/mean_test_loss.txt" )
+
     title = "Precision and loss for various activations"
     subtitles = [ "Absolute precision (a)", "Compatible precision (b)", "Training loss (c)", "Validation loss (d)" ]
     subxtitles = "Training epochs"
     subytitles = [ "Precision", "Cross-entropy loss" ]
-    legend = [ "relu", 'tanh', 'sigmoid', 'elu' ]
+    legend = [ "Relu", 'Tanh', 'Sigmoid', 'Elu' ]
     fig, axes = plt.subplots( nrows=2, ncols=2 )
     for row, axis in enumerate( axes ):
         if row == 0:
@@ -1071,7 +1072,11 @@ def plot_less_data():
     plt.suptitle( title )
     plt.show()
 
-plot_other_classifier()
+
+plot_activation_perf()
+#plot_optimiser_perf()
+#plot_data_distribution( "data/workflow_connections_paths.txt" )
+#plot_other_classifier()
 #plot_top1_top2_accuracy()
 '''plot_activation_perf()
 plot_optimiser_perf()
