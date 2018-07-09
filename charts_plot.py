@@ -31,10 +31,11 @@ def plot_tools_compatible_tools( file_path ):
         next_tools_list = json.loads( file_next_tools.read() )
     for tool in next_tools_list:
         next_tools.append( len( next_tools_list[ tool ].split( "," ) ) )
+    next_tools = np.sort( next_tools )
     plt.bar( np.arange( len( next_tools ) ), next_tools, color='r' )
     plt.ylabel( 'Number of tools' )
     plt.xlabel( 'Tools' )
-    plt.title( 'Distribution of number of next compatible tools' )
+    plt.title( 'Distribution of number of compatible next tools' )
     plt.grid( True )
     plt.show()
 
@@ -52,6 +53,13 @@ def plot_data_distribution( file_path ):
         size = len( path.split( "," ) )
         tools_freq.append( size )
         count.append( index )
+    tools_freq = np.sort( tools_freq )
+    average = np.mean( tools_freq )
+    max_length = np.max( tools_freq )
+    min_length = np.min( tools_freq )
+    print( "Average length: %.2f" % average )
+    print( "Max length: %d" % max_length )
+    print( "Min length: %d" % min_length )
     plt.bar( count, tools_freq, color='r' )
     plt.xlabel( 'Count of workflow paths' )
     plt.ylabel( 'Number of tools' )
@@ -907,16 +915,16 @@ def plot_train_long_test_decomposed():
 def plot_top1_top2_accuracy():
     barWidth = 1
     xticks = [ "Absolute top1", "Compatible top1", "Absolute top2", "Compatible top2" ]
-    xticks_repeated = [ "Absolute top-1","Absolute top-1", "Compatible top-1", "Compatible top-1", "Absolute top-2", "Absolute top-2", "Compatible top-2", "Compatible top-2" ]
+    xticks_repeated = [ "Abs. top-1","Abs. top-1", "Comp. top-1", "Comp. top-1", "Abs. top-2", "Abs. top-2", "Comp. top-2", "Comp. top-2" ]
     xpos = np.arange( 2 * len( xticks ) )
     data_top1_top2_test = [ 90.82140487, 98.86482131, 74.60304294, 93.94729358 ]
     data_top1_top2_train = [ 92.87385877, 99.34532873, 64.57, 90.89 ]
     xpos_1 = [ 1,3,5,7 ]
     xpos_2 = [ 2,4,6,8 ]
-    plt.bar( xpos_1, data_top1_top2_test, width = barWidth, label='Test set' )
-    plt.bar( xpos_2, data_top1_top2_train, width = barWidth, label='Train set' )
+    plt.bar( xpos_1, data_top1_top2_test, width = barWidth, label='Test paths' )
+    plt.bar( xpos_2, data_top1_top2_train, width = barWidth, label='Train paths' )
     plt.ylabel( 'Accuracy (in percentage)' )
-    plt.xticks( [ item + 1 for item in range( len( xticks_repeated ) ) ], xticks_repeated, rotation=30 )
+    plt.xticks( [ item + 1 for item in range( len( xticks_repeated ) ) ], xticks_repeated, rotation=45 )
     plt.title( 'Absolute and compatible top-1 and top-2 accuracies' )
     plt.legend( loc=4 )
     plt.grid( True )
@@ -1073,7 +1081,8 @@ def plot_less_data():
     plt.show()
 
 
-plot_activation_perf()
+#plot_top1_top2_accuracy()
+#plot_activation_perf()
 #plot_optimiser_perf()
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_other_classifier()
@@ -1091,7 +1100,7 @@ plot_train_long_test_decomposed()
 plot_top1_top2_accuracy()
 plot_input_length_precision()
 plot_other_classifier()'''
-#plot_tools_compatible_tools( "data/compatible_tools.json" )
+plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_less_data()
 #plot_input_length_precision()
