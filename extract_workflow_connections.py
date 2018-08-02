@@ -50,9 +50,15 @@ class ExtractWorkflowConnections:
                     in_tool = self.format_tool_id( in_tool )
                     out_tool = self.format_tool_id( out_tool )
                     workflows[ wf_id ].append( ( in_tool, out_tool ) )
+        
         print( "Processing workflows..." )
+        wf_ctr = 0
         for wf_id in workflows:
+            wf_ctr += 1
             workflow_parents[ wf_id ] = self.read_workflow( wf_id, workflows[ wf_id ] )
+        print wf_ctr
+        import sys
+        sys.exit()
         for wf_id in workflow_parents:
             flow_paths = list()
             parents_graph = workflow_parents[ wf_id ]

@@ -4,10 +4,10 @@ import numpy as np
 import json
 
 
-FONT_SIZE = 26
+FONT_SIZE = 30
 plt.rcParams["font.family"] = "FreeSerif"
 plt.rc('text', usetex=True)
-plt.rcParams[ 'text.latex.preamble' ]=[r"\usepackage{amsmath}"]
+#plt.rcParams[ 'text.latex.preamble' ]=[r"\usepackage{amsmath}"]
 plt.rcParams[ "font.size" ] = FONT_SIZE
 
 
@@ -1081,9 +1081,19 @@ def plot_less_data():
     plt.show()
 
 
+#plot_extreme_paths()
+#plot_longer_paths()
+#plot_embedding_sizes_perf()
+#plot_less_data()
+#plot_extreme_paths()
+#plot_longer_paths()
 #plot_top1_top2_accuracy()
-#plot_activation_perf()
-#plot_optimiser_perf()
+plot_activation_perf()
+plot_lr_perf()
+plot_batchsize_perf()
+plot_dropout_perf()
+plot_num_units_perf()
+plot_input_length_precision()
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_other_classifier()
 #plot_top1_top2_accuracy()
@@ -1100,7 +1110,7 @@ plot_train_long_test_decomposed()
 plot_top1_top2_accuracy()
 plot_input_length_precision()
 plot_other_classifier()'''
-plot_tools_compatible_tools( "data/compatible_tools.json" )
+#plot_tools_compatible_tools( "data/compatible_tools.json" )
 #plot_data_distribution( "data/workflow_connections_paths.txt" )
 #plot_less_data()
 #plot_input_length_precision()

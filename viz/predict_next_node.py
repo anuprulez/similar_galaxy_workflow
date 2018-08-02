@@ -37,7 +37,7 @@ class PredictNextNode:
         return loaded_model
 
     @classmethod
-    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=5 ):
+    def predict_node( self, trained_model, path_vec, nodes_rev_dict, max_seq_len, top_n=2 ):
         """
         Predict next nodes for a path using a trained model
         """

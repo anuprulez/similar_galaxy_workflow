@@ -113,13 +113,14 @@ $(document).ready(function() {
         $.getJSON( predictUrl, function( data ) {
             let predictedNodes = data[ "predicted_nodes" ],
                 predictedProb = data[ "predicted_prob" ],
-                topK = 5,
+                //topK = 5,
                 cytoNodes = [],
                 cytoEdges = [],
                 lastToolSplit = toolSeq.split( "," ),
                 lastTool = lastToolSplit[ lastToolSplit.length - 1 ];
             if( Object.keys( predictedNodes ).length > 0 ) {
                 predictedNodeList = predictedNodes.split( "," );
+                topK = predictedNodeList.length;
                 cytoNodes.push( { data: { id: lastTool, weight: 0.1, name: lastTool } } );
                 for( let counter = 0; counter < topK; counter++ ) {
                     let nodeName = predictedNodeList[ counter ],
