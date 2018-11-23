@@ -17,21 +17,11 @@
             <select class="tool-ids">
                 <option value="-1">-- choose a tool --</option>
             </select>
-            <button class="remove-last-tool" title="Removes the last tool from tools sequence and reloads the next tools">Remove last tool</button>
             <button class="clear-data" title="Reloads the page">Start again</button>
-            
         </div>
-        <div class="top-margin"><b> Tools sequence </b></div>
-        <div class="workflow-so-far top-margin"></div>
-
-        <div class="table-header top-margin"><b>Actual and predicted next tools for the above sequence</b></div>
-        <div class="loading-image"> loading...</div>
-        <div class="predicted-actual-tools"></div>
-
-        <div class="top-margin"><b> All paths containing the given sequence of tools </b></div>
-        <div class="loading-image"> loading...</div>
-        <div class="all-included-paths"></div>
+        <div id="workflow-graph">
+        </div>
     </div>
-  <script src="js/show-predicted-tools.js" type="text/javascript"></script>
+  <script src="js/workflow_prediction.js" type="text/javascript"></script>
   </body>
 </html>

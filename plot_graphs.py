@@ -2,18 +2,7 @@
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def plot_data_distribution( file_path ):
-    with open( file_path, 'r' ) as dist_file:
-        data = json.loads( dist_file.read() )
-    freq = [ len( item.split( "," ) ) for item in data ]
-    plt.bar( [ index for index, item in enumerate( freq ) ], height=freq, facecolor='g' )
-    plt.xlabel( 'Class number (tools that become labels for the sequence)' )
-    plt.ylabel( 'Frequency (number of sequences having the same class)' )
-    plt.title( 'Workflows: sequence - classes distribution' )
-    plt.grid( True )
-    plt.show()
+import csv
 
 
 def plot_labels_distribution( test_path, train_path ):
@@ -40,24 +29,21 @@ def plot_labels_distribution( test_path, train_path ):
     train_seq_count.extend( test_seq_count )
     train_labels_count.extend( test_labels_count )
     comp_labels_index = np.arange( len( train_labels_count ) )
-    print len( comp_labels_index )
-    print len( train_seq_count )
-    print len( train_labels_count )
     font = { 'family' : 'sans serif', 'size': 22 }
     plt.rc('font', **font) 
-    plt.bar( comp_labels_index, train_seq_count, facecolor='r', align='center' )
+    plt.bar( np.arange( len( test_seq_count ) ), test_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
-    plt.ylabel( 'Number of tools in samples' )
-    plt.title( 'Distribution of number of tools in samples' )
+    plt.ylabel( 'Number of next compatible tools in samples' )
+    plt.title( 'Distribution of number of next tools in test samples' )
     plt.grid( True )
     plt.show()
 
-    plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
+    '''plt.bar( comp_labels_index, train_labels_count, facecolor='r', align='center' )
     plt.xlabel( 'Number of samples' )
-    plt.ylabel( 'Number of labels in samples' )
-    plt.title( 'Distribution of number of labels in samples' )
+    plt.ylabel( 'Number of next compatible tools in samples' )
+    plt.title( 'Distribution of number of next tools in train samples' )
     plt.grid( True )
-    plt.show()
+    plt.show()'''
 
 
 def plot_loss( file_path_train, file_path_test ):
@@ -74,28 +60,49 @@ def plot_loss( file_path_train, file_path_test ):
     plt.ylabel( 'Loss' )
     plt.xlabel( 'Epochs' )
     plt.title( 'Loss drop vs epochs' )
-    plt.legend( [ "train", "test" ] )
+    plt.legend( [ "Train data", "Test data" ] )
     plt.grid( True )
     plt.show()
 
 
-def plot_accuracy( complete_data_file, test_data_file ):
-    acc_values_train = list()
-    acc_values_test = list()
-    with open( complete_data_file, 'r' ) as acc_complete:
-        complete_data_acc = acc_complete.read().split( "\n" )
-    complete_data_acc = [ float( item ) for item in complete_data_acc if item ]
-    with open( test_data_file, 'r' ) as acc_test:
-        test_data_acc = acc_test.read().split( "\n" )    
-    test_data_acc = [ float( item ) for item in test_data_acc if item ]
-    font = { 'family' : 'sans serif', 'size': 22 }
-    plt.rc('font', **font) 
-    plt.plot( complete_data_acc )
-    plt.plot( test_data_acc )
+def plot_accuracy( abs_test_file, compatible_test_file ):
+    with open( abs_test_file, 'r' ) as abs_test:
+        abs_test_acc = abs_test.read().split( "\n" )
+    abs_test_acc = [ float( item ) for item in abs_test_acc if item ]
+    with open( compatible_test_file, 'r' ) as compatible_test:
+        compatible_test_acc = compatible_test.read().split( "\n" )    
+    compatible_test_acc = [ float( item ) for item in compatible_test_acc if item ]
+    
+    #font = { 'family' : 'sans serif', 'size': 22 }
+    #plt.rc('font', **font) 
+    plt.plot( abs_test_acc )
+    plt.plot( compatible_test_acc )
+    #plt.plot( abs_train_acc )
+    #plt.plot( compatible_train_acc )
     plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
     plt.xlabel( 'Training epochs' )
-    plt.title( 'Next tools (labels) pred. topk acc vs. train and test samples' )
-    plt.legend( [ "Train samples", "Test samples" ] )
+    plt.title( 'Next tools prediction' )
+    plt.legend( [ "Test absolute accuracy", "Test compatible accuracy" ] )
+    plt.grid( True )
+    plt.show()
+
+
+def plot_test_accuracy( abs_test_file, compatible_test_file ):
+    with open( abs_test_file, 'r' ) as abs_test:
+        abs_test_acc = abs_test.read().split( "\n" )
+    abs_test_acc = [ float( item ) for item in abs_test_acc if item ]
+    with open( compatible_test_file, 'r' ) as compatible_test:
+        compatible_test_acc = compatible_test.read().split( "\n" )    
+    compatible_test_acc = [ float( item ) for item in compatible_test_acc if item ]
+    
+    #font = { 'family' : 'sans serif', 'size': 22 }
+    #plt.rc('font', **font) 
+    plt.plot( abs_test_acc )
+    plt.plot( compatible_test_acc )
+    plt.ylabel( 'Topk accuracy (0.7 = 70% accuracy)' )
+    plt.xlabel( 'Training epochs' )
+    plt.title( 'Next tools prediction' )
+    plt.legend( [ "Test absolute accuracy", "Test compatible accuracy" ] )
     plt.grid( True )
     plt.show()
 
@@ -113,7 +120,60 @@ def plot_top_prediction( abs_file_path ):
     plt.grid( True )
     plt.show()
 
-#plot_loss( "data/loss_history.txt", "data/val_loss_history.txt" )
-plot_accuracy( "data/abs_top_pred.txt", "data/test_top_pred.txt" )
-plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
 
+def plot_next_tools_precision( file_path ):
+    next_tools = list()
+    precision = list()
+    with open( file_path, 'rb' ) as next_tools_precision:
+        test_data_performance = csv.reader( next_tools_precision, delimiter=',' )
+        for index, row in enumerate( test_data_performance ):
+            tools = row[ 1 ].split(",")
+            next_tools.append( len( tools ) )
+            precision.append( row[ 6 ] )
+    plt.bar( next_tools, precision )
+    plt.ylabel( 'Number of next tools' )
+    plt.xlabel( 'Precision' )
+    plt.title( 'Number of next tool vs precision' )
+    plt.grid( True )
+    plt.show()
+
+
+def plot_lr():
+    lr = 0.001
+    decay = 1e-4
+    iterations = 200
+    lr_rates = list()
+    for i in range( iterations ):
+        lr_rates.append( lr )
+        lr = lr * ( 1 / ( 1 + decay * i ))
+    plt.plot( lr_rates )
+    plt.show()
+
+
+def plot_input_seq_prediction( file_path ):
+    next_tools = list()
+    precision = list()
+    with open( file_path, 'r' ) as tool_seq_prediction:
+        topk_acc = json.loads(tool_seq_prediction.read())
+    input_length = list()
+    acc = list()
+    for seq_len in topk_acc:
+        acc.append( np.mean( topk_acc[ seq_len ] ))
+        input_length.append( seq_len )
+    plt.bar( input_length, acc )
+    plt.ylabel( 'Accuracy' )
+    plt.xlabel( 'Size of input tools sequences' )
+    plt.title( 'Accuracy with the size of input tools sequences' )
+    plt.grid( True )
+    plt.show()
+
+
+#plot_lr()
+plot_loss( "data/mean_train_loss.txt", "data/mean_test_loss.txt" )
+plot_accuracy( "data/mean_test_absolute_precision.txt", "data/mean_test_compatibility_precision.txt" )
+#plot_accuracy( "data/mean_test_actual_absolute_precision.txt", "data/mean_test_actual_compatibility_precision.txt" )
+#plot_test_accuracy( "data/test_abs_top_pred.txt", "data/test_top_compatible_pred.txt" )
+#plot_accuracy( "data/train_abs_top_pred.txt", "data/train_top_compatible_pred.txt" )
+#plot_labels_distribution( "data/test_data_labels_dict.txt", "data/train_data_labels_dict.txt" )
+#plot_next_tools_precision( "data/test_data_performance_10.csv" )
+#plot_tools_compatible_tools( "data/compatible_tools.json" )

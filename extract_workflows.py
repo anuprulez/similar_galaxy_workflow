@@ -14,10 +14,13 @@ class ExtractWorkflows:
     @classmethod
     def __init__( self ):
         """ Init method. """
-        self.workflow_directory = 'data/workflows/'
-        self.tool_data_filename = 'data/workflows_raw.csv'
-        self.tools_filename = "data/all_tools.csv"
-        self.workflows_filename = "data/processed_workflows.csv"
+        self.current_working_dir = os.getcwd()
+        self.workflow_directory = self.current_working_dir + "/data/workflows/"
+        self.tools_filename = self.current_working_dir + "/data/all_tools.csv"
+        self.workflows_filename = self.current_working_dir + "/data/processed_workflows.csv"
+        self.workflows_json = self.current_working_dir + "/data/workflows.json"
+        self.workflows_steps = self.current_working_dir + "/data/workflow_steps.txt"
+        self.compatible_tools = self.current_working_dir + "/data/compatible_tools.json"
 
     @classmethod
     def read_workflow_file( self, workflow_file_path, file_id ):
@@ -36,15 +39,19 @@ class ExtractWorkflows:
                     tool_internal_ids = list()
                     steps = list()
                     immediate_parents = dict()
+                    tool_input_connections = dict()
+                    tool_output_connections = dict()
                     for step in all_steps:
                         wf_step = all_steps[ step ]
-                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "type": wf_step[ "type" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ] } )
+                        steps.append( { "id": wf_step[ "id" ], "name": wf_step[ "name" ], "tool_id": wf_step[ "tool_id" ], "input_connections": wf_step[ "input_connections" ], "type": wf_step[ "type" ], "tool_state": json.loads( wf_step[ "tool_state" ] ), "label": wf_step[ "label" ], "outputs": wf_step[ "outputs" ] } )
                     steps = sorted( steps, key=operator.itemgetter( "id" ) )
                     for step in steps:
                         # take a workflow if there is at least one step
                         tool_id_orig = step[ "tool_id" ]
                         if tool_id_orig:
                             parent_ids = list()
+                            parent_outputs = list()
+                            output_types = list()
                             tool_id = self.extract_tool_id( tool_id_orig )
                             tool_internal_id = step[ "id" ]
                             tool_internal_ids.append( tool_internal_id )
@@ -56,7 +63,12 @@ class ExtractWorkflows:
                                 # take only those parents whose tool id is not null
                                 if steps[ parent_id ][ "tool_id" ] is not None:
                                     parent_ids.append( str( parent_id ) )
+                                    parent_outputs.append( parents[ item ][ "output_name" ] )
                             immediate_parents[ str( tool_internal_id ) ] = list( set( parent_ids ) )
+                            tool_input_connections[ str( tool_internal_id ) ] = parent_outputs
+                            for output in step[ "outputs" ]:
+                                output_types.append( { "name": output[ "name" ], "type": output[ "type" ] } )
+                            tool_output_connections[ str( tool_internal_id ) ] = output_types
                     if len( tool_steps ) > 0:
                         workflow_json[ "steps" ] = tool_steps
                         workflow_json[ "id" ] = file_id
@@ -65,6 +77,8 @@ class ExtractWorkflows:
                         workflow_json[ "annotation" ] = file_json[ "annotation" ]
                         workflow_json[ "parents" ] = immediate_parents
                         workflow_json[ "original_steps" ] = steps
+                        workflow_json[ "input_types" ] = tool_input_connections
+                        workflow_json[ "output_types" ] = tool_output_connections
             except Exception:
                 pass
         return workflow_json, workflow_tools
@@ -86,23 +100,21 @@ class ExtractWorkflows:
                     workflow_json.append( wf )
                 all_workflow_tools.extend( tools )
         all_workflow_tools = list( set( all_workflow_tools ) )
-
         # extract ids from the tool ids link
         for item in all_workflow_tools:
             tool_id = self.extract_tool_id( item )
             if tool_id not in tools:
                 all_workflow_tools_id.append( { "Original id": item, "Tool id": tool_id } )
                 tools.append( tool_id )
-
         # write all the unique tools to a tabular file
         all_tools_dataframe = pd.DataFrame( all_workflow_tools_id )
         all_tools_dataframe.to_csv( self.tools_filename, encoding='utf-8' )
         # write all the workflows to a tabular file
         all_workflows_dataframe = pd.DataFrame( workflow_json )
         all_workflows_dataframe.to_csv( self.workflows_filename, encoding='utf-8' )
-
         # create flow paths from all workflows and write them as sentences
-        wf_steps_sentences = ""
+        workflow_paths = list()
+        print( "Processing workflows..." )
         for item in workflow_json:
             flow_paths = list()
             parents_graph = item[ "parents" ]
@@ -116,23 +128,42 @@ class ExtractWorkflows:
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             all_tool_paths = self.tool_seq_toolnames( steps, flow_paths )
-            if wf_steps_sentences == "":
-                wf_steps_sentences = all_tool_paths
-            else:
-                wf_steps_sentences += all_tool_paths
-
+            workflow_paths.extend( all_tool_paths )
         workflows_to_json = dict()
         for item in workflow_json:
             workflows_to_json[ item[ "id" ] ] = item
-
-        with open( "data/workflows.json", "w" ) as workflows_as_json:
+        with open( self.workflows_json, "w" ) as workflows_as_json:
             workflows_as_json.write( json.dumps( workflows_to_json ) )
             workflows_as_json.close()
-
+        workflow_paths = list( set( workflow_paths ) )
+        print( "Processing next tools..." )
+        next_tools = self.set_compatible_next_tools( workflow_paths )
+        with open( self.compatible_tools, "w" ) as compatible_tools_file:
+            compatible_tools_file.write( json.dumps( next_tools ) )
+        workflow_paths = "\n".join( workflow_paths )
         # write all the paths from all the workflow to a text file
-        with open( "data/workflow_steps.txt", "w" ) as steps_txt:
-            steps_txt.write( wf_steps_sentences )
-            steps_txt.close()
+        with open( self.workflows_steps, "w" ) as steps_txt:
+            steps_txt.write( workflow_paths )
+
+    @classmethod
+    def set_compatible_next_tools( self, workflow_paths ):
+        """
+        Find next tools for each tool
+        """
+        next_tools = dict()
+        for path in workflow_paths:
+            path_list = path.split( "," )
+            for window in range( 0, len( path_list ) - 1 ):
+                current_next_tools = path_list[ window: window + 2 ]
+                current_tool = current_next_tools[ 0 ]
+                next_tool = current_next_tools[ 1 ]
+                if current_tool in next_tools:
+                    next_tools[ current_tool ] += "," + next_tool
+                else:
+                    next_tools[ current_tool ] = next_tool
+        for tool in next_tools:
+            next_tools[ tool ] = ",".join( list( set( next_tools[ tool ].split( "," ) ) ) )
+        return next_tools
 
     @classmethod
     def process_tool_names( self, tool_name ):
@@ -142,24 +173,22 @@ class ExtractWorkflows:
 
     @classmethod
     def tool_seq_toolnames( self, tool_dict, paths ):
-        tool_seq = ""
+        paths_list = list()
         for path in paths:
             # create tool paths
-            sequence = ""
+            sequence = list()
             for tool in path:
                 tool_name = self.process_tool_names( tool_dict[ tool ] )
-                if sequence == "":
-                    sequence = tool_name
+                if len( sequence ) > 0:
+                    last_tool_name = sequence[ -1 ]
+                    if last_tool_name != tool_name:
+                        sequence.append( tool_name )
                 else:
-                    sequence += " " + tool_name
-            sequence += "\n"
-            # exclude the duplicate tool paths
-            if sequence not in tool_seq:
-                if tool_seq == "":
-                    tool_seq = sequence
-                else:
-                    tool_seq += sequence
-        return tool_seq
+                    sequence.append( tool_name )
+            sequence = ",".join( sequence )
+            if sequence not in paths_list:
+                paths_list.append( sequence )
+        return paths_list
 
     @classmethod
     def find_tool_paths_workflow( self, graph, start, end, path=[] ):
@@ -186,7 +215,7 @@ class ExtractWorkflows:
         for item in graph:
             if len( graph[ item ] ) == 0 and item in all_parents:
                 roots.append( item )
-            if  len( graph[ item ] ) > 0 and item not in all_parents:
+            if len( graph[ item ] ) > 0 and item not in all_parents:
                 leaves.append( item )
         return roots, leaves
 
@@ -196,15 +225,3 @@ class ExtractWorkflows:
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
         tool_id_split = tool_id.split( "." )
         return tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
-
-
-if __name__ == "__main__":
-
-    if len(sys.argv) != 1:
-        print( "Usage: python extract_workflows.py" )
-        exit( 1 )
-    start_time = time.time()
-    extract_workflow = ExtractWorkflows()
-    extract_workflow.read_workflow_directory()
-    end_time = time.time()
-    print ("Program finished in %d seconds" % int( end_time - start_time ) )
