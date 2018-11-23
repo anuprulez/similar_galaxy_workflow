@@ -99,9 +99,9 @@ class PredictNextTool:
         model.summary()
         
         # create checkpoint after each epoch - save the weights to h5 file
-        checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=2, mode='max' )
-        predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
-        callbacks_list = [ checkpoint, predict_callback_test ]
+        checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
+        #predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
+        callbacks_list = [ checkpoint ]
 
         # fit the model
         print ( "Start training..." )
@@ -112,8 +112,8 @@ class PredictNextTool:
         return {
             "train_loss": np.array( loss_values ),
             "test_loss": np.array( validation_loss ),
-            "test_absolute_precision": predict_callback_test.abs_precision, 
-            "test_compatibility_precision" : predict_callback_test.abs_compatible_precision
+            #"test_absolute_precision": predict_callback_test.abs_precision, 
+            #"test_compatibility_precision" : predict_callback_test.abs_compatible_precision
         }
         print ( "Training finished" )
         
@@ -170,7 +170,7 @@ class PredictNextTool:
         return np.mean(ave_abs_precision)
         
     @classmethod
-    def retrain_model(self, model_file, training_data, training_labels, test_data, test_labels, network_config):
+    def retrain_model(self, training_data, training_labels, test_data, test_labels, network_config):
         """
         Retrain the trained model with new data and compare performance on test data
         """
@@ -305,20 +305,20 @@ if __name__ == "__main__":
     # execute experiment runs and collect results for each run
     for run in range( experiment_runs ):
         results = predict_tool.evaluate_recurrent_network( run, network_config, data_dict, reverse_data_dictionary, train_data_1, train_labels_1, test_data, test_labels, next_compatible_tools )
-        test_abs_precision[ run ] = results[ "test_absolute_precision" ]
-        test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
-        training_loss[ run ] = results[ "train_loss" ]
-        test_loss[ run ] = results[ "test_loss" ]
+        #test_abs_precision[ run ] = results[ "test_absolute_precision" ]
+        #test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
+        #training_loss[ run ] = results[ "train_loss" ]
+        #test_loss[ run ] = results[ "test_loss" ]
 
     # save the results
-    np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, np.mean( test_abs_precision, axis=0 ), delimiter="," )
+    '''np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, np.mean( test_abs_precision, axis=0 ), delimiter="," )
     np.savetxt( MEAN_TEST_COMPATIBILITY_PRECISION, np.mean( test_compatibility_precision, axis=0 ), delimiter="," )
     np.savetxt( MEAN_TRAIN_LOSS, np.mean( training_loss, axis=0 ), delimiter="," )
-    np.savetxt( MEAN_TEST_LOSS, np.mean( test_loss, axis=0 ), delimiter="," )
+    np.savetxt( MEAN_TEST_LOSS, np.mean( test_loss, axis=0 ), delimiter="," )'''
     
     # retrain model and evaluate performance
-    print("Retrainin the model with new data...")
-    predict_tool.retrain_model("data/weights/trained_model.h5", train_data_2, train_labels_2, test_data, test_labels, network_config)
+    print("Retraining the model with new data...")
+    predict_tool.retrain_model( train_data_2, train_labels_2, test_data, test_labels, network_config )
     
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

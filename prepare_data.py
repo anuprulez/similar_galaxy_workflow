@@ -307,7 +307,7 @@ class PrepareData:
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         
-        size_fac = 0.5
+        size_fac = 0.8
         r_index = int(size_fac*len(train_data))
         train_data_1 = train_data[:r_index]
         train_labels_1 = train_labels[:r_index]
