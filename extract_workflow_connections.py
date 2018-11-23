@@ -56,9 +56,6 @@ class ExtractWorkflowConnections:
         for wf_id in workflows:
             wf_ctr += 1
             workflow_parents[ wf_id ] = self.read_workflow( wf_id, workflows[ wf_id ] )
-        print wf_ctr
-        import sys
-        sys.exit()
         for wf_id in workflow_parents:
             flow_paths = list()
             parents_graph = workflow_parents[ wf_id ]
@@ -71,7 +68,7 @@ class ExtractWorkflowConnections:
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
-        print( "Workflows processed" )
+        print( "Workflows processed: %d" % wf_ctr )
         print( "All paths: %d" % len( workflow_paths ) )
         print( "Counting frequency of paths..." )
         for path in workflow_paths:

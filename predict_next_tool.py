@@ -17,7 +17,6 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
-from keras.utils.vis_utils import plot_model
 
 import extract_workflow_connections
 import prepare_data
@@ -95,8 +94,7 @@ class PredictNextTool:
         # save the network as json
         self.save_network( model.to_json() )
         model.summary()
-        plot_model(model, to_file='data/model_plot.png', show_shapes=True, show_layer_names=True)
-        sys.exit()
+
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=2, mode='max' )
         predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
