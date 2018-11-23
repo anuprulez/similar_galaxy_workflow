@@ -26,7 +26,7 @@ class EvaluateTopResults:
         self.data_dictionary_path = self.current_working_dir + "/data_dictionary.txt"
         self.data_dictionary_rev_path = self.current_working_dir + "/data_rev_dict.txt"
         self.compatible_tools_filetypes = self.current_working_dir + "/compatible_tools.json"
-        self.max_seq_length = 22
+        self.max_seq_length = 25
 
     @classmethod
     def load_saved_model( self, network_config_path, weights_path ):
