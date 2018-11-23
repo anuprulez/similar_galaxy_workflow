@@ -17,7 +17,7 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
-from keras.utils.vis_utils import plot_model
+from keras.models import model_from_json
 
 import extract_workflow_connections
 import prepare_data
@@ -34,8 +34,10 @@ MEAN_TEST_LOSS = CURRENT_WORKING_DIR +  "/data/mean_test_loss.txt"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/data_dictionary.txt"
 COMPATIBLE_TOOLS_FILETYPES = CURRENT_WORKING_DIR + "/data/compatible_tools.json"
-TRAIN_DATA = CURRENT_WORKING_DIR + "/data/train_data.h5"
+TRAIN_DATA_1 = CURRENT_WORKING_DIR + "/data/train_data_1.h5"
+TRAIN_DATA_2 = CURRENT_WORKING_DIR + "/data/train_data_2.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
+TRAINED_MODEL_PATH = "data/weights/weights-epoch-10.hdf5"
 
 
 class PredictNextTool:
@@ -95,8 +97,7 @@ class PredictNextTool:
         # save the network as json
         self.save_network( model.to_json() )
         model.summary()
-        plot_model(model, to_file='data/model_plot.png', show_shapes=True, show_layer_names=True)
-        sys.exit()
+        
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=2, mode='max' )
         predict_callback_test = PredictCallback( test_data, test_labels, network_config[ "n_epochs" ], reverse_dictionary, next_compatible_tools )
@@ -115,7 +116,78 @@ class PredictNextTool:
             "test_compatibility_precision" : predict_callback_test.abs_compatible_precision
         }
         print ( "Training finished" )
+        
+    @classmethod
+    def load_saved_model( self, network_config_path, weights_path ):
+        """
+        Load the saved trained model using the saved network and its weights
+        """
+        with open( network_config_path, 'r' ) as network_config_file:
+            loaded_model = network_config_file.read()
+        # load the network
+        loaded_model = model_from_json(loaded_model)
+        # load the saved weights into the model
+        loaded_model.load_weights( weights_path )
+        return loaded_model
+        
+    @classmethod
+    def verify_model(self, model, x, y, reverse_data_dictionary):
+        """
+        Verify the model on test data
+        """
+        size = y.shape[ 0 ]
+        dimensions = y.shape[ 1 ]
+        topk_abs_pred = np.zeros( [ size ] )
+        topk_compatible_pred = np.zeros( [ size ] )
+        ave_abs_precision = list()
+        print("Test data size: %d" % len(x))
+        # loop over all the test samples and find prediction precision
+        for i in range( size ):
+            actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
+            topk = len( actual_classes_pos )
+            test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
+            test_sample_pos = np.where( x[ i ] > 0 )[ 0 ]
+            test_sample_tool_pos = x[ i ][ test_sample_pos[ 0 ]: ]
 
+            # predict next tools for a test path
+            prediction = model.predict( test_sample, verbose=0 )
+            prediction = np.reshape( prediction, ( dimensions, ) )
+
+            # remove the 0th position as there is no tool at this index
+            prediction = prediction[ 1: ]
+            prediction_pos = np.argsort( prediction, axis=-1 )
+            topk_prediction_pos = prediction_pos[ -topk: ]
+
+            # read tool names using reverse dictionary
+            sequence_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in test_sample_tool_pos ]
+            actual_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in actual_classes_pos ]
+            top_predicted_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) + 1 ) ] for tool_pos in topk_prediction_pos ]
+
+            # find false positives
+            false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
+            absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
+            ave_abs_precision.append(absolute_precision)
+        return np.mean(ave_abs_precision)
+        
+    @classmethod
+    def retrain_model(self, model_file, training_data, training_labels, test_data, test_labels, network_config):
+        """
+        Retrain the trained model with new data and compare performance on test data
+        """
+        loaded_model = self.load_saved_model( NETWORK_C0NFIG_JSON_PATH, TRAINED_MODEL_PATH )
+        reverse_data_dictionary = self.read_file(DATA_REV_DICT)
+        absolute_prec_current_model = self.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
+        print("Current model - absolute precision on test data is: %0.6f" % absolute_prec_current_model)
+        print("------------")
+
+        # retrain model
+        print("New training size: %d" % len(training_labels))
+        optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
+        loaded_model.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
+        loaded_model.fit(training_data, training_labels, shuffle="batch", batch_size=network_config[ "batch_size" ], epochs=network_config[ "n_epochs" ])
+        absolute_prec_new_model = self.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
+        print("New model - absolute precision on test data is: %0.6f" % absolute_prec_new_model)
+        
 
 class PredictCallback( Callback ):
     def __init__( self, test_data, test_labels, n_epochs, reverse_data_dictionary, next_compatible_tools ):
@@ -175,8 +247,8 @@ class PredictCallback( Callback ):
             topk_compatible_pred[ i ] = adjusted_precision
         self.abs_precision[ epoch ] = np.mean( topk_abs_pred )
         self.abs_compatible_precision[ epoch ] = np.mean( topk_compatible_pred )
-        print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, np.mean( topk_abs_pred ) ) )
-        print( "Epoch %d topk compatibility adjusted precision: %.2f" % ( epoch + 1, np.mean( topk_compatible_pred ) ) )
+        print( "Epoch %d topk absolute precision: %.6f" % ( epoch + 1, np.mean( topk_abs_pred ) ) )
+        print( "Epoch %d topk compatibility adjusted precision: %.6f" % ( epoch + 1, np.mean( topk_compatible_pred ) ) )
         print( "-------" )
 
 
@@ -188,14 +260,14 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 40,
-        "batch_size": 512,
+        "n_epochs": 10,
+        "batch_size": 128,
         "dropout": 0.2,
-        "memory_units": 512,
-        "embedding_vec_size": 512,
+        "memory_units": 128,
+        "embedding_vec_size": 128,
         "learning_rate": 0.001,
         "max_seq_len": 25,
-        "test_share": 0.2,
+        "test_share": 0.05,
         "validation_split": 0.2,
         "activation_recurrent": 'elu',
         "activation_output": 'sigmoid',
@@ -225,13 +297,14 @@ if __name__ == "__main__":
     reverse_data_dictionary = predict_tool.read_file( DATA_REV_DICT )
 
     # get training and test data with their labels
-    train_data, train_labels = predict_tool.get_h5_data( TRAIN_DATA )
+    train_data_1, train_labels_1 = predict_tool.get_h5_data( TRAIN_DATA_1 )
+    train_data_2, train_labels_2 = predict_tool.get_h5_data( TRAIN_DATA_2 )
     test_data, test_labels = predict_tool.get_h5_data( TEST_DATA )
     next_compatible_tools = predict_tool.read_file( COMPATIBLE_TOOLS_FILETYPES )
 
     # execute experiment runs and collect results for each run
     for run in range( experiment_runs ):
-        results = predict_tool.evaluate_recurrent_network( run, network_config, data_dict, reverse_data_dictionary, train_data, train_labels, test_data, test_labels, next_compatible_tools )
+        results = predict_tool.evaluate_recurrent_network( run, network_config, data_dict, reverse_data_dictionary, train_data_1, train_labels_1, test_data, test_labels, next_compatible_tools )
         test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
         training_loss[ run ] = results[ "train_loss" ]
@@ -242,5 +315,10 @@ if __name__ == "__main__":
     np.savetxt( MEAN_TEST_COMPATIBILITY_PRECISION, np.mean( test_compatibility_precision, axis=0 ), delimiter="," )
     np.savetxt( MEAN_TRAIN_LOSS, np.mean( training_loss, axis=0 ), delimiter="," )
     np.savetxt( MEAN_TEST_LOSS, np.mean( test_loss, axis=0 ), delimiter="," )
+    
+    # retrain model and evaluate performance
+    print("Retrainin the model with new data...")
+    predict_tool.retrain_model("data/weights/trained_model.h5", train_data_2, train_labels_2, test_data, test_labels, network_config)
+    
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
