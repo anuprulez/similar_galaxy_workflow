@@ -11,7 +11,6 @@ import random
 
 CURRENT_DIR = os.getcwd()
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
-COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/compatible_tools.json"
 
 
 class ExtractWorkflowConnections:
@@ -34,7 +33,6 @@ class ExtractWorkflowConnections:
         workflow_parents = dict()
         workflow_paths = list()
         unique_paths = list()
-        #workflow_paths_freq = dict()
         with open( self.WORKFLOW_FILE_PATH, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
@@ -79,13 +77,7 @@ class ExtractWorkflowConnections:
         # collect unique paths
         print( "Removing duplicate paths..." )
         unique_paths = list( set( workflow_paths_dup.split( "\n" ) ) )
-
         print( "Unique paths: %d" % len( unique_paths ) )
-        print( "Finding compatible next tools..." )
-
-        next_tools = self.set_compatible_next_tools( unique_paths )
-        with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
-            compatible_tools_file.write( json.dumps( next_tools ) )
 
         print( "Writing workflows to a text file..." )
         random.shuffle( unique_paths )

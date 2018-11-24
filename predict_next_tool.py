@@ -290,7 +290,7 @@ if __name__ == "__main__":
 
     # Process the paths from workflows
     print ( "Dividing data..." )
-    data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
+    data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ], sys.argv[2] )
     data.get_data_labels_mat()
 
     '''predict_tool = PredictNextTool( n_epochs )

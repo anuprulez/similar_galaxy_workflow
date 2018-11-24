@@ -34,10 +34,11 @@ TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
 class PrepareData:
 
     @classmethod
-    def __init__( self, max_seq_length, test_data_share ):
+    def __init__( self, max_seq_length, test_data_share, retrain=False ):
         """ Init method. """
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
+        self.retrain = retrain
 
     @classmethod
     def process_processed_data( self, fname ):
@@ -60,6 +61,56 @@ class PrepareData:
         return tokens, raw_paths
 
     @classmethod
+    def write_file(self, path, data):
+        with open( path, 'w' ) as f_data:
+            f_data.write( json.dumps( data ) )
+
+    @classmethod
+    def assemble_dictionary( self, new_data_dict):
+        """
+        Create/update tools indices in the forward and backward dictionary
+        """
+        try:
+            with open( DATA_DICTIONARY, 'r' ) as data_dict:
+                dictionary = json.loads( data_dict.read() )
+                max_prev_size = len(dictionary)
+                tool_counter = 1
+                for tool in new_data_dict:
+                    if tool not in dictionary:
+                        dictionary[tool] = max_prev_size + tool_counter
+                        tool_counter += 1
+            reverse_dict = dict((v,k) for k,v in dictionary.items())
+            self.write_file(DATA_DICTIONARY, dictionary)
+            self.write_file(DATA_REV_DICT, reverse_dict)
+            return dictionary, reverse_dict
+        except Exception as exp:
+            reverse_dict = dict((v,k) for k,v in new_data_dict.items())
+            self.write_file(DATA_DICTIONARY, new_data_dict)
+            self.write_file(DATA_REV_DICT, reverse_dict)
+            return new_data_dict, reverse_dict
+
+    @classmethod
+    def assemble_reverse_dictionary( self, new_data_dict):
+        """
+        Create/update tools indices in the forward and backward dictionary
+        """
+        try:
+            with open( DATA_REV_DICT, 'r' ) as data_dict:
+                dictionary = json.loads( data_dict.read() )
+                max_prev_size = len(dictionary)
+                tool_counter = 0
+                for tool in new_data_dict:
+                    if tool not in dictionary:
+                        dictionary[tool] = max_prev_size + tool_counter
+                        tool_counter += 1
+            with open( DATA_REV_DICT, 'w' ) as data_dict:
+                data_dict.write( json.dumps( dictionary ) )
+        except Exception as exp:
+            with open( DATA_REV_DICT, 'w' ) as data_dict:
+                data_dict.write( json.dumps( new_data_dict ) )
+            return new_data_dict
+
+    @classmethod
     def create_data_dictionary( self, words ):
         """
         Create two dictionaries having tools names and their indexes
@@ -68,11 +119,7 @@ class PrepareData:
         dictionary = dict()
         for word, _ in count:
             dictionary[ word ] = len( dictionary ) + 1
-        reverse_dictionary = dict( zip( dictionary.values(), dictionary.keys() ) )
-        with open( DATA_DICTIONARY, 'w' ) as data_dict:
-            data_dict.write( json.dumps( dictionary ) )
-        with open( DATA_REV_DICT, 'w' ) as data_rev_dict:
-            data_rev_dict.write( json.dumps( reverse_dictionary ) )
+        dictionary, reverse_dictionary = self.assemble_dictionary(dictionary)
         return dictionary, reverse_dictionary
 
     @classmethod
