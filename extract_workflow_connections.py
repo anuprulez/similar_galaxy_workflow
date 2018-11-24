@@ -10,9 +10,6 @@ import random
 
 
 CURRENT_DIR = os.getcwd()
-WORKFLOW_FILE_PATH = CURRENT_DIR + "/data/workflow_connections_merged.tsv"
-WORKFLOW_PATHS_FILE_DUP = CURRENT_DIR + "/data/workflow_connections_duplicate_paths.txt"
-WORKFLOW_PATHS_FREQ = CURRENT_DIR + "/data/workflow_paths_freq.txt"
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
 COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/compatible_tools.json"
 
@@ -20,8 +17,10 @@ COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/compatible_tools.json"
 class ExtractWorkflowConnections:
 
     @classmethod
-    def __init__( self ):
+    def __init__( self, raw_file, retrain=False ):
         """ Init method. """
+        self.WORKFLOW_FILE_PATH = CURRENT_DIR + "/" + raw_file
+        self.retrain = retrain
 
     @classmethod
     def read_tabular_file( self ):
@@ -35,8 +34,8 @@ class ExtractWorkflowConnections:
         workflow_parents = dict()
         workflow_paths = list()
         unique_paths = list()
-        workflow_paths_freq = dict()
-        with open( WORKFLOW_FILE_PATH, 'rt' ) as workflow_connections_file:
+        #workflow_paths_freq = dict()
+        with open( self.WORKFLOW_FILE_PATH, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
                 if not index:
@@ -68,30 +67,26 @@ class ExtractWorkflowConnections:
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
+
         print( "Workflows processed: %d" % wf_ctr )
         workflow_paths = workflow_paths[:20000]
         print( "All paths: %d" % len( workflow_paths ) )
-        print( "Counting frequency of paths..." )
-        for path in workflow_paths:
-            path_names = ",".join( path )
-            if path_names not in workflow_paths_freq:
-                workflow_paths_freq[ path_names ] = 0
-            workflow_paths_freq[ path_names ] += 1
-        with open( WORKFLOW_PATHS_FREQ , "w" ) as workflow_paths_freq_file:
-            workflow_paths_freq_file.write( json.dumps( workflow_paths_freq ) )
+
         # collect duplicate paths
         for path in workflow_paths:
             workflow_paths_dup += ",".join( path ) + "\n"
-        with open( WORKFLOW_PATHS_FILE_DUP, "w" ) as workflows_file:
-            workflows_file.write( workflow_paths_dup )
+
         # collect unique paths
         print( "Removing duplicate paths..." )
         unique_paths = list( set( workflow_paths_dup.split( "\n" ) ) )
+
         print( "Unique paths: %d" % len( unique_paths ) )
         print( "Finding compatible next tools..." )
+
         next_tools = self.set_compatible_next_tools( unique_paths )
         with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
             compatible_tools_file.write( json.dumps( next_tools ) )
+
         print( "Writing workflows to a text file..." )
         random.shuffle( unique_paths )
         for path in unique_paths:

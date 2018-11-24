@@ -254,8 +254,8 @@ class PredictCallback( Callback ):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 1:
-        print( "Usage: python predict_next_tool.py" )
+    if len(sys.argv) != 3:
+        print( "Usage: python predict_next_tool.py <workflow_file_path> <first training or retrain: boolean>" )
         exit( 1 )
     start_time = time.time()
     network_config = {
@@ -277,13 +277,15 @@ if __name__ == "__main__":
     n_epochs = network_config[ "n_epochs" ]
     experiment_runs = network_config[ "experiment_runs" ]
 
-    test_abs_precision = np.zeros( [ experiment_runs, n_epochs ] )
+    '''test_abs_precision = np.zeros( [ experiment_runs, n_epochs ] )
     test_compatibility_precision = np.zeros( [ experiment_runs, n_epochs ] )
     training_loss = np.zeros( [ experiment_runs, n_epochs ] )
-    test_loss = np.zeros( [ experiment_runs, n_epochs ] )
+    test_loss = np.zeros( [ experiment_runs, n_epochs ] )'''
 
     # Extract and process workflows
-    connections = extract_workflow_connections.ExtractWorkflowConnections()
+    print(sys.argv[1])
+    print(sys.argv[2])
+    connections = extract_workflow_connections.ExtractWorkflowConnections(sys.argv[1], sys.argv[2])
     connections.read_tabular_file()
 
     # Process the paths from workflows
@@ -291,7 +293,7 @@ if __name__ == "__main__":
     data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ] )
     data.get_data_labels_mat()
 
-    predict_tool = PredictNextTool( n_epochs )
+    '''predict_tool = PredictNextTool( n_epochs )
     # get data dictionary
     data_dict = predict_tool.read_file( DATA_DICTIONARY )
     reverse_data_dictionary = predict_tool.read_file( DATA_REV_DICT )
@@ -308,7 +310,7 @@ if __name__ == "__main__":
         #test_abs_precision[ run ] = results[ "test_absolute_precision" ]
         #test_compatibility_precision[ run ] = results[ "test_compatibility_precision" ]
         #training_loss[ run ] = results[ "train_loss" ]
-        #test_loss[ run ] = results[ "test_loss" ]
+        #test_loss[ run ] = results[ "test_loss" ]'''
 
     # save the results
     '''np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, np.mean( test_abs_precision, axis=0 ), delimiter="," )
@@ -317,8 +319,8 @@ if __name__ == "__main__":
     np.savetxt( MEAN_TEST_LOSS, np.mean( test_loss, axis=0 ), delimiter="," )'''
     
     # retrain model and evaluate performance
-    print("Retraining the model with new data...")
-    predict_tool.retrain_model( train_data_2, train_labels_2, test_data, test_labels, network_config )
+    #print("Retraining the model with new data...")
+    #predict_tool.retrain_model( train_data_2, train_labels_2, test_data, test_labels, network_config )
     
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

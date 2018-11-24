@@ -27,8 +27,7 @@ TRAIN_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/train_data_labels_na
 TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/test_data_labels_dict.json"
 TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/test_data_labels_names_dict.json"
 PATHS_FREQUENCY = CURRENT_WORKING_DIR + "/data/workflow_paths_freq.txt"
-TRAIN_DATA_1 = CURRENT_WORKING_DIR + "/data/train_data_1.h5"
-TRAIN_DATA_2 = CURRENT_WORKING_DIR + "/data/train_data_2.h5"
+TRAIN_DATA = CURRENT_WORKING_DIR + "/data/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
 
 
@@ -307,27 +306,27 @@ class PrepareData:
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         
-        size_fac = 0.8
-        r_index = int(size_fac*len(train_data))
-        train_data_1 = train_data[:r_index]
-        train_labels_1 = train_labels[:r_index]
+        #size_fac = 0.5
+        #r_index = int(size_fac*len(train_data))
+        #train_data_1 = train_data[:r_index]
+        #train_labels_1 = train_labels[:r_index]
         
-        train_data_2 = train_data[r_index:]
-        train_labels_2 = train_labels[r_index:]
+        #train_data_2 = train_data[r_index:]
+        #train_labels_2 = train_labels[r_index:]
 
-        print( "Verifying overlap in train and test data..." )
-        self.verify_overlap( train_data_1, test_data, reverse_dictionary )
+        #print( "Verifying overlap in train and test data..." )
+        #self.verify_overlap( train_data_1, test_data, reverse_dictionary )
         
-        self.verify_overlap( train_data_2, test_data, reverse_dictionary )
+        #self.verify_overlap( train_data_2, test_data, reverse_dictionary )
 
         # print( "Restoring the original data distribution in training data..." )
         # train_data, train_labels = self.reconstruct_original_distribution( reverse_dictionary, train_data, train_labels )
 
         print( "Randomizing the train data..." )
-        train_data_1, train_labels_1 = self.randomize_data( train_data_1, train_labels_1 )
-        train_data_2, train_labels_2 = self.randomize_data( train_data_2, train_labels_2 )
+        train_data, train_labels = self.randomize_data( train_data, train_labels )
+        #train_data_2, train_labels_2 = self.randomize_data( train_data_2, train_labels_2 )
 
         # save the training and test paths as h5 files
-        self.save_as_h5py( train_data_1, train_labels_1, TRAIN_DATA_1 )
-        self.save_as_h5py( train_data_2, train_labels_2, TRAIN_DATA_2 )
+        self.save_as_h5py( train_data, train_labels, TRAIN_DATA )
+        #self.save_as_h5py( train_data_2, train_labels_2, TRAIN_DATA_2 )
         self.save_as_h5py( test_data, test_labels, TEST_DATA )
