@@ -130,6 +130,7 @@ class PredictNextTool:
         topk_abs_pred = np.zeros( [ size ] )
         topk_compatible_pred = np.zeros( [ size ] )
         ave_abs_precision = list()
+
         print("Test data size: %d" % len(x))
         # loop over all the test samples and find prediction precision
         for i in range( size ):
@@ -141,9 +142,9 @@ class PredictNextTool:
 
             # predict next tools for a test path
             prediction = model.predict( test_sample, verbose=0 )
-            prediction = np.reshape( prediction, ( dimensions, ) )
 
             # remove the 0th position as there is no tool at this index
+            prediction = np.reshape(prediction, (dimensions,))
             prediction = prediction[ 1: ]
             prediction_pos = np.argsort( prediction, axis=-1 )
             topk_prediction_pos = prediction_pos[ -topk: ]
@@ -176,14 +177,7 @@ class PredictNextTool:
         model1.add( Embedding( new_dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )     
         new_embedding_dimensions = np.zeros([new_dimensions, network_config[ "embedding_vec_size" ]])
         new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[0].get_weights()[0]       
-        '''print(new_embedding_dimensions.shape)
-        for idx, ly in enumerate(loaded_model.layers):
-            try:
-                print(idx, len(ly.get_weights()))
-                for itm in ly.get_weights():
-                    print(itm.shape)
-            except:
-                print(idx, ly.get_weights())'''
+
         model1.layers[0].set_weights([new_embedding_dimensions])
         model1.add( SpatialDropout1D( network_config[ "dropout" ] ) )
 
@@ -209,16 +203,10 @@ class PredictNextTool:
         model1.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
         print("New model summary: \n")
         print(model1.summary())
-        #np.reshape(test_labels, (test_labels.shape[0], new_dimensions))
+
         reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
-        '''for idx, rw in enumerate(test_labels):
-            row = np.zeros(new_dimensions)
-            row[:old_dimensions] = rw
-            reshaped_test_labels[idx] = row
-        print(reshaped_test_labels.shape)
-        print(reshaped_test_labels)'''
         model1.fit(training_data, training_labels, shuffle="batch", batch_size=network_config[ "batch_size" ], epochs=network_config[ "n_epochs" ])
-        absolute_prec_new_model = self.verify_model(model1, test_data, test_labels, reverse_data_dictionary, old_dimensions)
+        absolute_prec_new_model = self.verify_model(model1, test_data, test_labels, reverse_data_dictionary, new_dimensions)
         print("New model - absolute precision on test data is: %0.6f" % absolute_prec_new_model)
 
 
@@ -237,7 +225,7 @@ if __name__ == "__main__":
         "embedding_vec_size": 128,
         "learning_rate": 0.001,
         "max_seq_len": 25,
-        "test_share": 0.05,
+        "test_share": 0.20,
         "validation_split": 0.2,
         "activation_recurrent": 'elu',
         "activation_output": 'sigmoid',
