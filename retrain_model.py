@@ -45,7 +45,7 @@ class PredictNextTool:
         self.BEST_RETRAINED_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/new_weights-epoch-" + str(epochs) + ".hdf5"
         
     @classmethod
-    def retrain_model(self, training_data, training_labels, test_data, test_labels, network_config):
+    def retrain_model(self, training_data, training_labels, test_data, test_labels, network_config, reverse_data_dict):
         """
         Retrain the trained model with new data and compare performance on test data
         """
@@ -61,33 +61,28 @@ class PredictNextTool:
         
         # add embedding
         model.add( Embedding( new_dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )     
-        new_embedding_dimensions = np.zeros([new_dimensions, network_config[ "embedding_vec_size" ]])
-        new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[0].get_weights()[0]       
+        #new_embedding_dimensions = np.zeros([new_dimensions, network_config[ "embedding_vec_size" ]])
+        #new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[0].get_weights()[0]       
 
-        model.layers[0].set_weights([new_embedding_dimensions])
-        model.layers[0].trainable = True
+        #model.layers[0].set_weights([new_embedding_dimensions])
+        #model.layers[0].trainable = True
         model.add( SpatialDropout1D( network_config[ "dropout" ] ) )
 
         # add GRU
         model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=True, activation=network_config[ "activation_recurrent" ] ) )
         model.layers[2].set_weights(loaded_model.layers[2].get_weights())
-        model.layers[2].trainable = True
+        model.layers[2].trainable = False
         model.add( Dropout( network_config[ "dropout" ] ) )
 
         # add GRU
         model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=False, activation=network_config[ "activation_recurrent" ] ) )
         model.layers[4].set_weights(loaded_model.layers[4].get_weights())
-        model.layers[4].trainable = True
+        model.layers[4].trainable = False
         model.add( Dropout( network_config[ "dropout" ] ) )
 
-        new_output_dimensions1 = np.zeros([network_config[ "memory_units" ], new_dimensions])
-        new_output_dimensions1[:, 0:old_dimensions] = loaded_model.layers[6].get_weights()[0]
-        new_output_dimensions2 = np.zeros([new_dimensions])
-        new_output_dimensions2[:old_dimensions] = loaded_model.layers[6].get_weights()[1]
-
         model.add( Dense(new_dimensions, activation=network_config[ "activation_output" ]))
-        model.layers[6].set_weights([new_output_dimensions1, new_output_dimensions2])
-        model.layers[6].trainable = True
+        #model.layers[6].set_weights([new_output_dimensions1, new_output_dimensions2])
+        #model.layers[6].trainable = True
         optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
         model.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
         
@@ -98,12 +93,48 @@ class PredictNextTool:
         
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
-        callbacks_list = [ checkpoint ]
+        predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, training_labels.shape[1], test_labels.shape[1], loaded_model, network_config )
+        callbacks_list = [ checkpoint, predict_callback_test ]
 
         reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
         print("Started training on new data...")
         model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list)
         print ( "Training finished" )
+
+
+class PredictCallback( Callback ):
+    def __init__( self, x, y, reverse_data_dictionary, new_dimensions, old_dimensions, loaded_model, network_config ):
+        self.test_data = x
+        self.test_labels = y
+        self.reverse_data_dictionary = reverse_data_dictionary
+        self.new_dimensions = new_dimensions
+        self.old_dimensions = old_dimensions
+        self.loaded_model = loaded_model
+        self.network_config = network_config
+
+    def on_epoch_end( self, epoch, logs={} ):
+        """
+        Compute absolute and compatible precision for test data
+        """
+        new_embedding_dimensions = self.model.layers[0].get_weights()[0]
+        new_embedding_dimensions[0:self.old_dimensions,:] = self.loaded_model.layers[0].get_weights()[0]
+        self.model.layers[0].set_weights([new_embedding_dimensions])
+
+        # add GRU
+        #self.model.layers[2].set_weights(self.loaded_model.layers[2].get_weights())
+
+        # add GRU
+        #self.model.layers[4].set_weights( self.loaded_model.layers[4].get_weights() )
+
+        new_output_dimensions1 = self.model.layers[6].get_weights()[0]
+        new_output_dimensions2 = self.model.layers[6].get_weights()[1]
+        new_output_dimensions1[:, 0:self.old_dimensions] = self.loaded_model.layers[6].get_weights()[0]
+        new_output_dimensions2[:self.old_dimensions] = self.loaded_model.layers[6].get_weights()[1]
+
+        self.model.layers[6].set_weights([new_output_dimensions1, new_output_dimensions2])
+        print("Evaluating performance on test data...")
+        precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+        print("Absolute precision on test data using new model is: %0.6f" % precision)
 
 
 if __name__ == "__main__":
@@ -153,13 +184,13 @@ if __name__ == "__main__":
     test_data, test_labels = utils.get_h5_data( TEST_DATA )
 
     # execute experiment runs and collect results for each run
-    predict_tool.retrain_model( train_data, train_labels, test_data, test_labels, network_config )
+    predict_tool.retrain_model( train_data, train_labels, test_data, test_labels, network_config, reverse_data_dictionary )
         
-    print("Evaluating performance on test data...")
-    print("Test data size: %d" % len(test_labels))
-    loaded_model = utils.load_saved_model( NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_RETRAINED_MODEL_PATH )
-    absolute_prec_current_model = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary, test_labels.shape[1])
-    print("Absolute precision on test data using new model is: %0.6f" % absolute_prec_current_model)
+    #print("Evaluating performance on test data...")
+    #print("Test data size: %d" % len(test_labels))
+    #loaded_model = utils.load_saved_model( NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_RETRAINED_MODEL_PATH )
+    #absolute_prec_current_model = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary, test_labels.shape[1])
+    #print("Absolute precision on test data using new model is: %0.6f" % absolute_prec_current_model)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
