@@ -10,7 +10,7 @@ import random
 
 
 CURRENT_DIR = os.getcwd()
-WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/workflow_connections_paths.txt"
+WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/generated_files/workflow_connections_paths.txt"
 
 
 class ExtractWorkflowConnections:

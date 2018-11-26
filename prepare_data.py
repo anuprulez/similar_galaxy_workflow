@@ -13,21 +13,21 @@ import h5py
 
 
 CURRENT_WORKING_DIR = os.getcwd()
-RAW_FILE = CURRENT_WORKING_DIR + "/data/workflow_connections_paths.txt"
-DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/data_dictionary.txt"
-DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/data_rev_dict.txt"
-COMPLETE_FILE = CURRENT_WORKING_DIR + "/data/complete_file.txt"
-COMPLETE_FILE_SEQUENCE = CURRENT_WORKING_DIR + "/data/complete_file_sequence.txt"
-COMPLETE_PATHS_POS = CURRENT_WORKING_DIR + "/data/complete_paths_pos.txt"
-COMPLETE_PATHS_NAMES = CURRENT_WORKING_DIR + "/data/complete_paths_names.txt"
-COMPLETE_PATHS_POS_DICT = CURRENT_WORKING_DIR + "/data/complete_paths_pos_dict.json"
-COMPLETE_PATHS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/complete_paths_names_dict.json"
-TRAIN_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/train_data_labels_names_dict.json"
-TRAIN_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/train_data_labels_names_dict.json"
-TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/test_data_labels_dict.json"
-TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/test_data_labels_names_dict.json"
-TRAIN_DATA = CURRENT_WORKING_DIR + "/data/train_data.h5"
-TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
+RAW_FILE = CURRENT_WORKING_DIR + "/data/generated_files/workflow_connections_paths.txt"
+DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
+DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
+COMPLETE_FILE = CURRENT_WORKING_DIR + "/data/generated_files/complete_file.txt"
+COMPLETE_FILE_SEQUENCE = CURRENT_WORKING_DIR + "/data/generated_files/complete_file_sequence.txt"
+COMPLETE_PATHS_POS = CURRENT_WORKING_DIR + "/data/generated_files/complete_paths_pos.txt"
+COMPLETE_PATHS_NAMES = CURRENT_WORKING_DIR + "/data/generated_files/complete_paths_names.txt"
+COMPLETE_PATHS_POS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/complete_paths_pos_dict.json"
+COMPLETE_PATHS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/complete_paths_names_dict.json"
+TRAIN_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/train_data_labels_names_dict.json"
+TRAIN_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/train_data_labels_names_dict.json"
+TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_labels_dict.json"
+TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_labels_names_dict.json"
+TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
+TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 
 
 class PrepareData:
