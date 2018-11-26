@@ -8,6 +8,8 @@ import json
 import csv
 import random
 
+import utils
+
 
 CURRENT_DIR = os.getcwd()
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/generated_files/workflow_connections_paths.txt"
@@ -80,6 +82,8 @@ class ExtractWorkflowConnections:
 
         print( "Writing workflows to a text file..." )
         random.shuffle( unique_paths )
+
+        utils.remove_file(WORKFLOW_PATHS_FILE)
         for path in unique_paths:
             workflow_paths_unique += path + "\n"
         with open( WORKFLOW_PATHS_FILE, "w" ) as workflows_file:

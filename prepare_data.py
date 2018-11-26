@@ -11,6 +11,8 @@ import json
 import random
 import h5py
 
+import utils
+
 
 CURRENT_WORKING_DIR = os.getcwd()
 RAW_FILE = CURRENT_WORKING_DIR + "/data/generated_files/workflow_connections_paths.txt"
@@ -61,8 +63,7 @@ class PrepareData:
 
     @classmethod
     def write_file(self, path, data):
-        if os.path.exists(path):
-            os.remove(path)
+        utils.remove_file(path)
         with open( path, 'w' ) as f_data:
             f_data.write( json.dumps( data ) )
 
@@ -71,7 +72,7 @@ class PrepareData:
         """
         Create/update tools indices in the forward and backward dictionary
         """
-        try:
+        if self.retrain is True or self.retrain is "True":
             with open( DATA_DICTIONARY, 'r' ) as data_dict:
                 dictionary = json.loads( data_dict.read() )
                 max_prev_size = len(dictionary)
@@ -84,7 +85,9 @@ class PrepareData:
             self.write_file(DATA_DICTIONARY, dictionary)
             self.write_file(DATA_REV_DICT, reverse_dict)
             return dictionary, reverse_dict
-        except Exception as exp:
+        else:
+            utils.remove_file(DATA_DICTIONARY)
+            utils.remove_file(DATA_REV_DICT)
             reverse_dict = dict((v,k) for k,v in new_data_dict.items())
             self.write_file(DATA_DICTIONARY, new_data_dict)
             self.write_file(DATA_REV_DICT, reverse_dict)
@@ -121,10 +124,8 @@ class PrepareData:
                         sub_paths_names.append(  ",".join( sequence ) )
         sub_paths_pos = list( set( sub_paths_pos ) )
         sub_paths_names = list( set( sub_paths_names ) )
-        if os.path.exists(file_pos):
-            os.remove(file_pos)
-        if os.path.exists(file_pos):
-            os.remove(file_names)
+        utils.remove_file(file_pos)
+        utils.remove_file(file_names)
         with open( file_pos, "w" ) as sub_paths_file_pos:
             for item in sub_paths_pos:
                 sub_paths_file_pos.write( "%s\n" % item )
@@ -151,16 +152,10 @@ class PrepareData:
                     paths_labels[ train_tools ] += "," + label
                 else:
                     paths_labels[ train_tools ] = label
-                    
-        if os.path.exists(paths_file_pos):
-            os.remove(paths_file_pos)
-        if os.path.exists(paths_file_names):
-            os.remove(paths_file_names)
-        if os.path.exists(destination_file):
-            os.remove(destination_file)
-        if os.path.exists(destination_file_names):
-            os.remove(destination_file_names)
-
+        utils.remove_file(paths_file_pos)
+        utils.remove_file(paths_file_names)
+        utils.remove_file(destination_file)
+        utils.remove_file(destination_file_names)
         with open( paths_file_pos, "w" ) as write_paths_file_pos:
             for item in paths:
                 write_paths_file_pos.write( "%s\n" % item )
@@ -202,16 +197,14 @@ class PrepareData:
         Write to file
         """
         path_seq_names = dict()
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        utils.remove_file(file_path)
         with open( file_path, "w" ) as dict_file:
             dict_file.write( json.dumps( dictionary ) )
         for item in dictionary:
             path_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in item.split( "," ) ] )
             path_label_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in dictionary[ item ].split( "," ) ] )
             path_seq_names[ path_names ] = path_label_names
-        if os.path.exists(file_names_path):
-            os.remove(file_names_path)
+        utils.remove_file(file_names_path)
         with open( file_names_path, "w" ) as multilabel_file:
             multilabel_file.write( json.dumps( path_seq_names ) )
 
@@ -255,6 +248,7 @@ class PrepareData:
         """
         Save the samples and their labels as h5 files
         """
+        utils.remove_file(file_path)
         hf = h5py.File( file_path, 'w' )
         hf.create_dataset( 'data', data=data, compression="gzip", compression_opts=9 )
         hf.create_dataset( 'data_labels', data=label, compression="gzip", compression_opts=9 )

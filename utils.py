@@ -46,8 +46,12 @@ def save_network( model, file_path ):
     """
     with open( file_path, "w" ) as json_file:
         json_file.write( model )
+
+def remove_file(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
         
-def verify_model( model, x, y, reverse_data_dictionary, dimensions ):
+def verify_model( model, x, y, reverse_data_dictionary ):
     """
     Verify the model on test data
     """
@@ -65,20 +69,19 @@ def verify_model( model, x, y, reverse_data_dictionary, dimensions ):
 
         # predict next tools for a test path
         prediction = model.predict( test_sample, verbose=0 )
-
+        nw_dimension = prediction.shape[1]
         # remove the 0th position as there is no tool at this index
-        prediction = np.reshape(prediction, (dimensions,))
-        prediction = prediction[ 1:dimensions ]
+        prediction = np.reshape(prediction, (nw_dimension,))
+        #prediction = prediction[ 1: ]
         prediction_pos = np.argsort( prediction, axis=-1 )
         topk_prediction_pos = prediction_pos[ -topk: ]
 
         # read tool names using reverse dictionary
-        sequence_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in test_sample_tool_pos ]
         actual_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in actual_classes_pos ]
-        top_predicted_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) + 1 ) ] for tool_pos in topk_prediction_pos ]
+        top_predicted_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in topk_prediction_pos ]
 
         # find false positives
         false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
-        absolute_precision = 1 - ( len( false_positives ) / float( len( actual_next_tool_names ) ) )
+        absolute_precision = 1 - ( len( false_positives ) / float( len( actual_classes_pos ) ) )
         ave_abs_precision.append(absolute_precision)
     return np.mean(ave_abs_precision)
