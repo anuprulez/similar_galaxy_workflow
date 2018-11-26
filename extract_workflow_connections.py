@@ -60,23 +60,22 @@ class ExtractWorkflowConnections:
             for root in roots:
                 for leaf in leaves:
                     paths = self.find_tool_paths_workflow( parents_graph, root, leaf )
-                    # reverse the paths as they are computed from leaves to roots
+                    # reverse the paths as they are computed from leaves to roots leaf
                     paths = [ tool_path for tool_path in paths ]
                     if len( paths ) > 0:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
 
         print( "Workflows processed: %d" % wf_ctr )
-        #workflow_paths = workflow_paths[:20000]
-        print( "All paths: %d" % len( workflow_paths ) )
+        print( "# paths in workflows: %d" % len( workflow_paths ) )
 
         # collect duplicate paths
         for path in workflow_paths:
             workflow_paths_dup += ",".join( path ) + "\n"
 
         # collect unique paths
-        print( "Removing duplicate paths..." )
-        unique_paths = list( set( workflow_paths_dup.split( "\n" ) ) )
+        unique_paths = list( workflow_paths_dup.split( "\n" ) )
+        unique_paths = list(filter(None, unique_paths))
         print( "Unique paths: %d" % len( unique_paths ) )
 
         print( "Writing workflows to a text file..." )

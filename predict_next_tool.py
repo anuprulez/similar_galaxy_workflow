@@ -26,12 +26,11 @@ import prepare_data
 # file paths
 CURRENT_WORKING_DIR = os.getcwd()
 NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/model.json"
-EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-{epoch:02d}.hdf5"
+EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-{epoch:d}.hdf5"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/data_dictionary.txt"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
-TRAINED_MODEL_PATH = "data/weights/weights-epoch-05.hdf5"
 
 
 class PredictNextTool:
@@ -40,6 +39,7 @@ class PredictNextTool:
     def __init__( self, epochs ):
         """ Init method. """
         self.n_epochs = epochs
+        self.TRAINED_MODEL_PATH = "data/weights/weights-epoch-" + str(epochs) + ".hdf5"
 
     @classmethod
     def save_network( self, model ):
@@ -98,14 +98,7 @@ class PredictNextTool:
 
         # fit the model
         print ( "Start training..." )
-        model_fit_callbacks = model.fit( train_data, train_labels, validation_split=network_config[ "validation_split" ], batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle="batch" )
-        loss_values = model_fit_callbacks.history[ "loss" ]
-        validation_loss = model_fit_callbacks.history[ "val_loss" ]
-
-        return {
-            "train_loss": np.array( loss_values ),
-            "test_loss": np.array( validation_loss )
-        }
+        model_fit_callbacks = model.fit( train_data, train_labels, batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list, shuffle="batch" )
         print ( "Training finished" )
         
     @classmethod
@@ -165,7 +158,7 @@ class PredictNextTool:
         """
         # retrain model
         print("New training size: %d" % len(training_labels))
-        loaded_model = predict_tool.load_saved_model( NETWORK_C0NFIG_JSON_PATH, TRAINED_MODEL_PATH )
+        loaded_model = predict_tool.load_saved_model( NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH )
         print("Old model summary: \n")
         print(loaded_model.summary())
         old_dimensions = test_labels.shape[1]
@@ -210,13 +203,17 @@ class PredictNextTool:
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print( "Usage: python predict_next_tool.py <workflow_file_path> <first training or retrain: boolean>" )
+    if len(sys.argv) != 4:
+        print( "Usage: python predict_next_tool.py <workflow_file_path> <first training or retrain: boolean> <training_epochs>" )
         exit( 1 )
     start_time = time.time()
+    
+    retrain = sys.argv[2]
+    n_epochs = int(sys.argv[3])
+    
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 5,
+        "n_epochs": n_epochs,
         "batch_size": 128,
         "dropout": 0.2,
         "memory_units": 128,
@@ -230,8 +227,6 @@ if __name__ == "__main__":
         "loss_type": "binary_crossentropy"
     }
 
-    retrain = sys.argv[2]
-    n_epochs = network_config[ "n_epochs" ]
     experiment_runs = network_config[ "experiment_runs" ]
 
     # Extract and process workflows
@@ -256,12 +251,12 @@ if __name__ == "__main__":
     # execute experiment runs and collect results for each run
     if retrain is False or retrain == "False":
         for run in range( experiment_runs ):
-            results = predict_tool.evaluate_recurrent_network( run, network_config, data_dict, \
-                          reverse_data_dictionary, train_data, train_labels, test_data, test_labels )
-        loaded_model = predict_tool.load_saved_model( NETWORK_C0NFIG_JSON_PATH, TRAINED_MODEL_PATH )
+            predict_tool.evaluate_recurrent_network( run, network_config, data_dict, \
+                reverse_data_dictionary, train_data, train_labels, test_data, test_labels )
+        loaded_model = predict_tool.load_saved_model( NETWORK_C0NFIG_JSON_PATH, predict_tool.TRAINED_MODEL_PATH )
         reverse_data_dictionary = predict_tool.read_file(DATA_REV_DICT)
         print("Evaluating performance on test data...")
-        print("Test data size: %d" % len(x))
+        print("Test data size: %d" % len(test_labels))
         absolute_prec_current_model = predict_tool.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary, test_labels.shape[1])
         print("Current model - absolute precision on test data is: %0.6f" % absolute_prec_current_model)
     else:
