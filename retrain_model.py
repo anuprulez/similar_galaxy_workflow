@@ -61,11 +61,7 @@ class PredictNextTool:
         
         # add embedding
         model.add( Embedding( new_dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )     
-        #new_embedding_dimensions = np.zeros([new_dimensions, network_config[ "embedding_vec_size" ]])
-        #new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[0].get_weights()[0]       
-
-        #model.layers[0].set_weights([new_embedding_dimensions])
-        #model.layers[0].trainable = True
+        model.layers[0].trainable = True
         model.add( SpatialDropout1D( network_config[ "dropout" ] ) )
 
         # add GRU
@@ -81,8 +77,7 @@ class PredictNextTool:
         model.add( Dropout( network_config[ "dropout" ] ) )
 
         model.add( Dense(new_dimensions, activation=network_config[ "activation_output" ]))
-        #model.layers[6].set_weights([new_output_dimensions1, new_output_dimensions2])
-        #model.layers[6].trainable = True
+        model.layers[6].trainable = True
         optimizer = RMSprop( lr=network_config[ "learning_rate" ] )
         model.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
         
@@ -119,12 +114,6 @@ class PredictCallback( Callback ):
         new_embedding_dimensions = self.model.layers[0].get_weights()[0]
         new_embedding_dimensions[0:self.old_dimensions,:] = self.loaded_model.layers[0].get_weights()[0]
         self.model.layers[0].set_weights([new_embedding_dimensions])
-
-        # add GRU
-        #self.model.layers[2].set_weights(self.loaded_model.layers[2].get_weights())
-
-        # add GRU
-        #self.model.layers[4].set_weights( self.loaded_model.layers[4].get_weights() )
 
         new_output_dimensions1 = self.model.layers[6].get_weights()[0]
         new_output_dimensions2 = self.model.layers[6].get_weights()[1]
