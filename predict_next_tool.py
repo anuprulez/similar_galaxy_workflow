@@ -31,7 +31,7 @@ DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/data_dictionary.txt"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/test_data.h5"
-TRAINED_MODEL_PATH = "data/weights/weights-epoch-02.hdf5"
+TRAINED_MODEL_PATH = "data/weights/weights-epoch-05.hdf5"
 
 
 class PredictNextTool:
@@ -130,8 +130,6 @@ class PredictNextTool:
         topk_abs_pred = np.zeros( [ size ] )
         topk_compatible_pred = np.zeros( [ size ] )
         ave_abs_precision = list()
-
-        print("Test data size: %d" % len(x))
         # loop over all the test samples and find prediction precision
         for i in range( size ):
             actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
@@ -218,7 +216,7 @@ if __name__ == "__main__":
     start_time = time.time()
     network_config = {
         "experiment_runs": 1,
-        "n_epochs": 2,
+        "n_epochs": 5,
         "batch_size": 128,
         "dropout": 0.2,
         "memory_units": 128,
@@ -262,6 +260,8 @@ if __name__ == "__main__":
                           reverse_data_dictionary, train_data, train_labels, test_data, test_labels )
         loaded_model = predict_tool.load_saved_model( NETWORK_C0NFIG_JSON_PATH, TRAINED_MODEL_PATH )
         reverse_data_dictionary = predict_tool.read_file(DATA_REV_DICT)
+        print("Evaluating performance on test data...")
+        print("Test data size: %d" % len(x))
         absolute_prec_current_model = predict_tool.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary, test_labels.shape[1])
         print("Current model - absolute precision on test data is: %0.6f" % absolute_prec_current_model)
     else:

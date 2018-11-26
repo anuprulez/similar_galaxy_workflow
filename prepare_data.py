@@ -61,6 +61,8 @@ class PrepareData:
 
     @classmethod
     def write_file(self, path, data):
+        if os.path.exists(path):
+            os.remove(path)
         with open( path, 'w' ) as f_data:
             f_data.write( json.dumps( data ) )
 
@@ -119,6 +121,10 @@ class PrepareData:
                         sub_paths_names.append(  ",".join( sequence ) )
         sub_paths_pos = list( set( sub_paths_pos ) )
         sub_paths_names = list( set( sub_paths_names ) )
+        if os.path.exists(file_pos):
+            os.remove(file_pos)
+        if os.path.exists(file_pos):
+            os.remove(file_names)
         with open( file_pos, "w" ) as sub_paths_file_pos:
             for item in sub_paths_pos:
                 sub_paths_file_pos.write( "%s\n" % item )
@@ -145,6 +151,16 @@ class PrepareData:
                     paths_labels[ train_tools ] += "," + label
                 else:
                     paths_labels[ train_tools ] = label
+                    
+        if os.path.exists(paths_file_pos):
+            os.remove(paths_file_pos)
+        if os.path.exists(paths_file_names):
+            os.remove(paths_file_names)
+        if os.path.exists(destination_file):
+            os.remove(destination_file)
+        if os.path.exists(destination_file_names):
+            os.remove(destination_file_names)
+
         with open( paths_file_pos, "w" ) as write_paths_file_pos:
             for item in paths:
                 write_paths_file_pos.write( "%s\n" % item )
@@ -186,12 +202,16 @@ class PrepareData:
         Write to file
         """
         path_seq_names = dict()
+        if os.path.exists(file_path):
+            os.remove(file_path)
         with open( file_path, "w" ) as dict_file:
             dict_file.write( json.dumps( dictionary ) )
         for item in dictionary:
             path_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in item.split( "," ) ] )
             path_label_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in dictionary[ item ].split( "," ) ] )
             path_seq_names[ path_names ] = path_label_names
+        if os.path.exists(file_names_path):
+            os.remove(file_names_path)
         with open( file_names_path, "w" ) as multilabel_file:
             multilabel_file.write( json.dumps( path_seq_names ) )
 
@@ -205,7 +225,6 @@ class PrepareData:
         all_paths = multilabels_paths.keys()
         random.shuffle( list( all_paths ) )
         split_number = int( self.test_share * len( all_paths ) )
-
         if self.retrain is True or self.retrain == "True":
             split_number = 0
         for index, path in enumerate( list( all_paths ) ):

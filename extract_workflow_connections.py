@@ -67,7 +67,7 @@ class ExtractWorkflowConnections:
             workflow_paths.extend( flow_paths )
 
         print( "Workflows processed: %d" % wf_ctr )
-        workflow_paths = workflow_paths[:20000]
+        #workflow_paths = workflow_paths[:20000]
         print( "All paths: %d" % len( workflow_paths ) )
 
         # collect duplicate paths
