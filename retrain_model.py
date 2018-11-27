@@ -64,6 +64,7 @@ class PredictNextTool:
         model.add( Embedding( new_dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )     
         model.layers[0].trainable = True
         
+        # initialize embedding layer
         new_embedding_dimensions = model.layers[0].get_weights()[0]
         new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[0].get_weights()[0]
         model.layers[0].set_weights([new_embedding_dimensions])
@@ -72,12 +73,16 @@ class PredictNextTool:
 
         # add GRU
         model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=True, activation=network_config[ "activation_recurrent" ] ) )
+        
+        # initialize GRU layer
         model.layers[2].set_weights(loaded_model.layers[2].get_weights())
         model.layers[2].trainable = True
         model.add( Dropout( network_config[ "dropout" ] ) )
 
         # add GRU
         model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=False, activation=network_config[ "activation_recurrent" ] ) )
+        
+        # initialize GRU layer
         model.layers[4].set_weights(loaded_model.layers[4].get_weights())
         model.layers[4].trainable = True	
         model.add( Dropout( network_config[ "dropout" ] ) )
@@ -85,6 +90,7 @@ class PredictNextTool:
         model.add( Dense(new_dimensions, activation=network_config[ "activation_output" ]))
         model.layers[6].trainable = True
         
+        # initialize output layer
         new_output_dimensions1 = model.layers[6].get_weights()[0]
         new_output_dimensions2 = model.layers[6].get_weights()[1]
         new_output_dimensions1[:, 0:old_dimensions] = loaded_model.layers[6].get_weights()[0]
