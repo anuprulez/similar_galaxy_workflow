@@ -30,6 +30,7 @@ TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_l
 TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_labels_names_dict.json"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
+TEST_DATA_NEW = CURRENT_WORKING_DIR + "/data/generated_files/test_data_new.h5"
 
 
 class PrepareData:
@@ -66,6 +67,18 @@ class PrepareData:
         utils.remove_file(path)
         with open( path, 'w' ) as f_data:
             f_data.write( json.dumps( data ) )
+            
+    @classmethod
+    def create_new_dict(self, new_data_dict):
+        """
+        Create new data dictionary
+        """
+        utils.remove_file(DATA_DICTIONARY)
+        utils.remove_file(DATA_REV_DICT)
+        reverse_dict = dict((v,k) for k,v in new_data_dict.items())
+        self.write_file(DATA_DICTIONARY, new_data_dict)
+        self.write_file(DATA_REV_DICT, reverse_dict)
+        return new_data_dict, reverse_dict
 
     @classmethod
     def assemble_dictionary( self, new_data_dict):
@@ -81,16 +94,12 @@ class PrepareData:
                     if tool not in dictionary:
                         dictionary[tool] = max_prev_size + tool_counter
                         tool_counter += 1
-            reverse_dict = dict((v,k) for k,v in dictionary.items())
-            self.write_file(DATA_DICTIONARY, dictionary)
-            self.write_file(DATA_REV_DICT, reverse_dict)
+                reverse_dict = dict((v,k) for k,v in dictionary.items())
+                self.write_file(DATA_DICTIONARY, dictionary)
+                self.write_file(DATA_REV_DICT, reverse_dict)
             return dictionary, reverse_dict
         else:
-            utils.remove_file(DATA_DICTIONARY)
-            utils.remove_file(DATA_REV_DICT)
-            reverse_dict = dict((v,k) for k,v in new_data_dict.items())
-            self.write_file(DATA_DICTIONARY, new_data_dict)
-            self.write_file(DATA_REV_DICT, reverse_dict)
+            new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
             return new_data_dict, reverse_dict
 
     @classmethod
@@ -218,8 +227,6 @@ class PrepareData:
         all_paths = multilabels_paths.keys()
         random.shuffle( list( all_paths ) )
         split_number = int( self.test_share * len( all_paths ) )
-        if self.retrain is True or self.retrain == "True":
-            split_number = 0
         for index, path in enumerate( list( all_paths ) ):
             if index < split_number:
                 test_dict[ path ] = multilabels_paths[ path ]
@@ -279,10 +286,13 @@ class PrepareData:
         print( "Train data: %d" % len( train_paths_dict ) )
         print( "Test data: %d" % len( test_paths_dict ) )
 
+        self.write_to_file( TEST_DATA_LABELS_DICT, TEST_DATA_LABELS_NAMES_DICT, test_paths_dict, reverse_dictionary )
+        test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
+
         if self.retrain is False or self.retrain == "False":
-            self.write_to_file( TEST_DATA_LABELS_DICT, TEST_DATA_LABELS_NAMES_DICT, test_paths_dict, reverse_dictionary )
-            test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
             self.save_as_h5py( test_data, test_labels, TEST_DATA )
+        else:
+            self.save_as_h5py( test_data, test_labels, TEST_DATA_NEW )
 
         self.write_to_file( TRAIN_DATA_LABELS_DICT, TRAIN_DATA_LABELS_NAMES_DICT, train_paths_dict, reverse_dictionary )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )

@@ -125,7 +125,7 @@ if __name__ == "__main__":
         
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(test_labels))
-    absolute_prec_current_model = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary, test_labels.shape[1])
+    absolute_prec_current_model = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
     print("Absolute precision on test data using current model is: %0.6f" % absolute_prec_current_model)
     
     end_time = time.time()

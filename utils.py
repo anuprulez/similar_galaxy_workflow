@@ -70,9 +70,10 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         # predict next tools for a test path
         prediction = model.predict( test_sample, verbose=0 )
         nw_dimension = prediction.shape[1]
+        
         # remove the 0th position as there is no tool at this index
         prediction = np.reshape(prediction, (nw_dimension,))
-        #prediction = prediction[ 1: ]
+
         prediction_pos = np.argsort( prediction, axis=-1 )
         topk_prediction_pos = prediction_pos[ -topk: ]
 
