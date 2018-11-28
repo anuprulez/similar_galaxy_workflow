@@ -89,7 +89,7 @@ if __name__ == "__main__":
     network_config = {
         "n_epochs": n_epochs,
         "batch_size": 128,
-        "dropout": 0.2,
+        "dropout": 0.1,
         "memory_units": 128,
         "embedding_vec_size": 128,
         "learning_rate": 0.001,

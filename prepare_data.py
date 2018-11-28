@@ -30,7 +30,6 @@ TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_l
 TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_labels_names_dict.json"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
-TEST_DATA_NEW = CURRENT_WORKING_DIR + "/data/generated_files/test_data_new.h5"
 
 
 class PrepareData:
@@ -288,11 +287,7 @@ class PrepareData:
 
         self.write_to_file( TEST_DATA_LABELS_DICT, TEST_DATA_LABELS_NAMES_DICT, test_paths_dict, reverse_dictionary )
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
-
-        if self.retrain is False or self.retrain == "False":
-            self.save_as_h5py( test_data, test_labels, TEST_DATA )
-        else:
-            self.save_as_h5py( test_data, test_labels, TEST_DATA_NEW )
+        self.save_as_h5py( test_data, test_labels, TEST_DATA )
 
         self.write_to_file( TRAIN_DATA_LABELS_DICT, TRAIN_DATA_LABELS_NAMES_DICT, train_paths_dict, reverse_dictionary )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
