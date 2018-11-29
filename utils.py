@@ -62,14 +62,14 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     Create a RNN network and set its parameters
     """
     dimensions = len( reverse_dictionary ) + 1
-    lr = float(mdl_dict["learning_rate"])
-    embedding_vector_size = int(mdl_dict["embedding_vector_size"])
-    dropout = float(mdl_dict["dropout"])
-    units = int(mdl_dict["memory_units"])
-    batch_size = int(mdl_dict["batch_size"])
-    loss = mdl_dict["loss_type"]
-    activation_recurrent = mdl_dict["activation_recurrent"]
-    activation_output = mdl_dict[ "activation_output"]
+    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    embedding_vector_size = int(mdl_dict.get("embedding_vector_size", "128"))
+    dropout = float(mdl_dict.get("dropout", ""))
+    units = int(mdl_dict.get("memory_units", "128"))
+    batch_size = int(mdl_dict.get("batch_size", "128"))
+    loss = mdl_dict.get("loss_type", "binary_crossentropy")
+    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
+    activation_output = mdl_dict.get("activation_output", "sigmoid")
         
     # define the architecture of the recurrent neural network
     model = Sequential()
