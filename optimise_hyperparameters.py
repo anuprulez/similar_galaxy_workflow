@@ -50,7 +50,7 @@ class HyperparameterOptimisation:
     @classmethod
     def find_best_model(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels):
         """
-        Define recurrent neural network and train sequential data
+        Collect the accuracies of all model and find the best one
         """
         parameter_names, models = self.make_combinations(optimise_parameters_node)
         n_epochs_optimise = int(network_config["n_epochs_optimise"])
