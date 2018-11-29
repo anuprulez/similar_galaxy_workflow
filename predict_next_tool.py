@@ -54,14 +54,14 @@ class PredictNextTool:
 
         # define the recurrent network
         model = Sequential()
-        model.add( Embedding( dimensions, network_config[ "embedding_vec_size" ], mask_zero=True ) )
-        model.add( SpatialDropout1D( network_config[ "dropout" ] ) )
-        model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=True, activation=network_config[ "activation_recurrent" ] ) )
-        model.add( Dropout( network_config[ "dropout" ] ) )
-        model.add( GRU( network_config[ "memory_units" ], dropout=network_config[ "dropout" ], recurrent_dropout=network_config[ "dropout" ], return_sequences=False, activation=network_config[ "activation_recurrent" ] ) )
-        model.add( Dropout( network_config[ "dropout" ] ) )
-        model.add( Dense( dimensions, activation=network_config[ "activation_output" ] ) )
-        model.compile( loss=network_config[ "loss_type" ], optimizer=optimizer )
+        model.add( Embedding(dimensions, network_config["embedding_vec_size"], mask_zero=True))
+        model.add( SpatialDropout1D( network_config["dropout"]))
+        model.add( GRU( network_config["memory_units"], dropout=network_config["dropout"], recurrent_dropout=network_config["dropout"], return_sequences=True, activation=network_config["activation_recurrent"]))
+        model.add( Dropout(network_config["dropout"]))
+        model.add( GRU( network_config["memory_units"], dropout=network_config["dropout"], recurrent_dropout=network_config["dropout"], return_sequences=False, activation=network_config["activation_recurrent"]))
+        model.add( Dropout(network_config[ "dropout"]))
+        model.add( Dense(dimensions, activation=network_config[ "activation_output"]))
+        model.compile(loss=network_config["loss_type" ], optimizer=optimizer)
 
         # save the network as json
         utils.save_network( model.to_json(), NETWORK_C0NFIG_JSON_PATH )
