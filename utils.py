@@ -4,6 +4,12 @@ import json
 import h5py
 
 from keras.models import model_from_json
+from keras.models import Sequential
+from keras.layers import Dense, GRU, Dropout
+from keras.layers.embeddings import Embedding
+from keras.callbacks import ModelCheckpoint, Callback
+from keras.layers.core import SpatialDropout1D
+from keras.optimizers import RMSprop
 
 
 def save_network( model ):
@@ -51,10 +57,39 @@ def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
         
+def set_recurrent_network(mdl_dict, reverse_dictionary):
+    """
+    Create a RNN network and set its parameters
+    """
+    dimensions = len( reverse_dictionary ) + 1
+    lr = float(mdl_dict["learning_rate"])
+    embedding_vector_size = int(mdl_dict["embedding_vector_size"])
+    dropout = float(mdl_dict["dropout"])
+    units = int(mdl_dict["memory_units"])
+    batch_size = int(mdl_dict["batch_size"])
+    loss = mdl_dict["loss_type"]
+    activation_recurrent = mdl_dict["activation_recurrent"]
+    activation_output = mdl_dict[ "activation_output"]
+        
+    # define the architecture of the recurrent neural network
+    model = Sequential()
+    model.add(Embedding(dimensions, embedding_vector_size, mask_zero=True))
+    model.add(SpatialDropout1D(dropout))
+    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation=activation_recurrent))
+    model.add(Dropout(dropout))
+    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation=activation_recurrent))
+    model.add(Dropout(dropout))
+    model.add(Dense(dimensions, activation=activation_output))
+    optimizer = RMSprop(lr=lr)
+    model.compile(loss=loss, optimizer=optimizer)
+    return model
+       
 def verify_model( model, x, y, reverse_data_dictionary ):
     """
     Verify the model on test data
     """
+    print("Evaluating performance on test data...")
+    print("Test data size: %d" % len(y))
     size = y.shape[ 0 ]
     topk_abs_pred = np.zeros( [ size ] )
     topk_compatible_pred = np.zeros( [ size ] )
@@ -85,4 +120,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
         absolute_precision = 1 - ( len( false_positives ) / float( len( actual_classes_pos ) ) )
         ave_abs_precision.append(absolute_precision)
-    return np.mean(ave_abs_precision)
+    mean_precision = np.mean(ave_abs_precision)
+    print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
+    return mean_precision
