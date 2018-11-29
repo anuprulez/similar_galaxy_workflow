@@ -70,7 +70,7 @@ class ExtractWorkflowConnections:
 
         print( "Workflows processed: %d" % wf_ctr )
         print( "# paths in workflows: %d" % len( workflow_paths ) )
-
+    
         # collect duplicate paths
         for path in workflow_paths:
             workflow_paths_dup += ",".join( path ) + "\n"

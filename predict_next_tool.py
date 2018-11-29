@@ -66,7 +66,7 @@ class PredictNextTool:
         # save the network as json
         utils.save_network( model.to_json(), NETWORK_C0NFIG_JSON_PATH )
         model.summary()
-        
+
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
         callbacks_list = [ checkpoint ]
