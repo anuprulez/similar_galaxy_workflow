@@ -27,6 +27,14 @@ def read_file( file_path ):
         file_content = json.loads( json_file.read() )
     return file_content
 
+def write_file( file_path, content ):
+    """
+    Write a file
+    """
+    remove_file(file_path)
+    with open( file_path, "w" ) as json_file:
+        json_file.write(json.dumps( content) )
+
 def get_h5_data( file_name ):
     """
     Read h5 file to get train and test data
@@ -56,24 +64,31 @@ def save_network( model, file_path ):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
-        
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+
+def get_defaults(mdl_dict):
     """
-    Create a RNN network and set its parameters
+    Get param values (defaults as well)
     """
-    dimensions = len( reverse_dictionary ) + 1
     lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_vector_size = int(mdl_dict.get("embedding_vector_size", "128"))
-    dropout = float(mdl_dict.get("dropout", ""))
+    embedding_size = int(mdl_dict.get("embedding_vector_size", "128"))
+    dropout = float(mdl_dict.get("dropout", "0.1"))
     units = int(mdl_dict.get("memory_units", "128"))
     batch_size = int(mdl_dict.get("batch_size", "128"))
     loss = mdl_dict.get("loss_type", "binary_crossentropy")
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
+    return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
+
+def set_recurrent_network(mdl_dict, reverse_dictionary):
+    """
+    Create a RNN network and set its parameters
+    """
+    dimensions = len( reverse_dictionary ) + 1
+    lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_defaults(mdl_dict)
         
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, embedding_vector_size, mask_zero=True))
+    model.add(Embedding(dimensions, embedding_size, mask_zero=True))
     model.add(SpatialDropout1D(dropout))
     model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation=activation_recurrent))
     model.add(Dropout(dropout))

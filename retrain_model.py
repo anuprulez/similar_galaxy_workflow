@@ -18,6 +18,7 @@ from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras.models import model_from_json
+from keras import backend as K
 
 import extract_workflow_connections
 import prepare_data
@@ -32,6 +33,7 @@ DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
+BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 
 
 class PredictNextTool:
@@ -49,7 +51,7 @@ class PredictNextTool:
         Retrain the trained model with new data and compare performance on test data
         """
         print("New training size: %d" % len(training_labels))
-        loaded_model = utils.load_saved_model( NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH )
+        loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH)
 
         layer_names = [layer.name for layer in loaded_model.layers]
  
@@ -59,14 +61,9 @@ class PredictNextTool:
         old_dimensions = loaded_model.layers[0].input_dim
         new_dimensions = training_labels.shape[1]
 
-        # model configurations
-        dropout = network_config["dropout"]
-        memory_units = network_config[ "memory_units" ]
-        act_recurrent = network_config["activation_recurrent"]
-        embedding_size = network_config["embedding_vec_size"]
-        act_output = network_config["activation_output"]
-        learning_rate = network_config["learning_rate"]
-        loss_type = network_config["loss_type"]
+        # best model configurations
+        best_params = utils.read_file( BEST_PARAMETERS )
+        lr, embedding_size, dropout, units, batch_size, loss, act_recurrent, act_output = utils.get_defaults(best_params)
 
         model = Sequential()
         
@@ -80,12 +77,12 @@ class PredictNextTool:
                 new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[idx].get_weights()[0]
                 model_layer.set_weights([new_embedding_dimensions])
             elif "spatial_dropout1d_1" in ly:
-                model.add( SpatialDropout1D(dropout))
+                model.add(SpatialDropout1D(dropout))
             elif "dropout" in ly:
-                model.add( Dropout(dropout))
+                model.add(Dropout(dropout))
             elif "gru" in ly:
-                return_seq = True if "gru_1" in ly else False
-                model.add( GRU(memory_units, dropout=dropout, recurrent_dropout=dropout, return_sequences=return_seq, activation=act_recurrent))
+                layer = loaded_model.layers[idx]
+                model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=layer.return_sequences, activation=act_recurrent))
                 model_layer = model.layers[idx]
                 # initialize GRU layer
                 model_layer.set_weights(loaded_model.layers[idx].get_weights())
@@ -100,9 +97,8 @@ class PredictNextTool:
                 new_output_dimensions1[:, 0:old_dimensions] = loaded_model.layers[6].get_weights()[0]
                 new_output_dimensions2[:old_dimensions] = loaded_model.layers[6].get_weights()[1]
                 model_layer.set_weights([new_output_dimensions1, new_output_dimensions2])
-                
-        optimizer = RMSprop(lr=learning_rate)
-        model.compile(loss=loss_type, optimizer=optimizer)
+
+        model.compile(loss=loss, optimizer=RMSprop(lr=lr))
         
         # save the network as json
         utils.save_network( model.to_json(), NETWORK_C0NFIG_JSON_PATH )
@@ -131,9 +127,7 @@ class PredictCallback( Callback ):
         """
         Compute absolute and compatible precision for test data
         """ 
-        print("Evaluating performance on test data...")
         new_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
-        print("Absolute precision on test data using new model is: %0.6f" % new_precision)
 
 
 if __name__ == "__main__":

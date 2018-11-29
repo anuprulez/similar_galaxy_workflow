@@ -30,6 +30,7 @@ DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
+BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 
 
 class PredictNextTool:
@@ -49,6 +50,8 @@ class PredictNextTool:
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
         print("Best model: %s" % str(best_model_parameters))
+
+        utils.write_file( BEST_PARAMETERS, best_model_parameters )
         
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)

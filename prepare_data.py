@@ -60,12 +60,6 @@ class PrepareData:
         tokens = np.array( tokens )
         tokens = np.reshape( tokens, [ -1, ] )
         return tokens, raw_paths
-
-    @classmethod
-    def write_file(self, path, data):
-        utils.remove_file(path)
-        with open( path, 'w' ) as f_data:
-            f_data.write( json.dumps( data ) )
             
     @classmethod
     def create_new_dict(self, new_data_dict):
@@ -75,8 +69,8 @@ class PrepareData:
         utils.remove_file(DATA_DICTIONARY)
         utils.remove_file(DATA_REV_DICT)
         reverse_dict = dict((v,k) for k,v in new_data_dict.items())
-        self.write_file(DATA_DICTIONARY, new_data_dict)
-        self.write_file(DATA_REV_DICT, reverse_dict)
+        utils.write_file(DATA_DICTIONARY, new_data_dict)
+        utils.write_file(DATA_REV_DICT, reverse_dict)
         return new_data_dict, reverse_dict
 
     @classmethod
@@ -94,8 +88,8 @@ class PrepareData:
                         dictionary[tool] = max_prev_size + tool_counter
                         tool_counter += 1
                 reverse_dict = dict((v,k) for k,v in dictionary.items())
-                self.write_file(DATA_DICTIONARY, dictionary)
-                self.write_file(DATA_REV_DICT, reverse_dict)
+                utils.write_file(DATA_DICTIONARY, dictionary)
+                utils.write_file(DATA_REV_DICT, reverse_dict)
             return dictionary, reverse_dict
         else:
             new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
