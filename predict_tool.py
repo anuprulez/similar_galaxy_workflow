@@ -33,7 +33,7 @@ TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 
 
-class PredictNextTool:
+class PredictTool:
 
     @classmethod
     def __init__( self, n_epochs ):
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     test_data, test_labels = utils.get_h5_data( TEST_DATA )
 
     # execute experiment runs and collect results for each run
-    predict_tool = PredictNextTool(n_epochs)
+    predict_tool = PredictTool(n_epochs)
     predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_data_dictionary, train_data, train_labels, test_data, test_labels)
     loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_MODEL_PATH)
     

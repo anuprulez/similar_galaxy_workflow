@@ -8,7 +8,6 @@ import numpy as np
 import time
 import os
 import json
-import h5py
 
 # machine learning library
 from keras.models import Sequential
@@ -17,8 +16,7 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
-from keras.models import model_from_json
-from keras import backend as K
+import xml.etree.ElementTree as et
 
 import extract_workflow_connections
 import prepare_data
@@ -36,7 +34,7 @@ TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 
 
-class PredictNextTool:
+class RetrainPredictTool:
 
     @classmethod
     def __init__( self, epochs, trained_model_path ):
@@ -46,7 +44,7 @@ class PredictNextTool:
         self.BEST_RETRAINED_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/new_weights-epoch-" + str(epochs) + ".hdf5"
         
     @classmethod
-    def retrain_model(self, training_data, training_labels, test_data, test_labels, network_config, reverse_data_dict):
+    def retrain_model(self, training_data, training_labels, test_data, test_labels, reverse_data_dict):
         """
         Retrain the trained model with new data and compare performance on test data
         """
@@ -112,7 +110,7 @@ class PredictNextTool:
 
         reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
         print("Started training on new data...")
-        model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=network_config[ "batch_size" ], epochs=self.n_epochs, callbacks=callbacks_list)
+        model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=int(best_params["batch_size"]), epochs=self.n_epochs, callbacks=callbacks_list)
         print ( "Training finished" )
 
 
@@ -136,27 +134,17 @@ if __name__ == "__main__":
         print( "Usage: python retrain_model.py <workflow_file_path> <training_epochs> <trained_model_path>" )
         exit( 1 )
     start_time = time.time()
-    
-    retrain = True
-    n_epochs = int(sys.argv[2])
-    
-    network_config = {
-        "experiment_runs": 1,
-        "n_epochs": n_epochs,
-        "batch_size": 128,
-        "dropout": 0.1,
-        "memory_units": 128,
-        "embedding_vec_size": 128,
-        "learning_rate": 0.001,
-        "max_seq_len": 25,
-        "test_share": 0.20,
-        "validation_split": 0.2,
-        "activation_recurrent": 'elu',
-        "activation_output": 'sigmoid',
-        "loss_type": "binary_crossentropy"
-    }
 
-    experiment_runs = network_config[ "experiment_runs" ]
+    tree = et.parse(sys.argv[3])
+    root = tree.getroot()
+    config = dict()
+    for child in root:
+        if child.tag == "ml_parameters":
+            for item in child:
+                config[item.get("name")] = item.get("value")
+
+    n_epochs_retrain = int(config['n_epochs_retrain'])
+    retrain = True
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections(sys.argv[1], retrain)
@@ -164,13 +152,10 @@ if __name__ == "__main__":
 
     # Process the paths from workflows
     print ( "Dividing data..." )
-    data = prepare_data.PrepareData( network_config[ "max_seq_len" ], network_config[ "test_share" ], retrain)
+    data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
     data.get_data_labels_mat()
 
-    predict_tool = PredictNextTool( n_epochs, sys.argv[3] )
-
     # get data dictionary
-    data_dict = utils.read_file( DATA_DICTIONARY )
     reverse_data_dictionary = utils.read_file( DATA_REV_DICT )
 
     # get training and test data with their labels
@@ -178,7 +163,8 @@ if __name__ == "__main__":
     test_data, test_labels = utils.get_h5_data( TEST_DATA )
 
     # execute experiment runs and collect results for each run
-    predict_tool.retrain_model( train_data, train_labels, test_data, test_labels, network_config, reverse_data_dictionary )
+    retrain_predict_tool = RetrainPredictTool(n_epochs_retrain, sys.argv[2])
+    retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_data_dictionary)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
