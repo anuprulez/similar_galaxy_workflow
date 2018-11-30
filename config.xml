@@ -11,7 +11,7 @@
     </ml_parameters>
     <optimise_parameters>
         <parameter name="batch_size" value="64,128" />
-        <parameter name="dropout" value="0.1,0.2" />
+        <parameter name="dropout" value="0.1" />
         <parameter name="memory_units" value="128" />
         <parameter name="embedding_vector_size" value="128" />
         <parameter name="activation_recurrent" value="elu" />

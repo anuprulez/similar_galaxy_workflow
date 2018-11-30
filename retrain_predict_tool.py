@@ -67,7 +67,7 @@ class RetrainPredictTool:
         
         for idx, ly in enumerate(layer_names):
             if "embedding" in ly:
-                model.add( Embedding(new_dimensions, embedding_size, mask_zero=True))     
+                model.add( Embedding(new_dimensions, embedding_size, mask_zero=True))
                 model_layer = model.layers[idx]
                 model_layer.trainable = True
                 # initialize embedding layer

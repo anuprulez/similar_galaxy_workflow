@@ -30,6 +30,7 @@ TEST_DATA_LABELS_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_l
 TEST_DATA_LABELS_NAMES_DICT = CURRENT_WORKING_DIR + "/data/generated_files/test_data_labels_names_dict.json"
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
+TRAIN_DATA_CLASS_FREQ = CURRENT_WORKING_DIR + "/data/generated_files/train_data_class_freq.txt"
 
 
 class PrepareData:
@@ -250,9 +251,29 @@ class PrepareData:
         """
         utils.remove_file(file_path)
         hf = h5py.File( file_path, 'w' )
-        hf.create_dataset( 'data', data=data, compression="gzip", compression_opts=9 )
-        hf.create_dataset( 'data_labels', data=label, compression="gzip", compression_opts=9 )
+        hf.create_dataset('data', data=data, compression="gzip", compression_opts=9)
+        hf.create_dataset('data_labels', data=label, compression="gzip", compression_opts=9)
         hf.close()
+        
+    @classmethod
+    def get_class_frequency(self, train_labels):
+        """
+        Compute class frequency and (inverse) class weights
+        """
+        n_classes = train_labels.shape[1]
+        frequency_scores = dict()
+        class_weights = list()
+        class_weights.append(0)
+        for i in range(1, n_classes):
+            count = len(np.where( train_labels[:, i] > 0 )[0])
+            frequency_scores[str(i)] = count
+            class_weights.append(count)
+        frequency_scores = dict(sorted(frequency_scores.items(), key=lambda kv: kv[1]))
+        utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
+        max_weight = max(class_weights)
+        class_weights = [np.round((max_weight / float(wt)), 2) if wt > 0 else 0 for wt in class_weights]
+        inverse_weights = np.asarray(class_weights, dtype=np.float64)
+        return frequency_scores, inverse_weights
 
     @classmethod
     def get_data_labels_mat( self ):
@@ -286,4 +307,10 @@ class PrepareData:
         self.write_to_file( TRAIN_DATA_LABELS_DICT, TRAIN_DATA_LABELS_NAMES_DICT, train_paths_dict, reverse_dictionary )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         train_data, train_labels = self.randomize_data( train_data, train_labels )
-        self.save_as_h5py( train_data, train_labels, TRAIN_DATA )
+        frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
+        # get weighted class labels for each training sample
+        weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
+        row_sums = weighted_train_labels.sum(axis=1)
+        # normalize the weighted class values
+        weighted_train_labels_normalised = weighted_train_labels / row_sums[:, np.newaxis]
+        self.save_as_h5py( train_data, weighted_train_labels_normalised, TRAIN_DATA )
