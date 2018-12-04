@@ -313,4 +313,4 @@ class PrepareData:
         row_sums = weighted_train_labels.sum(axis=1)
         # normalize the weighted class values
         weighted_train_labels_normalised = weighted_train_labels / row_sums[:, np.newaxis]
-        self.save_as_h5py( train_data, weighted_train_labels_normalised, TRAIN_DATA )
+        self.save_as_h5py( train_data, train_labels, TRAIN_DATA )
