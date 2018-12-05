@@ -13,6 +13,7 @@ import utils
 
 CURRENT_DIR = os.getcwd()
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/generated_files/workflow_connections_paths.txt"
+TOOL_DISPLAY_NAME = CURRENT_DIR + "/data/generated_files/tool_display_name.txt"
 
 
 class ExtractWorkflowConnections:
@@ -35,6 +36,7 @@ class ExtractWorkflowConnections:
         workflow_parents = dict()
         workflow_paths = list()
         unique_paths = list()
+        tool_name_display = dict()
         with open( self.WORKFLOW_FILE_PATH, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
@@ -46,10 +48,17 @@ class ExtractWorkflowConnections:
                 in_tool = row[ 2 ]
                 out_tool = row[ 5 ]
                 if out_tool and in_tool and out_tool != in_tool:
-                    in_tool = self.format_tool_id( in_tool )
-                    out_tool = self.format_tool_id( out_tool )
+                    in_tool_original, in_tool = self.format_tool_id( in_tool )
+                    out_tool_original, out_tool = self.format_tool_id( out_tool )
                     workflows[ wf_id ].append( ( in_tool, out_tool ) )
-        
+                    if in_tool not in tool_name_display:
+                         tool_name_display[in_tool] = in_tool_original
+                    if out_tool not in tool_name_display:
+                         tool_name_display[out_tool] = out_tool_original
+                         
+        # add tool ids and original names
+        utils.write_file(TOOL_DISPLAY_NAME, tool_name_display)
+
         print( "Processing workflows..." )
         wf_ctr = 0
         for wf_id in workflows:
@@ -157,6 +166,6 @@ class ExtractWorkflowConnections:
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
         tool_id_split = tool_id.split( "." )
         tool_id = tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
-        tool_id = tool_id.replace( " ", "_" )
-        tool_id = tool_id.replace( ":", "" )
-        return tool_id.lower()
+        tool_id_no_space = tool_id.replace( " ", "_" )
+        tool_id_no_colon = tool_id_no_space.replace( ":", "" )
+        return tool_id, tool_id_no_colon
