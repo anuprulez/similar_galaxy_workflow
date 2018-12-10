@@ -166,6 +166,4 @@ class ExtractWorkflowConnections:
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
         tool_id_split = tool_id.split( "." )
         tool_id = tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
-        tool_id_no_space = tool_id.replace( " ", "_" )
-        tool_id_no_colon = tool_id_no_space.replace( ":", "" )
-        return tool_id, tool_id_no_colon
+        return tool_id, tool_id

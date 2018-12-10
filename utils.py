@@ -114,8 +114,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
         topk = len( actual_classes_pos )
         test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
-        test_sample_pos = np.where( x[ i ] > 0 )[ 0 ]
-        test_sample_tool_pos = x[ i ][ test_sample_pos[ 0 ]: ]
 
         # predict next tools for a test path
         prediction = model.predict( test_sample, verbose=0 )
