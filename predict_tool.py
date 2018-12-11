@@ -13,7 +13,7 @@ import xml.etree.ElementTree as et
 import warnings
 
 # machine learning library
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
 
 import extract_workflow_connections
 import prepare_data
@@ -31,6 +31,8 @@ DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.t
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
+MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_absolute_precision.txt"
+MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_loss.txt"
 
 
 class PredictTool:
@@ -61,11 +63,36 @@ class PredictTool:
         model.summary()
 
         # create checkpoint after each epoch - save the weights to h5 file
+        early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
         checkpoint = ModelCheckpoint(EPOCH_WEIGHTS_PATH, verbose=0, mode='max')
-        callbacks_list = [checkpoint]
+        predict_callback_test = PredictCallback( test_data, test_labels, reverse_dictionary, n_epochs )
+        callbacks_list = [ checkpoint, early_stopping, predict_callback_test ]
+        
         print ("Start training on the best model...")
-        model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
+        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
+        loss_values = model_fit_callbacks.history[ "loss" ]
+        
+        return {
+            "train_loss": np.array( loss_values ),
+            "test_absolute_precision": predict_callback_test.abs_precision,
+        }
         print ("Training finished")
+        
+
+class PredictCallback( Callback ):
+    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs ):
+        self.test_data = test_data
+        self.test_labels = test_labels
+        self.reverse_data_dictionary = reverse_data_dictionary
+        self.abs_precision = list()
+
+    def on_epoch_end( self, epoch, logs={} ):
+        """
+        Compute absolute and compatible precision for test data
+        """
+        mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+        self.abs_precision.append(mean_precision)
+        print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, mean_precision ) )
 
 
 if __name__ == "__main__":
@@ -107,11 +134,15 @@ if __name__ == "__main__":
 
     # execute experiment runs and collect results for each run
     predict_tool = PredictTool(n_epochs)
-    predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_data_dictionary, train_data, train_labels, test_data, test_labels)
-    loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_MODEL_PATH)
+    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_data_dictionary, train_data, train_labels, test_data, test_labels)
+    
+    np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
+    np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
+    
+    #loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_MODEL_PATH)
     
     # verify the model with test data
-    mean_precision = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
+    #mean_precision = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

@@ -32,6 +32,8 @@ DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.t
 TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
 TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
+MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_absolute_precision.txt"
+MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_loss.txt"
 
 
 class RetrainPredictTool:
@@ -105,27 +107,36 @@ class RetrainPredictTool:
         
         # create checkpoint after each epoch - save the weights to h5 file
         checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
-        predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, loaded_model )
+        predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, self.n_epochs )
         callbacks_list = [ checkpoint, predict_callback_test ]
 
         reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
         print("Started training on new data...")
         model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=int(best_params["batch_size"]), epochs=self.n_epochs, callbacks=callbacks_list)
+        loss_values = model_fit_callbacks.history[ "loss" ]
+        
         print ( "Training finished" )
+        
+        return {
+            "train_loss": np.array( loss_values ),
+            "test_absolute_precision": predict_callback_test.abs_precision,
+        }
 
 
 class PredictCallback( Callback ):
-    def __init__( self, test_data, test_labels, reverse_data_dictionary, loaded_model ):
+    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs ):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
-        self.loaded_model = loaded_model
+        self.abs_precision = list()
 
     def on_epoch_end( self, epoch, logs={} ):
         """
         Compute absolute and compatible precision for test data
-        """ 
-        new_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+        """
+        mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+        self.abs_precision.append(mean_precision)
+        print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, mean_precision ) )
 
 
 if __name__ == "__main__":
@@ -164,7 +175,10 @@ if __name__ == "__main__":
 
     # execute experiment runs and collect results for each run
     retrain_predict_tool = RetrainPredictTool(n_epochs_retrain, sys.argv[2])
-    retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_data_dictionary)
+    results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_data_dictionary)
+    
+    np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
+    np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

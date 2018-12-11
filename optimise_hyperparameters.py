@@ -42,11 +42,13 @@ class HyperparameterOptimisation:
         # get the network
         model = utils.set_recurrent_network(mdl_dict, reverse_dictionary)
         
+        model.summary()
+        
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
         
         # fit the model
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(mdl_dict["batch_size"]), epochs=n_epochs_optimise, shuffle="batch", callbacks=[early_stopping])
-        
+
         # verify model with test data
         mean_precision = utils.verify_model(model, test_data, test_labels, reverse_dictionary)
         return mean_precision
