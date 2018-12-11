@@ -256,6 +256,28 @@ class PrepareData:
         hf.close()
         
     @classmethod
+    def verify_overlap( self, train_data, test_data, reverse_dictionary ):
+        """
+        Verify the overlapping of samples in train and test data
+        """
+        train_data_size = train_data.shape[ 0 ]
+        test_data_size = test_data.shape[ 0 ]
+        train_samples = list()
+        test_samples = list()
+        for i in range( train_data_size ):
+            train_sample_pos = np.where( train_data[ i ] > 0 )[ 0 ]
+            train_sample_tool_pos = train_data[ i ][ train_sample_pos[ 0 ]: ]
+            sample_tool_names = ",".join( [ str(tool_pos) for tool_pos in train_sample_tool_pos ] )
+            train_samples.append( sample_tool_names )
+        for i in range( test_data_size ):
+            test_sample_pos = np.where( test_data[ i ] > 0 )[ 0 ]
+            test_sample_tool_pos = test_data[ i ][ test_sample_pos[ 0 ]: ]
+            sample_tool_names = ",".join( [ str(tool_pos) for tool_pos in test_sample_tool_pos ] )
+            test_samples.append( sample_tool_names )
+        intersection = list( set( train_samples ).intersection( set( test_samples ) ) )
+        print( "Overlap in train and test: %d" % len( intersection ) )
+        
+    @classmethod
     def get_class_frequency(self, train_labels):
         """
         Compute class frequency and (inverse) class weights
@@ -306,6 +328,10 @@ class PrepareData:
 
         self.write_to_file( TRAIN_DATA_LABELS_DICT, TRAIN_DATA_LABELS_NAMES_DICT, train_paths_dict, reverse_dictionary )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
+        
+        print( "Verifying overlap in train and test data..." )
+        self.verify_overlap( train_data, test_data, reverse_dictionary )
+        
         train_data, train_labels = self.randomize_data( train_data, train_labels )
         frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
         # get weighted class labels for each training sample

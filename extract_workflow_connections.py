@@ -14,6 +14,7 @@ import utils
 CURRENT_DIR = os.getcwd()
 WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/generated_files/workflow_connections_paths.txt"
 TOOL_DISPLAY_NAME = CURRENT_DIR + "/data/generated_files/tool_display_name.txt"
+COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/generated_files/compatible_tools.json"
 
 
 class ExtractWorkflowConnections:
@@ -91,6 +92,11 @@ class ExtractWorkflowConnections:
 
         print( "Writing workflows to a text file..." )
         random.shuffle( unique_paths )
+        
+        print( "Finding compatible next tools..." )
+        next_tools = self.set_compatible_next_tools( unique_paths )
+        with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
+            compatible_tools_file.write( json.dumps( next_tools ) )
 
         utils.remove_file(WORKFLOW_PATHS_FILE)
         for path in unique_paths:
