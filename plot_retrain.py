@@ -209,3 +209,123 @@ layout_time_acc = dict(
 fig_tp = go.Figure(data=[trace0, trace1, trace2], layout=layout_time_acc)
 pio.write_image(fig_tp, 'data/generated_files/precision_train_retrain.png', width=1200, height=800)
 
+
+#### Plot precision 
+
+train_precision_file = "data/generated_files/mean_test_absolute_precision.txt"
+retrain_precision_file = "data/generated_files/retrain_mean_test_absolute_precision.txt"
+retrain_precision_no_fine_tuning = "data/generated_files/retrain_no_finetuning_test_absolute_precision.txt"
+
+train_precision = read_file(train_precision_file)
+train_precision = train_precision[:len(train_precision) - 1]
+
+# Create traces
+trace0 = go.Scatter(
+    x = x_axis,
+    y = train_precision,
+    mode = 'lines+markers',
+    name = 'Training',
+    marker = dict(
+        size = circle_size,
+        color='rgb(243, 1, 1)',
+        line = dict(
+            width = 2,
+            color = 'rgb(243, 1, 1)'
+        )
+    )
+)
+
+layout_time_acc = dict(
+    title='Training accuracy',
+    font=dict(family='Times new roman', size=fontsz),
+    yaxis=dict(
+        showgrid=True,
+        showline=True,
+        showticklabels=True,
+        range=[0.85, 1],
+        title='Accuracy',
+        titlefont=dict(
+            family='Times new roman',
+            size=fontsz
+        )
+    ),
+    xaxis=dict(
+        zeroline=False,
+        showline=True,
+        showticklabels=True,
+        showgrid=True,
+        title='Number of training epochs',
+        titlefont=dict(
+            family='Times new roman',
+            size=fontsz
+        )
+    ),
+    margin=dict(
+        l=100,
+        r=100,
+        t=100,
+        b=100
+    ),
+)
+
+fig_tp = go.Figure(data=[trace0], layout=layout_time_acc)
+pio.write_image(fig_tp, 'data/generated_files/precision_train.png', width=1200, height=800)
+
+# plot loss
+
+train_loss = read_file(train_loss_file)
+train_loss = train_loss[:len(train_loss) - 1]
+
+x_axis = list(range(1, len(train_loss) + 1))
+
+# Create traces
+trace0 = go.Scatter(
+    x = x_axis,
+    y = train_loss,
+    mode = 'lines+markers',
+    name = 'Training',
+    marker = dict(
+        size = circle_size,
+        color='rgb(243, 1, 1)',
+        line = dict(
+            width = 2,
+            color = 'rgb(243, 1, 1)'
+        )
+    )
+)
+
+
+layout_time_acc = dict(
+    title='Cross-entropy loss for training',
+    font=dict(family='Times new roman', size=fontsz),
+    yaxis=dict(
+        showgrid=True,
+        showline=True,
+        showticklabels=True,
+        title='Cross-entropy loss',
+        titlefont=dict(
+            family='Times new roman',
+            size=fontsz
+        )
+    ),
+    xaxis=dict(
+        zeroline=False,
+        showline=True,
+        showticklabels=True,
+        showgrid=True,
+        title='Number of training epochs',
+        titlefont=dict(
+            family='Times new roman',
+            size=fontsz
+        )
+    ),
+    margin=dict(
+        l=100,
+        r=100,
+        t=100,
+        b=100
+    ),
+)
+
+fig_tp = go.Figure(data=[trace0], layout=layout_time_acc)
+pio.write_image(fig_tp, 'data/generated_files/loss_train.png', width=1200, height=800)
