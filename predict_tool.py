@@ -117,8 +117,6 @@ if __name__ == "__main__":
     model_config = trained_model.to_json()
     model_weights = trained_model.get_weights()
     
-    trained_model.save_weights("data/generated_files/saved_weights.hdf5")
-    
     model_values = {
         'data_dictionary': data_dictionary,
         'model_config': model_config,

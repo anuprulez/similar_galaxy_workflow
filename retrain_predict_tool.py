@@ -154,17 +154,15 @@ if __name__ == "__main__":
     while True:
         try:
             d_key = "weight_" + str(weight_ctr)
-            weights = utils.get_h5_data(hf_file, d_key)
+            weights = utils.get_HDF5(hf_file, d_key)
+            print(weights.shape)
             model_weights.append(weights)
             weight_ctr += 1
-        except:
+        except Exception as exception:
             break
     hf_file.close()
     
-    #loaded_model = utils.load_saved_model(model_config, model_weights)
-
-    loaded_model = model_from_json(model_config)
-    loaded_model.load_weights("data/generated_files/saved_weights.hdf5")
+    loaded_model = utils.load_saved_model(model_config, model_weights)
     
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
