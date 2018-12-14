@@ -45,12 +45,12 @@ class PredictTool:
 
         # define callbacks
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
-        predict_callback_test = PredictCallback( test_data, test_labels, reverse_dictionary, n_epochs )
-        callbacks_list = [ early_stopping, predict_callback_test ]
+        predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs)
+        callbacks_list = [early_stopping, predict_callback_test]
 
         print ("Start training on the best model...")
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
-        loss_values = model_fit_callbacks.history[ "loss" ]
+        loss_values = model_fit_callbacks.history["loss"]
         
         return {
             "train_loss": np.array( loss_values ),
@@ -116,6 +116,8 @@ if __name__ == "__main__":
     best_model_parameters = results["best_parameters"]
     model_config = trained_model.to_json()
     model_weights = trained_model.get_weights()
+    
+    trained_model.save_weights("data/generated_files/saved_weights.hdf5")
     
     model_values = {
         'data_dictionary': data_dictionary,

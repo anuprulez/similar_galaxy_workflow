@@ -17,6 +17,7 @@ from keras.layers.embeddings import Embedding
 from keras.callbacks import Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
+from keras.models import model_from_json
 import xml.etree.ElementTree as et
 
 import extract_workflow_connections
@@ -160,7 +161,10 @@ if __name__ == "__main__":
             break
     hf_file.close()
     
-    loaded_model = utils.load_saved_model(model_config, model_weights)
+    #loaded_model = utils.load_saved_model(model_config, model_weights)
+
+    loaded_model = model_from_json(model_config)
+    loaded_model.load_weights("data/generated_files/saved_weights.hdf5")
     
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
@@ -184,6 +188,7 @@ if __name__ == "__main__":
         'best_parameters': best_model_parameters,
         'model_weights': trained_model.get_weights()
     }
+    
     utils.set_trained_model(trained_model_path, model_values)
 
     end_time = time.time()
