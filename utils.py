@@ -48,6 +48,17 @@ def get_h5_data( file_name ):
     """
     hf = h5py.File( file_name, 'r' )
     return hf.get( "data" ), hf.get( "data_labels" )
+    
+
+def save_as_h5py( data, label, file_path ):
+    """
+    Save the samples and their labels as h5 files
+    """
+    remove_file(file_path)
+    hf = h5py.File( file_path, 'w' )
+    hf.create_dataset('data', data=data, compression="gzip", compression_opts=9)
+    hf.create_dataset('data_labels', data=label, compression="gzip", compression_opts=9)
+    hf.close()
 
 def load_saved_model( network_config_path, weights_path ):
     """

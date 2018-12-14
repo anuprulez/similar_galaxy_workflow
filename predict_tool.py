@@ -7,8 +7,6 @@ import sys
 import numpy as np
 import time
 import os
-import json
-import h5py
 import xml.etree.ElementTree as et
 import warnings
 
@@ -41,7 +39,7 @@ class PredictTool:
     @classmethod
     def __init__( self, n_epochs ):
         """ Init method. """
-        self.BEST_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-"+ str(n_epochs) + ".hdf5"
+        self.BEST_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-" + str(n_epochs) + ".hdf5"
 
     @classmethod
     def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels):
@@ -55,7 +53,7 @@ class PredictTool:
         print("Best model: %s" % str(best_model_parameters))
 
         utils.write_file( BEST_PARAMETERS, best_model_parameters )
-        
+
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
     
@@ -68,7 +66,7 @@ class PredictTool:
         checkpoint = ModelCheckpoint(EPOCH_WEIGHTS_PATH, verbose=0, mode='max')
         predict_callback_test = PredictCallback( test_data, test_labels, reverse_dictionary, n_epochs )
         callbacks_list = [ checkpoint, early_stopping, predict_callback_test ]
-        
+
         print ("Start training on the best model...")
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -116,7 +114,7 @@ if __name__ == "__main__":
 
     n_epochs = int(config['n_epochs'])
     retrain = config['retrain']
-    
+
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
     workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
@@ -124,21 +122,21 @@ if __name__ == "__main__":
     # Process the paths from workflows
     print ( "Dividing data..." )
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, frequency_scores = data.get_data_labels_matrices(workflow_paths)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary = data.get_data_labels_matrices(workflow_paths)
 
     # execute experiment runs and collect results for each run
     predict_tool = PredictTool(n_epochs)
     results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
-    
+
     np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
     np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
-    
+
     # save files
     utils.write_file(COMPATIBLE_NEXT_TOOLS, compatible_next_tools)
     utils.save_processed_workflows(WORKFLOW_PATHS_FILE, workflow_paths)
     utils.write_file(DATA_DICTIONARY, data_dictionary)
     utils.write_file(DATA_REV_DICT, reverse_dictionary)
-    utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
+    # utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

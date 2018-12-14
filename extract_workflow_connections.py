@@ -3,12 +3,8 @@ Extract workflow paths from the tabular file containing
 input and output tools
 """
 
-import os
-import json
 import csv
 import random
-
-import utils
 
 
 class ExtractWorkflowConnections:
@@ -25,7 +21,6 @@ class ExtractWorkflowConnections:
         print( "Reading workflows..." )
         workflows = {}
         workflow_paths_dup = ""
-        workflow_paths_unique = ""
         workflow_parents = dict()
         workflow_paths = list()
         unique_paths = list()
@@ -45,9 +40,9 @@ class ExtractWorkflowConnections:
                     out_tool_original, out_tool = self.format_tool_id( out_tool )
                     workflows[ wf_id ].append( ( in_tool, out_tool ) )
                     if in_tool not in tool_name_display:
-                         tool_name_display[in_tool] = in_tool_original
+                        tool_name_display[in_tool] = in_tool_original
                     if out_tool not in tool_name_display:
-                         tool_name_display[out_tool] = out_tool_original
+                        tool_name_display[out_tool] = out_tool_original
 
         print( "Processing workflows..." )
         wf_ctr = 0
@@ -69,7 +64,7 @@ class ExtractWorkflowConnections:
 
         print( "Workflows processed: %d" % wf_ctr )
         print( "# paths in workflows: %d" % len( workflow_paths ) )
-    
+
         # collect duplicate paths
         for path in workflow_paths:
             workflow_paths_dup += ",".join( path ) + "\n"
@@ -83,7 +78,7 @@ class ExtractWorkflowConnections:
         
         print( "Finding compatible next tools..." )
         compatible_next_tools = self.set_compatible_next_tools( unique_paths )
-            
+
         return unique_paths, compatible_next_tools
 
     @classmethod

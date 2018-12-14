@@ -4,7 +4,6 @@ machine learning algorithm. The paths are divided
 into the test and training sets
 """
 
-import os
 import collections
 import numpy as np
 import json
@@ -40,7 +39,7 @@ class PrepareData:
         tokens = np.array( tokens )
         tokens = np.reshape( tokens, [ -1, ] )
         return tokens, raw_paths
-            
+
     @classmethod
     def create_new_dict(self, new_data_dict):
         """
@@ -50,27 +49,26 @@ class PrepareData:
         return new_data_dict, reverse_dict
 
     @classmethod
-    def assemble_dictionary( self, new_data_dict):
+    def assemble_dictionary( self, new_data_dict, old_data_dictionary={}):
         """
         Create/update tools indices in the forward and backward dictionary
         """
         if self.retrain is True or self.retrain is "True":
-            with open( DATA_DICTIONARY, 'r' ) as data_dict:
-                dictionary = json.loads( data_dict.read() )
-                max_prev_size = len(dictionary)
-                tool_counter = 1
-                for tool in new_data_dict:
-                    if tool not in dictionary:
-                        dictionary[tool] = max_prev_size + tool_counter
-                        tool_counter += 1
-                reverse_dict = dict((v,k) for k,v in dictionary.items())
+            dictionary = old_data_dictionary
+            max_prev_size = len(dictionary)
+            tool_counter = 1
+            for tool in new_data_dict:
+                if tool not in dictionary:
+                    dictionary[tool] = max_prev_size + tool_counter
+                    tool_counter += 1
+            reverse_dict = dict((v,k) for k,v in dictionary.items())
             return dictionary, reverse_dict
         else:
             new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
             return new_data_dict, reverse_dict
 
     @classmethod
-    def create_data_dictionary( self, words ):
+    def create_data_dictionary( self, words, old_data_dictionary={}):
         """
         Create two dictionaries having tools names and their indexes
         """
@@ -78,7 +76,7 @@ class PrepareData:
         dictionary = dict()
         for word, _ in count:
             dictionary[ word ] = len( dictionary ) + 1
-        dictionary, reverse_dictionary = self.assemble_dictionary(dictionary)
+        dictionary, reverse_dictionary = self.assemble_dictionary(dictionary, old_data_dictionary)
         return dictionary, reverse_dictionary
 
     @classmethod
@@ -179,17 +177,6 @@ class PrepareData:
         return rand_train_data, rand_train_labels
 
     @classmethod
-    def save_as_h5py( self, data, label, file_path ):
-        """
-        Save the samples and their labels as h5 files
-        """
-        utils.remove_file(file_path)
-        hf = h5py.File( file_path, 'w' )
-        hf.create_dataset('data', data=data, compression="gzip", compression_opts=9)
-        hf.create_dataset('data_labels', data=label, compression="gzip", compression_opts=9)
-        hf.close()
-        
-    @classmethod
     def verify_overlap( self, train_data, test_data, reverse_dictionary ):
         """
         Verify the overlapping of samples in train and test data
@@ -225,19 +212,18 @@ class PrepareData:
             frequency_scores[str(i)] = count
             class_weights.append(count)
         frequency_scores = dict(sorted(frequency_scores.items(), key=lambda kv: kv[1]))
-        
         max_weight = max(class_weights)
         class_weights = [np.round((max_weight / float(wt)), 2) if wt > 0 else 0 for wt in class_weights]
         inverse_weights = np.asarray(class_weights, dtype=np.float64)
         return frequency_scores, inverse_weights
 
     @classmethod
-    def get_data_labels_matrices( self, workflow_paths ):
+    def get_data_labels_matrices( self, workflow_paths, old_data_dictionary={} ):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
         processed_data, raw_paths = self.process_workflow_paths( workflow_paths )
-        dictionary, reverse_dictionary = self.create_data_dictionary( processed_data )
+        dictionary, reverse_dictionary = self.create_data_dictionary( processed_data, old_data_dictionary )
         num_classes = len( dictionary )
 
         print( "Raw paths: %d" % len( raw_paths ) )
@@ -263,12 +249,14 @@ class PrepareData:
         self.verify_overlap( train_data, test_data, reverse_dictionary )
         
         train_data, train_labels = self.randomize_data( train_data, train_labels )
-        frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
+        
+        # TODO:
+        # frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
         
         # get weighted class labels for each training sample
-        weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
-        row_sums = weighted_train_labels.sum(axis=1)
+        #weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
+        #row_sums = weighted_train_labels.sum(axis=1)
         
         # normalize the weighted class values
-        weighted_train_labels_normalised = weighted_train_labels / row_sums[:, np.newaxis]
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, frequency_scores
+        # weighted_train_labels_normalised = weighted_train_labels / row_sums[:, np.newaxis]
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary
