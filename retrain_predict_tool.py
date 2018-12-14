@@ -26,7 +26,8 @@ import utils
 # file paths
 CURRENT_WORKING_DIR = os.getcwd()
 NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/generated_files/model.json"
-EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-{epoch:d}.hdf5"
+#EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/weights-epoch-{epoch:d}.hdf5"
+EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/trained_model.hdf5"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
@@ -41,7 +42,7 @@ class RetrainPredictTool:
         """ Init method. """
         self.n_epochs = epochs
         self.TRAINED_MODEL_PATH = trained_model_path
-        self.BEST_RETRAINED_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/new_weights-epoch-" + str(epochs) + ".hdf5"
+        self.BEST_RETRAINED_MODEL_PATH = CURRENT_WORKING_DIR + "/data/generated_files/new_weights-epoch-" + str(epochs) + ".hdf5"
         
     @classmethod
     def retrain_model(self, training_data, training_labels, test_data, test_labels, reverse_data_dict):
@@ -109,6 +110,7 @@ class RetrainPredictTool:
         callbacks_list = [ checkpoint, predict_callback_test ]
 
         reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
+        
         print("Started training on new data...")
         model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=int(best_params["batch_size"]), epochs=self.n_epochs, callbacks=callbacks_list)
         loss_values = model_fit_callbacks.history[ "loss" ]
@@ -154,29 +156,27 @@ if __name__ == "__main__":
 
     n_epochs_retrain = int(config['n_epochs_retrain'])
     retrain = True
-
+    
     # Extract and process workflows
-    connections = extract_workflow_connections.ExtractWorkflowConnections(sys.argv[1], retrain)
-    connections.read_tabular_file()
+    connections = extract_workflow_connections.ExtractWorkflowConnections()
+    workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
     print ( "Dividing data..." )
+    old_data_dictionary = utils.read_file(DATA_DICTIONARY)
+    print ( "Dividing data..." )
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
-    data.get_data_labels_mat()
-
-    # get data dictionary
-    reverse_data_dictionary = utils.read_file( DATA_REV_DICT )
-
-    # get training and test data with their labels
-    train_data, train_labels = utils.get_h5_data( TRAIN_DATA )
-    test_data, test_labels = utils.get_h5_data( TEST_DATA )
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary = data.get_data_labels_matrices(workflow_paths, old_data_dictionary)
 
     # execute experiment runs and collect results for each run
     retrain_predict_tool = RetrainPredictTool(n_epochs_retrain, sys.argv[2])
-    results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_data_dictionary)
+    results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_dictionary)
     
     np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
     np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
+    
+    utils.write_file(DATA_DICTIONARY, data_dictionary)
+    utils.write_file(DATA_REV_DICT, reverse_dictionary)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
