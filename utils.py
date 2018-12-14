@@ -34,6 +34,13 @@ def write_file( file_path, content ):
     remove_file(file_path)
     with open( file_path, "w" ) as json_file:
         json_file.write(json.dumps( content) )
+        
+def save_processed_workflows(file_path, unique_paths,):
+    workflow_paths_unique = ""
+    for path in unique_paths:
+        workflow_paths_unique += path + "\n"
+    with open( file_path, "w" ) as workflows_file:
+        workflows_file.write( workflow_paths_unique )
 
 def get_h5_data( file_name ):
     """
@@ -126,8 +133,8 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         topk_prediction_pos = prediction_pos[ -topk: ]
 
         # read tool names using reverse dictionary
-        actual_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in actual_classes_pos ]
-        top_predicted_next_tool_names = [ reverse_data_dictionary[ str( int( tool_pos ) ) ] for tool_pos in topk_prediction_pos ]
+        actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
+        top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in topk_prediction_pos ]
 
         # find false positives
         false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]

@@ -25,14 +25,15 @@ warnings.filterwarnings("ignore")
 # file paths
 CURRENT_WORKING_DIR = os.getcwd()
 NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/generated_files/model.json"
-EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-{epoch:d}.hdf5"
+EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/weights-epoch-{epoch:d}.hdf5"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
-TRAIN_DATA = CURRENT_WORKING_DIR + "/data/generated_files/train_data.h5"
-TEST_DATA = CURRENT_WORKING_DIR + "/data/generated_files/test_data.h5"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_absolute_precision.txt"
 MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_loss.txt"
+WORKFLOW_PATHS_FILE = CURRENT_WORKING_DIR + "/data/generated_files/workflow_connections_paths.txt"
+COMPATIBLE_NEXT_TOOLS = CURRENT_WORKING_DIR + "/data/generated_files/compatible_tools.json"
+TRAIN_DATA_CLASS_FREQ = CURRENT_WORKING_DIR + "/data/generated_files/train_data_class_freq.txt"
 
 
 class PredictTool:
@@ -117,32 +118,27 @@ if __name__ == "__main__":
     retrain = config['retrain']
     
     # Extract and process workflows
-    connections = extract_workflow_connections.ExtractWorkflowConnections(sys.argv[1], retrain)
-    connections.read_tabular_file()
+    connections = extract_workflow_connections.ExtractWorkflowConnections()
+    workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
     print ( "Dividing data..." )
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
-    data.get_data_labels_mat()
-    
-    # get data dictionary
-    reverse_data_dictionary = utils.read_file( DATA_REV_DICT)
-    
-    # get training and test data with their labels
-    train_data, train_labels = utils.get_h5_data( TRAIN_DATA )
-    test_data, test_labels = utils.get_h5_data( TEST_DATA )
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, frequency_scores = data.get_data_labels_matrices(workflow_paths)
 
     # execute experiment runs and collect results for each run
     predict_tool = PredictTool(n_epochs)
-    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_data_dictionary, train_data, train_labels, test_data, test_labels)
+    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
     
     np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
     np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
     
-    #loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, predict_tool.BEST_MODEL_PATH)
-    
-    # verify the model with test data
-    #mean_precision = utils.verify_model(loaded_model, test_data, test_labels, reverse_data_dictionary)
+    # save files
+    utils.write_file(COMPATIBLE_NEXT_TOOLS, compatible_next_tools)
+    utils.save_processed_workflows(WORKFLOW_PATHS_FILE, workflow_paths)
+    utils.write_file(DATA_DICTIONARY, data_dictionary)
+    utils.write_file(DATA_REV_DICT, reverse_dictionary)
+    utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

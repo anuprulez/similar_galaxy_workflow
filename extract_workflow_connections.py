@@ -11,22 +11,14 @@ import random
 import utils
 
 
-CURRENT_DIR = os.getcwd()
-WORKFLOW_PATHS_FILE = CURRENT_DIR + "/data/generated_files/workflow_connections_paths.txt"
-TOOL_DISPLAY_NAME = CURRENT_DIR + "/data/generated_files/tool_display_name.txt"
-COMPATIBLE_NEXT_TOOLS = CURRENT_DIR + "/data/generated_files/compatible_tools.json"
-
-
 class ExtractWorkflowConnections:
 
     @classmethod
-    def __init__( self, raw_file, retrain=False ):
+    def __init__( self ):
         """ Init method. """
-        self.WORKFLOW_FILE_PATH = CURRENT_DIR + "/" + raw_file
-        self.retrain = retrain
 
     @classmethod
-    def read_tabular_file( self ):
+    def read_tabular_file( self, raw_file_path ):
         """
         Read tabular file and extract workflow connections
         """
@@ -38,7 +30,7 @@ class ExtractWorkflowConnections:
         workflow_paths = list()
         unique_paths = list()
         tool_name_display = dict()
-        with open( self.WORKFLOW_FILE_PATH, 'rt' ) as workflow_connections_file:
+        with open( raw_file_path, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
             for index, row in enumerate( workflow_connections ):
                 if not index:
@@ -56,9 +48,6 @@ class ExtractWorkflowConnections:
                          tool_name_display[in_tool] = in_tool_original
                     if out_tool not in tool_name_display:
                          tool_name_display[out_tool] = out_tool_original
-                         
-        # add tool ids and original names
-        utils.write_file(TOOL_DISPLAY_NAME, tool_name_display)
 
         print( "Processing workflows..." )
         wf_ctr = 0
@@ -90,19 +79,12 @@ class ExtractWorkflowConnections:
         unique_paths = list(filter(None, unique_paths))
         print( "Unique paths: %d" % len( unique_paths ) )
 
-        print( "Writing workflows to a text file..." )
         random.shuffle( unique_paths )
         
         print( "Finding compatible next tools..." )
-        next_tools = self.set_compatible_next_tools( unique_paths )
-        with open( COMPATIBLE_NEXT_TOOLS , "w" ) as compatible_tools_file:
-            compatible_tools_file.write( json.dumps( next_tools ) )
-
-        utils.remove_file(WORKFLOW_PATHS_FILE)
-        for path in unique_paths:
-            workflow_paths_unique += path + "\n"
-        with open( WORKFLOW_PATHS_FILE, "w" ) as workflows_file:
-            workflows_file.write( workflow_paths_unique )
+        compatible_next_tools = self.set_compatible_next_tools( unique_paths )
+            
+        return unique_paths, compatible_next_tools
 
     @classmethod
     def set_compatible_next_tools( self, workflow_paths ):
