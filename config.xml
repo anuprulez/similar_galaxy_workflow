@@ -3,7 +3,7 @@
     <ml_parameters>
         <parameter name="retrain" value="False" />
         <parameter name="n_epochs_optimise" value="1" />
-        <parameter name="n_epochs" value="1" />
+        <parameter name="n_epochs" value="3" />
         <parameter name="n_epochs_retrain" value="3" />
         <parameter name="test_share" value="0.2" />
         <parameter name="validation_split" value="0.2" />

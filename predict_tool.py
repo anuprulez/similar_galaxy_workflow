@@ -118,9 +118,7 @@ if __name__ == "__main__":
     model_weights = trained_model.get_weights()
     
     model_values = {
-        'compatible_next_tools': compatible_next_tools,
         'data_dictionary': data_dictionary,
-        'reverse_dictionary': reverse_dictionary,
         'model_config': model_config,
         'best_parameters': best_model_parameters,
         'model_weights': model_weights

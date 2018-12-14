@@ -179,15 +179,12 @@ if __name__ == "__main__":
     trained_model = results["model"]
     best_model_parameters = results["best_params"]
     model_values = {
-        'compatible_next_tools': compatible_next_tools,
         'data_dictionary': data_dictionary,
-        'reverse_dictionary': reverse_dictionary,
         'model_config': trained_model.to_json(),
         'best_parameters': best_model_parameters,
         'model_weights': trained_model.get_weights()
     }
-    
-    utils.set_trained_model(TRAIN_DUMP_FILE, model_values)
+    utils.set_trained_model(trained_model_path, model_values)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
