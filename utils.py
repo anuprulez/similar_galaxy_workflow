@@ -7,17 +7,9 @@ from keras.models import model_from_json
 from keras.models import Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
-from keras.callbacks import ModelCheckpoint, Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
-
-def save_network( model ):
-    """
-    Save the network as json file
-    """
-    with open( NETWORK_C0NFIG_JSON_PATH, "w" ) as json_file:
-        json_file.write( model )
 
 def read_file( file_path ):
     """
@@ -27,6 +19,7 @@ def read_file( file_path ):
         file_content = json.loads( json_file.read() )
     return file_content
 
+
 def write_file( file_path, content ):
     """
     Write a file
@@ -34,54 +27,69 @@ def write_file( file_path, content ):
     remove_file(file_path)
     with open( file_path, "w" ) as json_file:
         json_file.write(json.dumps( content) )
-        
-def save_processed_workflows(file_path, unique_paths,):
+
+  
+def save_processed_workflows(file_path, unique_paths):
     workflow_paths_unique = ""
     for path in unique_paths:
         workflow_paths_unique += path + "\n"
     with open( file_path, "w" ) as workflows_file:
         workflows_file.write( workflow_paths_unique )
 
-def get_h5_data( file_name ):
-    """
-    Read h5 file to get train and test data
-    """
-    hf = h5py.File( file_name, 'r' )
-    return hf.get( "data" ), hf.get( "data_labels" )
-    
 
-def save_as_h5py( data, label, file_path ):
-    """
-    Save the samples and their labels as h5 files
-    """
-    remove_file(file_path)
-    hf = h5py.File( file_path, 'w' )
-    hf.create_dataset('data', data=data, compression="gzip", compression_opts=9)
-    hf.create_dataset('data_labels', data=label, compression="gzip", compression_opts=9)
-    hf.close()
-
-def load_saved_model( network_config_path, weights_path ):
+def load_saved_model(model_config, model_weights):
     """
     Load the saved trained model using the saved network and its weights
     """
-    with open( network_config_path, 'r' ) as network_config_file:
-        loaded_model = network_config_file.read()
-        # load the network
-        loaded_model = model_from_json(loaded_model)
-        # load the saved weights into the model
-        loaded_model.load_weights( weights_path )
+    # load the network
+    loaded_model = model_from_json(model_config)
+    # load the saved weights into the model
+    loaded_model.set_weights(model_weights)
     return loaded_model
 
-def save_network( model, file_path ):
+ 
+def get_HDF5(hf, d_key):
     """
-    Save the network as json file
+    Read h5 file to get train and test data
     """
-    with open( file_path, "w" ) as json_file:
-        json_file.write( model )
+    return hf.get(d_key).value
+
+
+def save_HDF5(hf_file, d_key, data, d_type=""):
+    """
+    Save datasets as h5 file
+    """
+    if (d_type == 'json'): 
+        data = json.dumps(data)
+    hf_file.create_dataset(d_key, data=data)
+
+      
+def set_trained_model(dump_file, model_values):
+    """
+    Create an h5 file with the trained weights and associated dicts
+    """
+    hf_file = h5py.File(dump_file, 'w')
+    for key in model_values:
+        value = model_values[key]
+        if key == 'model_weights':
+            for idx, item in enumerate(value):
+                w_key = "weight_" + str(idx)
+                if w_key in hf_file:
+                    hf_file.modify(w_key, item)
+                else:
+                    hf_file.create_dataset(w_key, data=item)
+        else:
+            if key in hf_file:
+                hf_file.modify(key, json.dumps(value))
+            else:
+                hf_file.create_dataset(key, data=json.dumps(value))
+    hf_file.close()
+
 
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
+
 
 def get_defaults(mdl_dict):
     """
@@ -96,6 +104,7 @@ def get_defaults(mdl_dict):
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
+
 
 def set_recurrent_network(mdl_dict, reverse_dictionary):
     """
@@ -116,7 +125,8 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     optimizer = RMSprop(lr=lr)
     model.compile(loss=loss, optimizer=optimizer)
     return model
-       
+
+
 def verify_model( model, x, y, reverse_data_dictionary ):
     """
     Verify the model on test data
@@ -124,8 +134,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[ 0 ]
-    topk_abs_pred = np.zeros( [ size ] )
-    topk_compatible_pred = np.zeros( [ size ] )
     ave_abs_precision = list()
     # loop over all the test samples and find prediction precision
     for i in range( size ):

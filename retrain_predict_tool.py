@@ -8,12 +8,13 @@ import numpy as np
 import time
 import os
 import json
+import h5py
 
 # machine learning library
 from keras.models import Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
-from keras.callbacks import ModelCheckpoint, Callback
+from keras.callbacks import Callback
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 import xml.etree.ElementTree as et
@@ -32,27 +33,25 @@ DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.t
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_absolute_precision.txt"
 MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_loss.txt"
+TRAIN_DUMP_FILE = CURRENT_WORKING_DIR + "/data/generated_files/train_dump.hdf5"
 
 
 class RetrainPredictTool:
 
     @classmethod
-    def __init__( self, epochs, trained_model_path ):
+    def __init__( self ):
         """ Init method. """
-        self.n_epochs = epochs
-        self.TRAINED_MODEL_PATH = trained_model_path
-        self.BEST_RETRAINED_MODEL_PATH = CURRENT_WORKING_DIR + "/data/generated_files/new_weights-epoch-" + str(epochs) + ".hdf5"
         
     @classmethod
-    def retrain_model(self, training_data, training_labels, test_data, test_labels, reverse_data_dict):
+    def retrain_model(self, training_data, training_labels, test_data, test_labels, reverse_data_dict, epochs, loaded_model, best_params):
         """
         Retrain the trained model with new data and compare performance on test data
         """
         print("New training size: %d" % len(training_labels))
-        loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH)
+        #loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH)
 
         layer_names = [layer.name for layer in loaded_model.layers]
- 
+
         print("Old model summary: \n")
         print(loaded_model.summary())
 
@@ -60,16 +59,16 @@ class RetrainPredictTool:
         new_dimensions = training_labels.shape[1]
 
         # best model configurations
-        best_params = utils.read_file( BEST_PARAMETERS )
         lr, embedding_size, dropout, units, batch_size, loss, act_recurrent, act_output = utils.get_defaults(best_params)
 
         model = Sequential()
-        
+
         for idx, ly in enumerate(layer_names):
             if "embedding" in ly:
                 model.add( Embedding(new_dimensions, embedding_size, mask_zero=True))
                 model_layer = model.layers[idx]
                 model_layer.trainable = True
+
                 # initialize embedding layer
                 new_embedding_dimensions = model_layer.get_weights()[0]
                 new_embedding_dimensions[0:old_dimensions,:] = loaded_model.layers[idx].get_weights()[0]
@@ -82,6 +81,7 @@ class RetrainPredictTool:
                 layer = loaded_model.layers[idx]
                 model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=layer.return_sequences, activation=act_recurrent))
                 model_layer = model.layers[idx]
+                
                 # initialize GRU layer
                 model_layer.set_weights(loaded_model.layers[idx].get_weights())
                 model_layer.trainable = True
@@ -99,19 +99,16 @@ class RetrainPredictTool:
         model.compile(loss=loss, optimizer=RMSprop(lr=lr))
         
         # save the network as json
-        utils.save_network( model.to_json(), NETWORK_C0NFIG_JSON_PATH )
         print("New model summary...")
         model.summary()
         
         # create checkpoint after each epoch - save the weights to h5 file
-        checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
-        predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, self.n_epochs )
-        callbacks_list = [ checkpoint, predict_callback_test ]
-
-        reshaped_test_labels = np.zeros([test_labels.shape[0], new_dimensions])
+        # checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
+        predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, epochs )
+        callbacks_list = [ predict_callback_test ]
         
         print("Started training on new data...")
-        model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=int(best_params["batch_size"]), epochs=self.n_epochs, callbacks=callbacks_list)
+        model_fit_callbacks = model.fit(training_data, training_labels, shuffle="batch", batch_size=int(best_params["batch_size"]), epochs=epochs, callbacks=callbacks_list)
         loss_values = model_fit_callbacks.history[ "loss" ]
         
         print ( "Training finished" )
@@ -119,6 +116,8 @@ class RetrainPredictTool:
         return {
             "train_loss": np.array( loss_values ),
             "test_absolute_precision": predict_callback_test.abs_precision,
+            "model": model,
+            "best_params": best_params
         }
 
 
@@ -156,26 +155,55 @@ if __name__ == "__main__":
     n_epochs_retrain = int(config['n_epochs_retrain'])
     retrain = True
     
+    # Extract the previous model
+    
+    hf_file = h5py.File(TRAIN_DUMP_FILE, 'r')
+    model_config = json.loads(utils.get_HDF5(hf_file, 'model_config'))
+    old_data_dictionary = json.loads(utils.get_HDF5(hf_file, 'data_dictionary'))
+    best_parameters = json.loads(utils.get_HDF5(hf_file, 'best_parameters'))
+    model_weights = list()
+    weight_ctr = 0
+    while True:
+        try:
+            d_key = "weight_" + str(weight_ctr)
+            weights = utils.get_h5_data(hf_file, d_key)
+            model_weights.append(weights)
+            weight_ctr += 1
+        except:
+            break
+    hf_file.close()
+    
+    loaded_model = utils.load_saved_model(model_config, model_weights)
+    
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
     workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
-    print ( "Dividing data..." )
-    old_data_dictionary = utils.read_file(DATA_DICTIONARY)
-    print ( "Dividing data..." )
+    print ("Dividing data...")
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary = data.get_data_labels_matrices(workflow_paths, old_data_dictionary)
 
-    # execute experiment runs and collect results for each run
-    retrain_predict_tool = RetrainPredictTool(n_epochs_retrain, sys.argv[2])
-    results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_dictionary)
+    # retrain the model on new data
+    retrain_predict_tool = RetrainPredictTool()
+    results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_dictionary, n_epochs_retrain, loaded_model, best_parameters)
     
-    np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
-    np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
+    # save the latest model
+    trained_model = results["model"]
+    best_model_parameters = results["best_params"]
+    model_values = {
+        'compatible_next_tools': compatible_next_tools,
+        'data_dictionary': data_dictionary,
+        'reverse_dictionary': reverse_dictionary,
+        'model_config': trained_model.to_json(),
+        'best_parameters': best_model_parameters,
+        'model_weights': trained_model.get_weights()
+    }
     
-    utils.write_file(DATA_DICTIONARY, data_dictionary)
-    utils.write_file(DATA_REV_DICT, reverse_dictionary)
+    utils.set_trained_model(TRAIN_DUMP_FILE, model_values)
+    
+    #np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
+    #np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

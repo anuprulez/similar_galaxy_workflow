@@ -9,6 +9,7 @@ import time
 import os
 import xml.etree.ElementTree as et
 import warnings
+import h5py
 
 # machine learning library
 from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
@@ -22,27 +23,24 @@ warnings.filterwarnings("ignore")
 
 # file paths
 CURRENT_WORKING_DIR = os.getcwd()
-NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/generated_files/model.json"
-EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/trained_model.hdf5"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
 BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
 MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_absolute_precision.txt"
 MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_loss.txt"
 WORKFLOW_PATHS_FILE = CURRENT_WORKING_DIR + "/data/generated_files/workflow_connections_paths.txt"
-COMPATIBLE_NEXT_TOOLS = CURRENT_WORKING_DIR + "/data/generated_files/compatible_tools.json"
 TRAIN_DATA_CLASS_FREQ = CURRENT_WORKING_DIR + "/data/generated_files/train_data_class_freq.txt"
+TRAIN_DUMP_FILE = CURRENT_WORKING_DIR + "/data/generated_files/train_dump.hdf5"
 
 
 class PredictTool:
 
     @classmethod
-    def __init__( self, n_epochs ):
+    def __init__( self ):
         """ Init method. """
-        self.BEST_MODEL_PATH = CURRENT_WORKING_DIR + "/data/weights/weights-epoch-" + str(n_epochs) + ".hdf5"
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs):
         """
         Define recurrent neural network and train sequential data
         """
@@ -52,20 +50,17 @@ class PredictTool:
         best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
         print("Best model: %s" % str(best_model_parameters))
 
-        utils.write_file( BEST_PARAMETERS, best_model_parameters )
-
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
-    
-        # save the network configuration
-        utils.save_network(model.to_json(), NETWORK_C0NFIG_JSON_PATH)
+
         model.summary()
 
-        # create checkpoint after each epoch - save the weights to h5 file
+        # create checkpoint after each epoch - save the weights to h5 file        
+        # checkpoint = ModelCheckpoint(EPOCH_WEIGHTS_PATH, verbose=0, mode='max')
+
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
-        checkpoint = ModelCheckpoint(EPOCH_WEIGHTS_PATH, verbose=0, mode='max')
         predict_callback_test = PredictCallback( test_data, test_labels, reverse_dictionary, n_epochs )
-        callbacks_list = [ checkpoint, early_stopping, predict_callback_test ]
+        callbacks_list = [ early_stopping, predict_callback_test ]
 
         print ("Start training on the best model...")
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
@@ -74,8 +69,9 @@ class PredictTool:
         return {
             "train_loss": np.array( loss_values ),
             "test_absolute_precision": predict_callback_test.abs_precision,
+            "model": model,
+            "best_parameters": best_model_parameters
         }
-        print ("Training finished")
         
 
 class PredictCallback( Callback ):
@@ -125,17 +121,29 @@ if __name__ == "__main__":
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary = data.get_data_labels_matrices(workflow_paths)
 
     # execute experiment runs and collect results for each run
-    predict_tool = PredictTool(n_epochs)
-    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
-
-    np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
-    np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
+    predict_tool = PredictTool()
+    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs)
 
     # save files
-    utils.write_file(COMPATIBLE_NEXT_TOOLS, compatible_next_tools)
-    utils.save_processed_workflows(WORKFLOW_PATHS_FILE, workflow_paths)
-    utils.write_file(DATA_DICTIONARY, data_dictionary)
-    utils.write_file(DATA_REV_DICT, reverse_dictionary)
+    trained_model = results["model"]
+    best_model_parameters = results["best_parameters"]
+    model_config = trained_model.to_json()
+    model_weights = trained_model.get_weights()
+    
+    model_values = {
+        'compatible_next_tools': compatible_next_tools,
+        'data_dictionary': data_dictionary,
+        'reverse_dictionary': reverse_dictionary,
+        'model_config': model_config,
+        'best_parameters': best_model_parameters,
+        'model_weights': model_weights
+    }
+    
+    utils.set_trained_model(TRAIN_DUMP_FILE, model_values)
+
+    # np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
+    # np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
+    # utils.save_processed_workflows(WORKFLOW_PATHS_FILE, workflow_paths)
     # utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
 
     end_time = time.time()
