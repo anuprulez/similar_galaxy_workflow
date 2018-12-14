@@ -254,7 +254,7 @@ class PrepareData:
         # frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
         
         # get weighted class labels for each training sample
-        #weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
+        # weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
         #row_sums = weighted_train_labels.sum(axis=1)
         
         # normalize the weighted class values

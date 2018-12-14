@@ -24,18 +24,6 @@ import prepare_data
 import utils
 
 
-# file paths
-CURRENT_WORKING_DIR = os.getcwd()
-NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/generated_files/model.json"
-EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/trained_model.hdf5"
-DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
-DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
-BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
-MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_absolute_precision.txt"
-MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/retrain_mean_test_loss.txt"
-TRAIN_DUMP_FILE = CURRENT_WORKING_DIR + "/data/generated_files/train_dump.hdf5"
-
-
 class RetrainPredictTool:
 
     @classmethod
@@ -48,7 +36,6 @@ class RetrainPredictTool:
         Retrain the trained model with new data and compare performance on test data
         """
         print("New training size: %d" % len(training_labels))
-        #loaded_model = utils.load_saved_model(NETWORK_C0NFIG_JSON_PATH, self.TRAINED_MODEL_PATH)
 
         layer_names = [layer.name for layer in loaded_model.layers]
 
@@ -89,6 +76,7 @@ class RetrainPredictTool:
                 model.add( Dense(new_dimensions, activation=act_output))
                 model_layer = model.layers[idx]
                 model_layer.trainable = True
+
                 # initialize output layer
                 new_output_dimensions1 = model_layer.get_weights()[0]
                 new_output_dimensions2 = model_layer.get_weights()[1]
@@ -102,8 +90,7 @@ class RetrainPredictTool:
         print("New model summary...")
         model.summary()
         
-        # create checkpoint after each epoch - save the weights to h5 file
-        # checkpoint = ModelCheckpoint( EPOCH_WEIGHTS_PATH, verbose=0, mode='max' )
+        # define callbacks
         predict_callback_test = PredictCallback( test_data, test_labels, reverse_data_dict, epochs )
         callbacks_list = [ predict_callback_test ]
         
@@ -140,11 +127,11 @@ class PredictCallback( Callback ):
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
-        print( "Usage: python retrain_model.py <workflow_file_path> <training_epochs> <trained_model_path>" )
+        print( "Usage: python retrain_predict_tool.py data/workflows/workflow_connections_12.tsv <config_file_path> <trained_model_file_path>" ) 
         exit( 1 )
     start_time = time.time()
 
-    tree = et.parse(sys.argv[3])
+    tree = et.parse(sys.argv[2])
     root = tree.getroot()
     config = dict()
     for child in root:
@@ -154,10 +141,10 @@ if __name__ == "__main__":
 
     n_epochs_retrain = int(config['n_epochs_retrain'])
     retrain = True
+    trained_model_path = sys.argv[3]
     
     # Extract the previous model
-    
-    hf_file = h5py.File(TRAIN_DUMP_FILE, 'r')
+    hf_file = h5py.File(trained_model_path, 'r')
     model_config = json.loads(utils.get_HDF5(hf_file, 'model_config'))
     old_data_dictionary = json.loads(utils.get_HDF5(hf_file, 'data_dictionary'))
     best_parameters = json.loads(utils.get_HDF5(hf_file, 'best_parameters'))
@@ -201,9 +188,6 @@ if __name__ == "__main__":
     }
     
     utils.set_trained_model(TRAIN_DUMP_FILE, model_values)
-    
-    #np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
-    #np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))

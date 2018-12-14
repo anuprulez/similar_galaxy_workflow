@@ -21,17 +21,6 @@ import utils
 
 warnings.filterwarnings("ignore")
 
-# file paths
-CURRENT_WORKING_DIR = os.getcwd()
-DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
-DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
-BEST_PARAMETERS = CURRENT_WORKING_DIR + "/data/generated_files/best_params.json"
-MEAN_TEST_ABSOLUTE_PRECISION = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_absolute_precision.txt"
-MEAN_TRAIN_LOSS = CURRENT_WORKING_DIR + "/data/generated_files/mean_test_loss.txt"
-WORKFLOW_PATHS_FILE = CURRENT_WORKING_DIR + "/data/generated_files/workflow_connections_paths.txt"
-TRAIN_DATA_CLASS_FREQ = CURRENT_WORKING_DIR + "/data/generated_files/train_data_class_freq.txt"
-TRAIN_DUMP_FILE = CURRENT_WORKING_DIR + "/data/generated_files/train_dump.hdf5"
-
 
 class PredictTool:
 
@@ -52,12 +41,9 @@ class PredictTool:
 
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
-
         model.summary()
 
-        # create checkpoint after each epoch - save the weights to h5 file        
-        # checkpoint = ModelCheckpoint(EPOCH_WEIGHTS_PATH, verbose=0, mode='max')
-
+        # define callbacks
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
         predict_callback_test = PredictCallback( test_data, test_labels, reverse_dictionary, n_epochs )
         callbacks_list = [ early_stopping, predict_callback_test ]
@@ -92,8 +78,8 @@ class PredictCallback( Callback ):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path>")
+    if len(sys.argv) != 4:
+        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path>")
         exit( 1 )
     start_time = time.time()
 
@@ -110,6 +96,7 @@ if __name__ == "__main__":
 
     n_epochs = int(config['n_epochs'])
     retrain = config['retrain']
+    trained_model_path = sys.argv[3]
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
@@ -139,12 +126,7 @@ if __name__ == "__main__":
         'model_weights': model_weights
     }
     
-    utils.set_trained_model(TRAIN_DUMP_FILE, model_values)
-
-    # np.savetxt( MEAN_TEST_ABSOLUTE_PRECISION, results[ "test_absolute_precision" ], delimiter="," )
-    # np.savetxt( MEAN_TRAIN_LOSS, results[ "train_loss" ], delimiter="," )
-    # utils.save_processed_workflows(WORKFLOW_PATHS_FILE, workflow_paths)
-    # utils.write_file(TRAIN_DATA_CLASS_FREQ, frequency_scores)
+    utils.set_trained_model(trained_model_path, model_values)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
