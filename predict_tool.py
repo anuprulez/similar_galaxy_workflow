@@ -23,7 +23,6 @@ warnings.filterwarnings("ignore")
 # file paths
 CURRENT_WORKING_DIR = os.getcwd()
 NETWORK_C0NFIG_JSON_PATH = CURRENT_WORKING_DIR + "/data/generated_files/model.json"
-#EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/weights-epoch-{epoch:d}.hdf5"
 EPOCH_WEIGHTS_PATH = CURRENT_WORKING_DIR + "/data/generated_files/trained_model.hdf5"
 DATA_REV_DICT = CURRENT_WORKING_DIR + "/data/generated_files/data_rev_dict.txt"
 DATA_DICTIONARY = CURRENT_WORKING_DIR + "/data/generated_files/data_dictionary.txt"
