@@ -155,7 +155,6 @@ if __name__ == "__main__":
         try:
             d_key = "weight_" + str(weight_ctr)
             weights = utils.get_HDF5(hf_file, d_key)
-            print(weights.shape)
             model_weights.append(weights)
             weight_ctr += 1
         except Exception as exception:

@@ -91,18 +91,31 @@ def remove_file(file_path):
         os.remove(file_path)
 
 
-def get_defaults(mdl_dict):
+def get_defaults(mdl_dict=None):
     """
     Get param values (defaults as well)
     """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_vector_size", "128"))
-    dropout = float(mdl_dict.get("dropout", "0.1"))
-    units = int(mdl_dict.get("memory_units", "128"))
-    batch_size = int(mdl_dict.get("batch_size", "128"))
-    loss = mdl_dict.get("loss_type", "binary_crossentropy")
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
+    print(mdl_dict)
+    if mdl_dict == None:
+        return {
+            'lr': 0.001, 
+            'embedding_size': 128, 
+            'dropout': 0.1,
+            'units': 128,
+            'batch_size': 32,
+            'loss': "binary_crossentropy",
+            'activation_recurrent': "elu",
+            'activation_output': "sigmoid"
+        }
+    else:
+        lr = float(mdl_dict.get("learning_rate", "0.001"))
+        embedding_size = int(mdl_dict.get("embedding_vector_size", "128"))
+        dropout = float(mdl_dict.get("dropout", "0.1"))
+        units = int(mdl_dict.get("memory_units", "128"))
+        batch_size = int(mdl_dict.get("batch_size", "128"))
+        loss = mdl_dict.get("loss_type", "binary_crossentropy")
+        activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
+        activation_output = mdl_dict.get("activation_output", "sigmoid")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
@@ -127,7 +140,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model
 
 
-def verify_model( model, x, y, reverse_data_dictionary ):
+def verify_model( model, x, y, reverse_data_dictionary, norm ):
     """
     Verify the model on test data
     """
@@ -135,6 +148,7 @@ def verify_model( model, x, y, reverse_data_dictionary ):
     print("Test data size: %d" % len(y))
     size = y.shape[ 0 ]
     ave_abs_precision = list()
+    predicted_class_freq = dict()
     # loop over all the test samples and find prediction precision
     for i in range( size ):
         actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
@@ -153,7 +167,13 @@ def verify_model( model, x, y, reverse_data_dictionary ):
 
         # read tool names using reverse dictionary
         actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
-        top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in topk_prediction_pos ]
+        top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ]  for tool_pos in topk_prediction_pos if int(tool_pos) > 0 ]
+        
+        for t_n in top_predicted_next_tool_names:
+            if t_n in predicted_class_freq:
+                predicted_class_freq[t_n] += 1
+            else:
+                predicted_class_freq[t_n] = 1
 
         # find false positives
         false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
@@ -161,4 +181,29 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         ave_abs_precision.append(absolute_precision)
     mean_precision = np.mean(ave_abs_precision)
     print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
+    
+    predicted_class_freq = dict(sorted(predicted_class_freq.items(), key=lambda kv: kv[1]))
+    if norm is True:
+        write_file("data/generated_files/predicted_class_freq_normalized.json", predicted_class_freq)
+    else:
+        write_file("data/generated_files/predicted_class_freq_original.json", predicted_class_freq)
+    
     return mean_precision
+    
+
+def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
+    # save files
+    trained_model = results["model"]
+    best_model_parameters = results["best_parameters"]
+    model_config = trained_model.to_json()
+    model_weights = trained_model.get_weights()
+    
+    model_values = {
+        'data_dictionary': data_dictionary,
+        'model_config': model_config,
+        'best_parameters': best_model_parameters,
+        'model_weights': model_weights,
+        "compatible_tools": compatible_next_tools
+    }
+    
+    set_trained_model(trained_model_path, model_values)

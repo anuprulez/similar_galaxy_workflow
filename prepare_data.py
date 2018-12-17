@@ -61,7 +61,7 @@ class PrepareData:
                 if tool not in dictionary:
                     dictionary[tool] = max_prev_size + tool_counter
                     tool_counter += 1
-            reverse_dict = dict((v,k) for k,v in dictionary.items())
+            reverse_dict = dict((v, k) for k, v in dictionary.items())
             return dictionary, reverse_dict
         else:
             new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
@@ -204,18 +204,18 @@ class PrepareData:
         Compute class frequency and (inverse) class weights
         """
         n_classes = train_labels.shape[1]
-        frequency_scores = dict()
+        inverse_frequency_scores = dict()
         class_weights = list()
-        class_weights.append(0)
         for i in range(1, n_classes):
             count = len(np.where( train_labels[:, i] > 0 )[0])
-            frequency_scores[str(i)] = count
+            inverse_frequency_scores[i] = count
             class_weights.append(count)
-        frequency_scores = dict(sorted(frequency_scores.items(), key=lambda kv: kv[1]))
         max_weight = max(class_weights)
-        class_weights = [np.round((max_weight / float(wt)), 2) if wt > 0 else 0 for wt in class_weights]
-        inverse_weights = np.asarray(class_weights, dtype=np.float64)
-        return frequency_scores, inverse_weights
+        inverse_frequency_scores[0] = 0.0
+        for key, value in inverse_frequency_scores.items():
+            if value > 0:
+                inverse_frequency_scores[key] = float(max_weight) / value
+        return inverse_frequency_scores
 
     @classmethod
     def get_data_labels_matrices( self, workflow_paths, old_data_dictionary={} ):
@@ -250,13 +250,7 @@ class PrepareData:
         
         train_data, train_labels = self.randomize_data( train_data, train_labels )
         
-        # TODO:
-        # frequency_scores, inverse_class_weights = self.get_class_frequency(train_labels)
+        # get inverse class weights
+        inverse_class_weights = self.get_class_frequency(train_labels)
         
-        # get weighted class labels for each training sample
-        # weighted_train_labels = np.multiply(train_labels, inverse_class_weights)
-        #row_sums = weighted_train_labels.sum(axis=1)
-        
-        # normalize the weighted class values
-        # weighted_train_labels_normalised = weighted_train_labels / row_sums[:, np.newaxis]
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights

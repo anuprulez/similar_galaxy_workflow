@@ -29,27 +29,32 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, optimize=True, normalized=True, inv_class_weights={}):
         """
         Define recurrent neural network and train sequential data
         """
         # get the best model and train
-        print("Start hyperparameter optimisation...")
-        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
-        print("Best model: %s" % str(best_model_parameters))
-
+        if optimize is True:
+            print("Start hyperparameter optimisation...")
+            hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
+            print("Best model: %s" % str(best_model_parameters))
+        else:
+            best_model_parameters = utils.get_defaults()
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
         model.summary()
 
         # define callbacks
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
-        predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs)
+        predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, normalized)
         callbacks_list = [early_stopping, predict_callback_test]
 
         print ("Start training on the best model...")
-        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
+        if inv_class_weights is not None:
+            model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights)
+        else:
+            model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch")
         loss_values = model_fit_callbacks.history["loss"]
         
         return {
@@ -59,19 +64,22 @@ class PredictTool:
             "best_parameters": best_model_parameters
         }
         
+        
+        
 
 class PredictCallback( Callback ):
-    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs ):
+    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs, normalized ):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
+        self.normalized = normalized
         self.abs_precision = list()
 
     def on_epoch_end( self, epoch, logs={} ):
         """
         Compute absolute and compatible precision for test data
         """
-        mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+        mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.normalized)
         self.abs_precision.append(mean_precision)
         print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, mean_precision ) )
 
@@ -105,26 +113,20 @@ if __name__ == "__main__":
     # Process the paths from workflows
     print ( "Dividing data..." )
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary = data.get_data_labels_matrices(workflow_paths)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, inverse_class_weights = data.get_data_labels_matrices(workflow_paths)
 
-    # execute experiment runs and collect results for each run
+    # find the best model and start training
     predict_tool = PredictTool()
-    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs)
-
-    # save files
-    trained_model = results["model"]
-    best_model_parameters = results["best_parameters"]
-    model_config = trained_model.to_json()
-    model_weights = trained_model.get_weights()
     
-    model_values = {
-        'data_dictionary': data_dictionary,
-        'model_config': model_config,
-        'best_parameters': best_model_parameters,
-        'model_weights': model_weights
-    }
+    # start training with weighted classes
+    print("Training with weighted classes...")
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, True, inverse_class_weights)
+    print("Saving results with weighted classes...")
+    utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
     
-    utils.set_trained_model(trained_model_path, model_values)
+    #print("Training with un-weighted classes...")
+    #results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, False)
+    #utils.save_model(results, data_dictionary, compatible_next_tools, trained_model_path)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
