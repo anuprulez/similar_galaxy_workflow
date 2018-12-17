@@ -95,14 +95,13 @@ def get_defaults(mdl_dict=None):
     """
     Get param values (defaults as well)
     """
-    print(mdl_dict)
     if mdl_dict == None:
         return {
             'lr': 0.001, 
             'embedding_size': 128, 
             'dropout': 0.1,
             'units': 128,
-            'batch_size': 32,
+            'batch_size': 128,
             'loss': "binary_crossentropy",
             'activation_recurrent': "elu",
             'activation_output': "sigmoid"
@@ -205,5 +204,4 @@ def save_model(results, data_dictionary, compatible_next_tools, trained_model_pa
         'model_weights': model_weights,
         "compatible_tools": compatible_next_tools
     }
-    
     set_trained_model(trained_model_path, model_values)

@@ -121,12 +121,13 @@ if __name__ == "__main__":
     # start training with weighted classes
     print("Training with weighted classes...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, True, inverse_class_weights)
-    print("Saving results with weighted classes...")
-    utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
+    utils.save_model(results_weighted, data_dictionary, compatible_next_tools, "data/generated_files/trained_model_weighted.hdf5")
     
-    #print("Training with un-weighted classes...")
-    #results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, False)
-    #utils.save_model(results, data_dictionary, compatible_next_tools, trained_model_path)
+    print(" ")
+    
+    print("Training with un-weighted classes...")
+    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, False)
+    utils.save_model(results, data_dictionary, compatible_next_tools, "data/generated_files/trained_model_unweighted.hdf5")
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
