@@ -139,7 +139,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model
 
 
-def verify_model( model, x, y, reverse_data_dictionary, norm ):
+def verify_model( model, x, y, reverse_data_dictionary ):
     """
     Verify the model on test data
     """
@@ -182,11 +182,7 @@ def verify_model( model, x, y, reverse_data_dictionary, norm ):
     print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
     
     predicted_class_freq = dict(sorted(predicted_class_freq.items(), key=lambda kv: kv[1]))
-    if norm is True:
-        write_file("data/generated_files/predicted_class_freq_normalized.json", predicted_class_freq)
-    else:
-        write_file("data/generated_files/predicted_class_freq_original.json", predicted_class_freq)
-    
+    #write_file("data/generated_files/predicted_class_freq_normalized.json", predicted_class_freq)
     return mean_precision
     
 

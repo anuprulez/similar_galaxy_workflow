@@ -77,8 +77,7 @@ class ExtractWorkflowConnections:
         random.shuffle( unique_paths )
         
         print( "Finding compatible next tools..." )
-        compatible_next_tools = self.set_compatible_next_tools( unique_paths )
-
+        compatible_next_tools = self.set_compatible_next_tools(unique_paths)
         return unique_paths, compatible_next_tools
 
     @classmethod

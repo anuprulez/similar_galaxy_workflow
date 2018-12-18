@@ -199,46 +199,65 @@ class PrepareData:
         print( "Overlap in train and test: %d" % len( intersection ) )
         
     @classmethod
-    def get_class_frequency(self, train_labels):
+    def fetch_time_decay(self, data_dictionary):
+        """
+        Get time elapsed information
+        """
+        time_decay = dict()
+        time_decay[0] = 0.0
+        for k, v in data_dictionary.items():
+            if k == 'Cut1':
+                time_decay[v] = 10
+            else:
+                time_decay[v] = random.randint(1, 9)
+        return time_decay
+        
+    @classmethod
+    def assign_class_weights(self, train_labels, time_decay):
         """
         Compute class frequency and (inverse) class weights
         """
         n_classes = train_labels.shape[1]
-        inverse_frequency_scores = dict()
-        inverse_frequency_scores[0] = 0.0
+        inverse_class_weights = dict()
+        inverse_class_weights[0] = 0.0
         for i in range(1, n_classes):
             count = len(np.where( train_labels[:, i] > 0 )[0])
-            inverse_frequency_scores[i] = count
-        max_weight = max(inverse_frequency_scores.values())
-        for key, value in inverse_frequency_scores.items():
+            inverse_class_weights[i] = count
+        max_weight = max(inverse_class_weights.values())
+        for key, value in inverse_class_weights.items():
             if value > 0:
-                inverse_frequency_scores[key] = float(max_weight) / value
-        return inverse_frequency_scores
+                # mask the weights those tools which have not been used recently
+                if time_decay[key] > 9:
+                    inverse_class_weights[key] = 0.0
+                else:
+                    adjusted_decay = (time_decay[key] % 6) + 1
+                    inverse_class_weights[key] = (float(max_weight) / (value * adjusted_decay))
+        return inverse_class_weights
 
     @classmethod
-    def get_data_labels_matrices( self, workflow_paths, old_data_dictionary={} ):
+    def get_data_labels_matrices(self, workflow_paths, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
-        processed_data, raw_paths = self.process_workflow_paths( workflow_paths )
-        dictionary, reverse_dictionary = self.create_data_dictionary( processed_data, old_data_dictionary )
-        num_classes = len( dictionary )
+        processed_data, raw_paths = self.process_workflow_paths(workflow_paths)
+        dictionary, reverse_dictionary = self.create_data_dictionary(processed_data, old_data_dictionary)
+        num_classes = len(dictionary)
 
-        print( "Raw paths: %d" % len( raw_paths ) )
-        random.shuffle( raw_paths )
+        print("Raw paths: %d" % len(raw_paths))
+        random.shuffle(raw_paths)
 
         print( "Decomposing paths..." )
-        all_unique_paths = self.decompose_paths( raw_paths, dictionary )
-        random.shuffle( all_unique_paths )
+        all_unique_paths = self.decompose_paths(raw_paths, dictionary)
+        random.shuffle(all_unique_paths)
 
-        print( "Creating dictionaries..." )
-        multilabels_paths = self.prepare_paths_labels_dictionary( reverse_dictionary, all_unique_paths )
+        print("Creating dictionaries...")
+        multilabels_paths = self.prepare_paths_labels_dictionary(reverse_dictionary, all_unique_paths)
 
-        print( "Complete data: %d" % len( multilabels_paths ) )
-        train_paths_dict, test_paths_dict = self.split_test_train_data( multilabels_paths )
+        print("Complete data: %d" % len(multilabels_paths))
+        train_paths_dict, test_paths_dict = self.split_test_train_data(multilabels_paths)
 
-        print( "Train data: %d" % len( train_paths_dict ) )
-        print( "Test data: %d" % len( test_paths_dict ) )
+        print("Train data: %d" % len(train_paths_dict))
+        print("Test data: %d" % len(test_paths_dict))
 
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
@@ -248,7 +267,10 @@ class PrepareData:
         
         train_data, train_labels = self.randomize_data( train_data, train_labels )
         
+        # get time decay information
+        time_decay = self.fetch_time_decay(dictionary)
+        
         # get inverse class weights
-        inverse_class_weights = self.get_class_frequency(train_labels)
+        inverse_class_weights = self.assign_class_weights(train_labels, time_decay)
         
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights
