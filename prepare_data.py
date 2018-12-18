@@ -205,13 +205,11 @@ class PrepareData:
         """
         n_classes = train_labels.shape[1]
         inverse_frequency_scores = dict()
-        class_weights = list()
+        inverse_frequency_scores[0] = 0.0
         for i in range(1, n_classes):
             count = len(np.where( train_labels[:, i] > 0 )[0])
             inverse_frequency_scores[i] = count
-            class_weights.append(count)
-        max_weight = max(class_weights)
-        inverse_frequency_scores[0] = 0.0
+        max_weight = max(inverse_frequency_scores.values())
         for key, value in inverse_frequency_scores.items():
             if value > 0:
                 inverse_frequency_scores[key] = float(max_weight) / value

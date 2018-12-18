@@ -48,7 +48,7 @@ class PredictTool:
         # define callbacks
         early_stopping = EarlyStopping(monitor='loss', patience=0, verbose=1, mode='min')
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, normalized)
-        callbacks_list = [early_stopping, predict_callback_test]
+        callbacks_list = [predict_callback_test]
 
         print ("Start training on the best model...")
         if inv_class_weights is not None:
@@ -120,13 +120,13 @@ if __name__ == "__main__":
     
     # start training with weighted classes
     print("Training with weighted classes...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, True, inverse_class_weights)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, 15, False, True, inverse_class_weights)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, "data/generated_files/trained_model_weighted.hdf5")
     
     print(" ")
     
     print("Training with un-weighted classes...")
-    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, False, False)
+    results = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, 15, False, False)
     utils.save_model(results, data_dictionary, compatible_next_tools, "data/generated_files/trained_model_unweighted.hdf5")
 
     end_time = time.time()
