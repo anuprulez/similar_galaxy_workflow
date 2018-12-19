@@ -36,13 +36,9 @@ class ExtractWorkflowConnections:
                 in_tool = row[ 2 ]
                 out_tool = row[ 5 ]
                 if out_tool and in_tool and out_tool != in_tool:
-                    in_tool_original, in_tool = self.format_tool_id( in_tool )
-                    out_tool_original, out_tool = self.format_tool_id( out_tool )
-                    workflows[ wf_id ].append( ( in_tool, out_tool ) )
-                    if in_tool not in tool_name_display:
-                        tool_name_display[in_tool] = in_tool_original
-                    if out_tool not in tool_name_display:
-                        tool_name_display[out_tool] = out_tool_original
+                    in_tool = self.format_tool_id( in_tool )
+                    out_tool = self.format_tool_id( out_tool )
+                    workflows[ wf_id ].append((in_tool, out_tool))
 
         print( "Processing workflows..." )
         wf_ctr = 0
@@ -92,9 +88,9 @@ class ExtractWorkflowConnections:
                 current_next_tools = path_split[ window: window + 2 ]
                 current_tool = current_next_tools[ 0 ]
                 next_tool = current_next_tools[ 1 ]
-                if current_tool in next_tools:
+                try:
                     next_tools[ current_tool ] += "," + next_tool
-                else:
+                except:
                     next_tools[ current_tool ] = next_tool
         for tool in next_tools:
             next_tools[ tool ] = ",".join( list( set( next_tools[ tool ].split( "," ) ) ) )
@@ -146,6 +142,4 @@ class ExtractWorkflowConnections:
     def format_tool_id( self, tool_link ):
         tool_id_split = tool_link.split( "/" )
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
-        tool_id_split = tool_id.split( "." )
-        tool_id = tool_id_split[ 0 ] if len( tool_id ) > 1 else tool_id
-        return tool_id, tool_id
+        return tool_id

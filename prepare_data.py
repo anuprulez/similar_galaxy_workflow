@@ -206,10 +206,7 @@ class PrepareData:
         time_decay = dict()
         time_decay[0] = 0.0
         for k, v in data_dictionary.items():
-            if k == 'Cut1':
-                time_decay[v] = 10
-            else:
-                time_decay[v] = random.randint(1, 9)
+            time_decay[v] = random.randint(1, 9)
         return time_decay
         
     @classmethod
@@ -227,11 +224,9 @@ class PrepareData:
         for key, value in inverse_class_weights.items():
             if value > 0:
                 # mask the weights those tools which have not been used recently
-                if time_decay[key] > 9:
-                    inverse_class_weights[key] = 0.0
-                else:
-                    adjusted_decay = (time_decay[key] % 6) + 1
-                    inverse_class_weights[key] = (float(max_weight) / (value * adjusted_decay))
+                adjusted_decay = (time_decay[key] % 6) + 1
+                # TODO: adjust the decay into class weights
+                inverse_class_weights[key] = (float(max_weight) / (value))
         return inverse_class_weights
 
     @classmethod
@@ -266,11 +261,11 @@ class PrepareData:
         self.verify_overlap( train_data, test_data, reverse_dictionary )
         
         train_data, train_labels = self.randomize_data( train_data, train_labels )
-        
+
         # get time decay information
         time_decay = self.fetch_time_decay(dictionary)
-        
+
         # get inverse class weights
         inverse_class_weights = self.assign_class_weights(train_labels, time_decay)
-        
+
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights
