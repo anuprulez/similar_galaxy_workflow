@@ -68,12 +68,13 @@ class PredictCallback( Callback ):
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
         self.abs_precision = list()
+        self.n_epochs = n_epochs
 
     def on_epoch_end( self, epoch, logs={} ):
         """
         Compute absolute and compatible precision for test data
         """
-        if epoch == n_epochs:
+        if epoch + 1 == self.n_epochs:
             mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
             self.abs_precision.append(mean_precision)
             print( "Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))

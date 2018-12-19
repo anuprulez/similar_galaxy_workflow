@@ -58,7 +58,7 @@ class ExtractWorkflowConnections:
 
         print("Workflows processed: %d" % wf_ctr)
         print("# paths in workflows: %d" % len( workflow_paths))
-        
+
         # remove slashes from the tool ids
         wf_paths_no_slash = list()
         for path in workflow_paths:

@@ -101,7 +101,7 @@ def get_defaults(mdl_dict=None):
             'embedding_size': 128, 
             'dropout': 0.1,
             'units': 128,
-            'batch_size': 64,
+            'batch_size': 128,
             'loss': "binary_crossentropy",
             'activation_recurrent': "elu",
             'activation_output': "sigmoid"
