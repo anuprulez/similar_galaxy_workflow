@@ -206,7 +206,7 @@ class PrepareData:
         time_decay = dict()
         time_decay[0] = 0.0
         for k, v in data_dictionary.items():
-            time_decay[v] = random.randint(1, 9)
+            time_decay[v] = random.randint(1, 18)
         return time_decay
         
     @classmethod

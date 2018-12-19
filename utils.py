@@ -147,7 +147,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
     print("Test data size: %d" % len(y))
     size = y.shape[ 0 ]
     ave_abs_precision = list()
-    predicted_class_freq = dict()
     # loop over all the test samples and find prediction precision
     for i in range( size ):
         actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
@@ -167,12 +166,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         # read tool names using reverse dictionary
         actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
         top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ]  for tool_pos in topk_prediction_pos if int(tool_pos) > 0 ]
-        
-        for t_n in top_predicted_next_tool_names:
-            if t_n in predicted_class_freq:
-                predicted_class_freq[t_n] += 1
-            else:
-                predicted_class_freq[t_n] = 1
 
         # find false positives
         false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
@@ -180,9 +173,6 @@ def verify_model( model, x, y, reverse_data_dictionary ):
         ave_abs_precision.append(absolute_precision)
     mean_precision = np.mean(ave_abs_precision)
     print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
-    
-    predicted_class_freq = dict(sorted(predicted_class_freq.items(), key=lambda kv: kv[1]))
-    #write_file("data/generated_files/predicted_class_freq_normalized.json", predicted_class_freq)
     return mean_precision
     
 

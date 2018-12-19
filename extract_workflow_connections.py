@@ -36,8 +36,6 @@ class ExtractWorkflowConnections:
                 in_tool = row[ 2 ]
                 out_tool = row[ 5 ]
                 if out_tool and in_tool and out_tool != in_tool:
-                    in_tool = self.format_tool_id( in_tool )
-                    out_tool = self.format_tool_id( out_tool )
                     workflows[ wf_id ].append((in_tool, out_tool))
 
         print( "Processing workflows..." )
@@ -58,11 +56,19 @@ class ExtractWorkflowConnections:
                         flow_paths.extend( paths )
             workflow_paths.extend( flow_paths )
 
-        print( "Workflows processed: %d" % wf_ctr )
-        print( "# paths in workflows: %d" % len( workflow_paths ) )
+        print("Workflows processed: %d" % wf_ctr)
+        print("# paths in workflows: %d" % len( workflow_paths))
+        
+        # remove slashes from the tool ids
+        wf_paths_no_slash = list()
+        for path in workflow_paths:
+            path_no_slash = [self.format_tool_id(tool_id) for tool_id in path]
+            wf_paths_no_slash.append(path_no_slash)
+
+        print("# paths in workflows with no slashes: %d" % len(wf_paths_no_slash))
 
         # collect duplicate paths
-        for path in workflow_paths:
+        for path in wf_paths_no_slash:
             workflow_paths_dup += ",".join( path ) + "\n"
 
         # collect unique paths

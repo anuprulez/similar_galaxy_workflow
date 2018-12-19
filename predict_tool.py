@@ -73,9 +73,10 @@ class PredictCallback( Callback ):
         """
         Compute absolute and compatible precision for test data
         """
-        mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
-        self.abs_precision.append(mean_precision)
-        print( "Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))
+        if epoch == n_epochs:
+            mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
+            self.abs_precision.append(mean_precision)
+            print( "Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))
 
 
 if __name__ == "__main__":
@@ -108,8 +109,6 @@ if __name__ == "__main__":
     print ( "Dividing data..." )
     data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, inverse_class_weights = data.get_data_labels_matrices(workflow_paths)
-
-    utils.write_file("data/generated_files/data_dictionary.txt", data_dictionary)
 
     # find the best model and start training
     predict_tool = PredictTool()
