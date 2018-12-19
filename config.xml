@@ -4,13 +4,13 @@
         <parameter name="retrain" value="False" />
         <parameter name="n_epochs_optimise" value="1" />
         <parameter name="n_epochs" value="30" />
-        <parameter name="n_epochs_retrain" value="3" />
-        <parameter name="test_share" value="0.2" />
+        <parameter name="n_epochs_retrain" value="15" />
+        <parameter name="test_share" value="0.0" />
         <parameter name="validation_split" value="0.2" />
         <parameter name="maximum_path_length" value="25" />
     </ml_parameters>
     <optimise_parameters>
-        <parameter name="batch_size" value="64" />
+        <parameter name="batch_size" value="128" />
         <parameter name="dropout" value="0.1" />
         <parameter name="memory_units" value="128" />
         <parameter name="embedding_vector_size" value="128" />

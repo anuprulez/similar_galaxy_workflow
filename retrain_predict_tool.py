@@ -177,17 +177,7 @@ if __name__ == "__main__":
     results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_dictionary, n_epochs_retrain, loaded_model, best_parameters, inverse_class_weights)
     
     # save the latest model
-    trained_model = results["model"]
-    best_model_parameters = results["best_params"]
-    '''model_values = {
-        'data_dictionary': data_dictionary,
-        'model_config': trained_model.to_json(),
-        'best_parameters': best_model_parameters,
-        'model_weights': trained_model.get_weights()
-    }'''
-    
     utils.save_model(results, data_dictionary, compatible_next_tools, trained_model_path)
-    #utils.set_trained_model(trained_model_path, model_values)
 
     end_time = time.time()
     print ("Program finished in %s seconds" % str( end_time - start_time ))
