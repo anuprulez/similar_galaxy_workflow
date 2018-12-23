@@ -206,7 +206,11 @@ class PrepareData:
         time_decay = dict()
         time_decay[0] = 0.0
         for k, v in data_dictionary.items():
-            time_decay[v] = random.randint(1, 18)
+            # TODO: Get the time information for each tool
+            if k == "htseq_count":
+                time_decay[v] = 18
+            else:
+                time_decay[v] = 0
         return time_decay
         
     @classmethod
@@ -224,9 +228,8 @@ class PrepareData:
         for key, value in inverse_class_weights.items():
             if value > 0:
                 # mask the weights those tools which have not been used recently
-                adjusted_decay = (time_decay[key] % 6) + 1
-                # TODO: adjust the decay into class weights
-                inverse_class_weights[key] = (float(max_weight) / (value))
+                adjusted_decay = (time_decay[key] // 6) + 1
+                inverse_class_weights[key] = (float(max_weight) / (value * adjusted_decay))
         return inverse_class_weights
 
     @classmethod
