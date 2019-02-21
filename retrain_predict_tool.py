@@ -14,7 +14,7 @@ import h5py
 from keras.models import Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
-from keras.callbacks import Callback
+from keras.callbacks import Callback, EarlyStopping
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras.models import model_from_json
@@ -128,7 +128,7 @@ class PredictCallback( Callback ):
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
-        print( "Usage: python retrain_predict_tool.py data/workflows/workflow_connections_12.tsv <config_file_path> <trained_model_file_path>" ) 
+        print( "Usage: python retrain_predict_tool.py <path to the tabular workflow file> <config_file_path> <previous_trained_model_file_path>" ) 
         exit( 1 )
     start_time = time.time()
 
