@@ -6,6 +6,8 @@ input and output tools
 import csv
 import random
 
+import utils
+
 
 class ExtractWorkflowConnections:
 
@@ -80,6 +82,7 @@ class ExtractWorkflowConnections:
         
         print( "Finding compatible next tools..." )
         compatible_next_tools = self.set_compatible_next_tools(unique_paths)
+        utils.write_file("data/generated_files/compatible_tools.json", compatible_next_tools)
         return unique_paths, compatible_next_tools
 
     @classmethod

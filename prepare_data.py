@@ -16,14 +16,14 @@ import utils
 class PrepareData:
 
     @classmethod
-    def __init__( self, max_seq_length, test_data_share, retrain=False ):
+    def __init__(self, max_seq_length, test_data_share, retrain=False):
         """ Init method. """
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
         self.retrain = retrain
 
     @classmethod
-    def process_workflow_paths( self, workflow_paths ):
+    def process_workflow_paths(self, workflow_paths):
         """
         Get all the tools and complete set of individual paths for each workflow
         """
@@ -49,7 +49,7 @@ class PrepareData:
         return new_data_dict, reverse_dict
 
     @classmethod
-    def assemble_dictionary( self, new_data_dict, old_data_dictionary={}):
+    def assemble_dictionary(self, new_data_dict, old_data_dictionary={}):
         """
         Create/update tools indices in the forward and backward dictionary
         """
@@ -80,7 +80,7 @@ class PrepareData:
         return dictionary, reverse_dictionary
 
     @classmethod
-    def decompose_paths( self, paths, dictionary ):
+    def decompose_paths(self, paths, dictionary):
         """
         Decompose the paths to variable length sub-paths keeping the first tool fixed
         """
@@ -101,7 +101,7 @@ class PrepareData:
         return sub_paths_pos
 
     @classmethod
-    def prepare_paths_labels_dictionary( self, reverse_dictionary, paths ):
+    def prepare_paths_labels_dictionary(self, reverse_dictionary, paths):
         """
         Create a dictionary of sequences with their labels for training and test paths
         """
@@ -125,7 +125,7 @@ class PrepareData:
         return paths_labels
 
     @classmethod
-    def pad_paths( self, paths_dictionary, num_classes ):
+    def pad_paths(self, paths_dictionary, num_classes):
         """
         Add padding to the tools sequences and create multi-hot encoded labels
         """
@@ -144,7 +144,7 @@ class PrepareData:
         return data_mat, label_mat
 
     @classmethod
-    def split_test_train_data( self, multilabels_paths ):
+    def split_test_train_data(self, multilabels_paths):
         """
         Split into test and train data randomly for each run
         """
@@ -161,7 +161,7 @@ class PrepareData:
         return train_dict, test_dict
 
     @classmethod
-    def randomize_data( self, train_data, train_labels ):
+    def randomize_data(self, train_data, train_labels):
         """
         Randomize the train data after its inflation
         """
@@ -177,25 +177,11 @@ class PrepareData:
         return rand_train_data, rand_train_labels
 
     @classmethod
-    def verify_overlap( self, train_data, test_data, reverse_dictionary ):
+    def verify_overlap(self, train_paths, test_paths):
         """
         Verify the overlapping of samples in train and test data
         """
-        train_data_size = train_data.shape[ 0 ]
-        test_data_size = test_data.shape[ 0 ]
-        train_samples = list()
-        test_samples = list()
-        for i in range( train_data_size ):
-            train_sample_pos = np.where( train_data[ i ] > 0 )[ 0 ]
-            train_sample_tool_pos = train_data[ i ][ train_sample_pos[ 0 ]: ]
-            sample_tool_names = ",".join( [ str(tool_pos) for tool_pos in train_sample_tool_pos ] )
-            train_samples.append( sample_tool_names )
-        for i in range( test_data_size ):
-            test_sample_pos = np.where( test_data[ i ] > 0 )[ 0 ]
-            test_sample_tool_pos = test_data[ i ][ test_sample_pos[ 0 ]: ]
-            sample_tool_names = ",".join( [ str(tool_pos) for tool_pos in test_sample_tool_pos ] )
-            test_samples.append( sample_tool_names )
-        intersection = list( set( train_samples ).intersection( set( test_samples ) ) )
+        intersection = list( set( train_paths ).intersection( set( test_paths ) ) )
         print( "Overlap in train and test: %d" % len( intersection ) )
         
     @classmethod
@@ -212,7 +198,7 @@ class PrepareData:
             else:
                 time_decay[v] = 0
         return time_decay
-        
+
     @classmethod
     def assign_class_weights(self, train_labels, time_decay):
         """
@@ -222,12 +208,12 @@ class PrepareData:
         inverse_class_weights = dict()
         inverse_class_weights[0] = 0.0
         for i in range(1, n_classes):
-            count = len(np.where( train_labels[:, i] > 0 )[0])
+            count = len(np.where(train_labels[:, i] > 0 )[0])
             inverse_class_weights[i] = count
         max_weight = max(inverse_class_weights.values())
         for key, value in inverse_class_weights.items():
             if value > 0:
-                # mask the weights those tools which have not been used recently
+                # reduce the weights of those tools which have not been used recently
                 adjusted_decay = (time_decay[key] // 6) + 1
                 inverse_class_weights[key] = (float(max_weight) / (value * adjusted_decay))
         return inverse_class_weights
@@ -256,12 +242,15 @@ class PrepareData:
 
         print("Train data: %d" % len(train_paths_dict))
         print("Test data: %d" % len(test_paths_dict))
+        
+        train_paths = train_paths_dict.keys()
+        test_paths = test_paths_dict.keys()
 
         test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
         train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
         
         print( "Verifying overlap in train and test data..." )
-        self.verify_overlap( train_data, test_data, reverse_dictionary )
+        self.verify_overlap(train_paths, test_paths)
         
         train_data, train_labels = self.randomize_data( train_data, train_labels )
 
