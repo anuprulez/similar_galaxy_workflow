@@ -194,7 +194,7 @@ class PrepareData:
         for k, v in data_dictionary.items():
             # TODO: Get the time information for each tool
             if k == "htseq_count":
-                time_decay[v] = 18
+                time_decay[v] = 0
             else:
                 time_decay[v] = 0
         return time_decay

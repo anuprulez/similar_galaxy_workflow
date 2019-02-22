@@ -97,7 +97,7 @@ def get_defaults(mdl_dict=None):
     """
     if mdl_dict == None:
         return {
-            'lr': 0.001, 
+            'lr': 0.001,
             'embedding_size': 128,
             'dropout': 0.05,
             'units': 256,

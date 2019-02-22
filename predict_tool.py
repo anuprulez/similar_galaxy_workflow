@@ -98,11 +98,11 @@ if __name__ == "__main__":
         for item in child:
             config[item.get("name")] = item.get("value")
 
-    n_epochs = int(config.get("n_epochs", "20"))
-    retrain = config.get('retrain', False)
-    maximum_path_length = int(config.get("maximum_path_length", "25"))
-    test_share = float(config.get("test_share", "0.2"))
-    hyperparameter_optimize = config.get('hyperparameter_optimize', False)
+    n_epochs = int(config["n_epochs"])
+    maximum_path_length = int(config["maximum_path_length"])
+    test_share = float(config["test_share"])
+    hyperparameter_optimize = config['hyperparameter_optimize']
+    retrain = config['retrain']
     trained_model_path = sys.argv[3]
 
     # Extract and process workflows
