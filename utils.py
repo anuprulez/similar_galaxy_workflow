@@ -98,10 +98,10 @@ def get_defaults(mdl_dict=None):
     if mdl_dict == None:
         return {
             'lr': 0.001, 
-            'embedding_size': 128, 
-            'dropout': 0.1,
-            'units': 128,
-            'batch_size': 128,
+            'embedding_size': 128,
+            'dropout': 0.05,
+            'units': 256,
+            'batch_size': 256,
             'loss': "binary_crossentropy",
             'activation_recurrent': "elu",
             'activation_output': "sigmoid"
@@ -109,9 +109,9 @@ def get_defaults(mdl_dict=None):
     else:
         lr = float(mdl_dict.get("learning_rate", "0.001"))
         embedding_size = int(mdl_dict.get("embedding_vector_size", "128"))
-        dropout = float(mdl_dict.get("dropout", "0.1"))
-        units = int(mdl_dict.get("memory_units", "128"))
-        batch_size = int(mdl_dict.get("batch_size", "128"))
+        dropout = float(mdl_dict.get("dropout", "0.05"))
+        units = int(mdl_dict.get("memory_units", "256"))
+        batch_size = int(mdl_dict.get("batch_size", "256"))
         loss = mdl_dict.get("loss_type", "binary_crossentropy")
         activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
         activation_output = mdl_dict.get("activation_output", "sigmoid")

@@ -29,12 +29,12 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inv_class_weights, optimize=False):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inv_class_weights, optimize):
         """
         Define recurrent neural network and train sequential data
         """
         # get the best model and train
-        if optimize is True:
+        if optimize is True or optimize == "True":
             print("Start hyperparameter optimisation...")
             hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
             best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
@@ -53,7 +53,7 @@ class PredictTool:
         print("Start training on the best model...")
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights)
         loss_values = model_fit_callbacks.history["loss"]
-        
+
         return {
             "train_loss": np.array(loss_values),
             "test_absolute_precision": predict_callback_test.abs_precision,
@@ -63,14 +63,14 @@ class PredictTool:
 
 
 class PredictCallback( Callback ):
-    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs ):
+    def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
         self.abs_precision = list()
         self.n_epochs = n_epochs
 
-    def on_epoch_end( self, epoch, logs={} ):
+    def on_epoch_end(self, epoch, logs={}):
         """
         Compute absolute and compatible precision for test data
         """
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # read config parameters
-    tree = et.parse( sys.argv[2] )
+    tree = et.parse(sys.argv[2])
     root = tree.getroot()
     config = dict()
     optimise_parameters_node = None
@@ -98,8 +98,11 @@ if __name__ == "__main__":
         for item in child:
             config[item.get("name")] = item.get("value")
 
-    n_epochs = int(config['n_epochs'])
-    retrain = config['retrain']
+    n_epochs = int(config.get("n_epochs", "20"))
+    retrain = config.get('retrain', False)
+    maximum_path_length = int(config.get("maximum_path_length", "25"))
+    test_share = float(config.get("test_share", "0.2"))
+    hyperparameter_optimize = config.get('hyperparameter_optimize', False)
     trained_model_path = sys.argv[3]
 
     # Extract and process workflows
@@ -107,8 +110,8 @@ if __name__ == "__main__":
     workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
-    print ( "Dividing data..." )
-    data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
+    print ("Dividing data...")
+    data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, inverse_class_weights = data.get_data_labels_matrices(workflow_paths)
 
     # find the best model and start training
@@ -116,7 +119,7 @@ if __name__ == "__main__":
 
     # start training with weighted classes
     print("Training with weighted classes...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inverse_class_weights)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inverse_class_weights, hyperparameter_optimize)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
 
     end_time = time.time()

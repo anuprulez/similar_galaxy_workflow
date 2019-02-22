@@ -2,6 +2,7 @@
 <root>
     <ml_parameters>
         <parameter name="retrain" value="False" />
+        <parameter name="hyperparameter_optimize" value="False" />
         <parameter name="n_epochs_optimise" value="1" />
         <parameter name="n_epochs" value="20" />
         <parameter name="n_epochs_retrain" value="20" />
@@ -11,9 +12,9 @@
     </ml_parameters>
     <optimise_parameters>
         <parameter name="batch_size" value="128" />
-        <parameter name="dropout" value="0.1" />
-        <parameter name="memory_units" value="128" />
-        <parameter name="embedding_vector_size" value="128" />
+        <parameter name="dropout" value="0.05" />
+        <parameter name="memory_units" value="256" />
+        <parameter name="embedding_vector_size" value="256" />
         <parameter name="activation_recurrent" value="elu" />
         <parameter name="activation_output" value="sigmoid" />
         <parameter name="loss_type" value="binary_crossentropy" />

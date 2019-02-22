@@ -110,40 +110,34 @@ class RetrainPredictTool:
 
 
 class PredictCallback( Callback ):
-    def __init__( self, test_data, test_labels, reverse_data_dictionary, n_epochs ):
+    def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
         self.abs_precision = list()
 
-    def on_epoch_end( self, epoch, logs={} ):
+    def on_epoch_end(self, epoch, logs={}):
         """
         Compute absolute and compatible precision for test data
         """
         mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
         self.abs_precision.append(mean_precision)
-        print( "Epoch %d topk absolute precision: %.2f" % ( epoch + 1, mean_precision ) )
+        print("Epoch %d topk absolute precision: %.2f" % ( epoch + 1, mean_precision ))
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 4:
-        print( "Usage: python retrain_predict_tool.py <path to the tabular workflow file> <config_file_path> <previous_trained_model_file_path>" ) 
+    if len(sys.argv) != 3:
+        print("Usage: python retrain_predict_tool.py <path_to_the_tabular_workflow_file> <previous_trained_model_file_path>")
         exit( 1 )
     start_time = time.time()
 
-    tree = et.parse(sys.argv[2])
-    root = tree.getroot()
-    config = dict()
-    for child in root:
-        if child.tag == "ml_parameters":
-            for item in child:
-                config[item.get("name")] = item.get("value")
-
-    n_epochs_retrain = int(config['n_epochs_retrain'])
+    n_epochs_retrain = 20
     retrain = True
+    maximum_path_length = 25
+    test_share = 0.2
     trained_model_path = sys.argv[3]
-    
+
     # Extract the previous model
     hf_file = h5py.File(trained_model_path, 'r')
     model_config = json.loads(utils.get_HDF5(hf_file, 'model_config'))
@@ -162,20 +156,20 @@ if __name__ == "__main__":
     hf_file.close()
     
     loaded_model = utils.load_saved_model(model_config, model_weights)
-    
+
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
     workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
     print ("Dividing data...")
-    data = prepare_data.PrepareData(int(config["maximum_path_length"]), float(config["test_share"]), retrain)
+    data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, inverse_class_weights = data.get_data_labels_matrices(workflow_paths, old_data_dictionary)
 
     # retrain the model on new data
     retrain_predict_tool = RetrainPredictTool()
     results = retrain_predict_tool.retrain_model(train_data, train_labels, test_data, test_labels, reverse_dictionary, n_epochs_retrain, loaded_model, best_parameters, inverse_class_weights)
-    
+
     # save the latest model
     utils.save_model(results, data_dictionary, compatible_next_tools, trained_model_path)
 
