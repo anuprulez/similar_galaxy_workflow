@@ -92,14 +92,12 @@ class ExtractWorkflowConnections:
         # collect unique paths
         unique_paths = list( workflow_paths_dup.split("\n"))
         unique_paths = list(filter(None, unique_paths))
-        print("Unique paths: %d" % len(unique_paths))
-
-        random.shuffle( unique_paths )
-        
-        #utils.write_file("data/generated_files/paths.txt", unique_paths)
-        
+        random.shuffle(unique_paths)
+        print("# paths: %d" % len(unique_paths))
+        no_dup_paths = list(set(unique_paths))
+        print("# no duplicated paths: %d" % len(no_dup_paths))
         print( "Finding compatible next tools..." )
-        compatible_next_tools = self.set_compatible_next_tools(unique_paths)
+        compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
         return unique_paths, compatible_next_tools, months_last_used
 
     @classmethod
