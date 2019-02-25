@@ -6,6 +6,8 @@ input and output tools
 import csv
 import random
 
+import utils
+
 
 class ExtractWorkflowConnections:
 
@@ -25,19 +27,35 @@ class ExtractWorkflowConnections:
         workflow_paths = list()
         unique_paths = list()
         tool_name_display = dict()
+        months_last_used = dict()
         with open( raw_file_path, 'rt' ) as workflow_connections_file:
-            workflow_connections = csv.reader( workflow_connections_file, delimiter=',' )
+            workflow_connections = csv.reader( workflow_connections_file, delimiter='\t' )
             for index, row in enumerate( workflow_connections ):
                 if not index:
                     continue
                 wf_id = str( row[ 0 ] )
                 if wf_id not in workflows:
                     workflows[ wf_id ] = list()
-                in_tool = row[ 2 ]
-                out_tool = row[ 5 ]
+                in_tool = row[ 3 ]
+                out_tool = row[ 6 ]
+
                 if out_tool and in_tool and out_tool != in_tool:
                     workflows[ wf_id ].append((in_tool, out_tool))
+                    # update the most recent usage time for each tool
+                    month_time = utils.convert_timestamp(row[ 1 ])
+                    formatted_in_tool = self.format_tool_id(in_tool)
+                    formatted_out_tool = self.format_tool_id(out_tool)
+                    if formatted_in_tool in months_last_used:
+                        if month_time < months_last_used[formatted_in_tool]:
+                            months_last_used[formatted_in_tool] = month_time
+                    else:
+                        months_last_used[formatted_in_tool] = month_time
 
+                    if formatted_out_tool in months_last_used:
+                        if month_time < months_last_used[formatted_out_tool]:
+                            months_last_used[formatted_out_tool] = month_time
+                    else:
+                        months_last_used[formatted_out_tool] = month_time
         print( "Processing workflows..." )
         wf_ctr = 0
         for wf_id in workflows:
@@ -72,15 +90,17 @@ class ExtractWorkflowConnections:
             workflow_paths_dup += ",".join( path ) + "\n"
 
         # collect unique paths
-        unique_paths = list( workflow_paths_dup.split( "\n" ) )
+        unique_paths = list( workflow_paths_dup.split("\n"))
         unique_paths = list(filter(None, unique_paths))
-        print( "Unique paths: %d" % len( unique_paths ) )
+        print("Unique paths: %d" % len(unique_paths))
 
         random.shuffle( unique_paths )
         
+        #utils.write_file("data/generated_files/paths.txt", unique_paths)
+        
         print( "Finding compatible next tools..." )
         compatible_next_tools = self.set_compatible_next_tools(unique_paths)
-        return unique_paths, compatible_next_tools
+        return unique_paths, compatible_next_tools, months_last_used
 
     @classmethod
     def set_compatible_next_tools( self, workflow_paths ):

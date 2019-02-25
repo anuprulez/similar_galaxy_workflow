@@ -2,6 +2,8 @@ import os
 import numpy as np
 import json
 import h5py
+import datetime
+import time
 
 from keras.models import model_from_json
 from keras.models import Sequential
@@ -89,6 +91,12 @@ def set_trained_model(dump_file, model_values):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
+        
+def convert_timestamp(time):
+    created_time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+    now_time = datetime.datetime.now()
+    month_time = ((now_time - created_time).days) / float(30)
+    return month_time
 
 
 def get_defaults(mdl_dict=None):

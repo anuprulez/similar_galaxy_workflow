@@ -5,7 +5,7 @@
         <parameter name="hyperparameter_optimize" value="False" />
         <parameter name="n_epochs_optimise" value="1" />
         <parameter name="n_epochs" value="30" />
-        <parameter name="test_share" value="0.0" />
+        <parameter name="test_share" value="0.2" />
         <parameter name="maximum_path_length" value="25" />
     </ml_parameters>
     <optimise_parameters>

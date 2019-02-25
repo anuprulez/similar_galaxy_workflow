@@ -185,18 +185,17 @@ class PrepareData:
         print( "Overlap in train and test: %d" % len( intersection ) )
         
     @classmethod
-    def fetch_time_decay(self, data_dictionary):
+    def fetch_time_decay(self, data_dictionary, months_last_used):
         """
         Get time elapsed information
         """
         time_decay = dict()
         time_decay[0] = 0.0
         for k, v in data_dictionary.items():
-            # TODO: Get the time information for each tool
-            if k == "htseq_count":
-                time_decay[v] = 0
-            else:
-                time_decay[v] = 0
+            time_decay[v] = months_last_used[k]
+        utils.write_file("data/generated_files/data_dictionary.txt", data_dictionary)
+        utils.write_file("data/generated_files/months_last_used.txt", months_last_used)
+        utils.write_file("data/generated_files/time_decay.txt", time_decay)
         return time_decay
 
     @classmethod
@@ -219,7 +218,7 @@ class PrepareData:
         return inverse_class_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, months_last_used, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -246,16 +245,16 @@ class PrepareData:
         train_paths = train_paths_dict.keys()
         test_paths = test_paths_dict.keys()
 
-        test_data, test_labels = self.pad_paths( test_paths_dict, num_classes )
-        train_data, train_labels = self.pad_paths( train_paths_dict, num_classes )
+        test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
+        train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
         
-        print( "Verifying overlap in train and test data..." )
-        self.verify_overlap(train_paths, test_paths)
+        #print( "Verifying overlap in train and test data..." )
+        #self.verify_overlap(train_paths, test_paths)
         
-        train_data, train_labels = self.randomize_data( train_data, train_labels )
+        train_data, train_labels = self.randomize_data(train_data, train_labels)
 
         # get time decay information
-        time_decay = self.fetch_time_decay(dictionary)
+        time_decay = self.fetch_time_decay(dictionary, months_last_used)
 
         # get inverse class weights
         inverse_class_weights = self.assign_class_weights(train_labels, time_decay)
