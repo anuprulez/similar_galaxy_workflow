@@ -9,8 +9,8 @@
         <parameter name="maximum_path_length" value="25" />
     </ml_parameters>
     <optimise_parameters>
-        <parameter name="batch_size" value="128" />
-        <parameter name="dropout" value="0.05" />
+        <parameter name="batch_size" value="128,256" />
+        <parameter name="dropout" value="0.05,0.1" />
         <parameter name="memory_units" value="256" />
         <parameter name="embedding_vector_size" value="256" />
         <parameter name="activation_recurrent" value="elu" />

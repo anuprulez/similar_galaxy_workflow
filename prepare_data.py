@@ -193,9 +193,9 @@ class PrepareData:
         time_decay[0] = 0.0
         for k, v in data_dictionary.items():
             time_decay[v] = months_last_used[k]
-        utils.write_file("data/generated_files/data_dictionary.txt", data_dictionary)
-        utils.write_file("data/generated_files/months_last_used.txt", months_last_used)
-        utils.write_file("data/generated_files/time_decay.txt", time_decay)
+        #utils.write_file("data/generated_files/data_dictionary.txt", data_dictionary)
+        #utils.write_file("data/generated_files/months_last_used.txt", months_last_used)
+        #utils.write_file("data/generated_files/time_decay.txt", time_decay)
         return time_decay
 
     @classmethod
