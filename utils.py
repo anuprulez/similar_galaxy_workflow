@@ -99,7 +99,7 @@ def convert_timestamp(time):
     return month_time
 
 
-def get_defaults(mdl_dict=None):
+def get_best_parameters(mdl_dict=None):
     """
     Get param values (defaults as well)
     """
@@ -131,7 +131,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     Create a RNN network and set its parameters
     """
     dimensions = len( reverse_dictionary ) + 1
-    lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_defaults(mdl_dict)
+    lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
         
     # define the architecture of the recurrent neural network
     model = Sequential()

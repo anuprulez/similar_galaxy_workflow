@@ -29,7 +29,7 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inv_class_weights, optimize):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, inv_class_weights, optimize):
         """
         Define recurrent neural network and train sequential data
         """
@@ -37,21 +37,22 @@ class PredictTool:
         if optimize is True or optimize == "True":
             print("Start hyperparameter optimisation...")
             hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels)
-            print("Best model: %s" % str(best_model_parameters))
+            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, val_share)
         else:
-            best_model_parameters = utils.get_defaults()
+            best_model_parameters = utils.get_best_parameters()
+        print("Best model: %s" % str(best_model_parameters))
+
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
         model.summary()
 
         # define callbacks
-        early_stopping = EarlyStopping(monitor='loss', patience=3, verbose=1, mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs)
-        callbacks_list = [early_stopping, predict_callback_test]
+        callbacks_list = []
 
         print("Start training on the best model...")
-        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights)
+        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights, validation_split=val_share)
         loss_values = model_fit_callbacks.history["loss"]
 
         return {
@@ -101,6 +102,7 @@ if __name__ == "__main__":
     n_epochs = int(config["n_epochs"])
     maximum_path_length = int(config["maximum_path_length"])
     test_share = float(config["test_share"])
+    val_share = float(config["val_share"])
     hyperparameter_optimize = config['hyperparameter_optimize']
     retrain = config['retrain']
     trained_model_path = sys.argv[3]
@@ -119,7 +121,7 @@ if __name__ == "__main__":
 
     # start training with weighted classes
     print("Training with weighted classes...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, inverse_class_weights, hyperparameter_optimize)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, inverse_class_weights, hyperparameter_optimize)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
 
     end_time = time.time()
