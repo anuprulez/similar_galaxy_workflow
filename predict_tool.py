@@ -37,7 +37,7 @@ class PredictTool:
         if optimize is True or optimize == "True":
             print("Start hyperparameter optimisation...")
             hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, val_share)
+            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, inv_class_weights, val_share)
         else:
             best_model_parameters = utils.get_best_parameters()
         print("Best model: %s" % str(best_model_parameters))
@@ -49,7 +49,7 @@ class PredictTool:
         # define callbacks
         early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs)
-        callbacks_list = []
+        callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights, validation_split=val_share)
@@ -75,7 +75,7 @@ class PredictCallback( Callback ):
         """
         Compute absolute and compatible precision for test data
         """
-        if epoch + 1 == self.n_epochs:
+        if epoch + 1 <= self.n_epochs:
             mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
             self.abs_precision.append(mean_precision)
             print( "Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))
