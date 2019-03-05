@@ -13,22 +13,22 @@ from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
 
-def read_file( file_path ):
+def read_file(file_path):
     """
     Read a file
     """
-    with open( file_path, "r" ) as json_file:
-        file_content = json.loads( json_file.read() )
+    with open(file_path, "r") as json_file:
+        file_content = json.loads(json_file.read())
     return file_content
 
 
-def write_file( file_path, content ):
+def write_file(file_path, content):
     """
     Write a file
     """
     remove_file(file_path)
-    with open( file_path, "w" ) as json_file:
-        json_file.write(json.dumps( content) )
+    with open(file_path, "w") as json_file:
+        json_file.write(json.dumps(content))
 
   
 def save_processed_workflows(file_path, unique_paths):
@@ -49,7 +49,16 @@ def load_saved_model(model_config, model_weights):
     loaded_model.set_weights(model_weights)
     return loaded_model
 
- 
+
+def format_tool_id(tool_link):
+    """
+    Extract tool id from tool link
+    """
+    tool_id_split = tool_link.split( "/" )
+    tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+    return tool_id
+
+
 def get_HDF5(hf, d_key):
     """
     Read h5 file to get train and test data
@@ -106,8 +115,8 @@ def get_best_parameters(mdl_dict=None):
     if mdl_dict == None:
         return {
             'lr': 0.001,
-            'embedding_size': 128,
-            'dropout': 0.05,
+            'embedding_size': 256,
+            'dropout': 0.1,
             'units': 256,
             'batch_size': 256,
             'loss': "binary_crossentropy",

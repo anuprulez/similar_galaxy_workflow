@@ -185,35 +185,34 @@ class PrepareData:
         print( "Overlap in train and test: %d" % len( intersection ) )
         
     @classmethod
-    def fetch_time_decay(self, data_dictionary, months_last_used):
+    def get_predicted_usage(self, data_dictionary, predicted_usage):
         """
-        Get time elapsed information
+        Get predicted usage for tools
         """
-        time_decay = dict()
-        time_decay[0] = 0.0
+        usage = dict()
+        usage[0] = 0.0
         for k, v in data_dictionary.items():
-            time_decay[v] = months_last_used[k]
-        return time_decay
+            usage[v] = predicted_usage[k]
+        return usage
 
     @classmethod
-    def assign_class_weights(self, train_labels, time_decay):
+    def assign_class_weights(self, train_labels, predicted_usage):
         """
-        Compute class frequency and (inverse) class weights
+        Compute class weights using usage
         """
         n_classes = train_labels.shape[1]
-        inverse_class_weights = dict()
-        inverse_class_weights[0] = 0.0
+        class_weights = dict()
+        class_weights[0] = 0.0
         for i in range(1, n_classes):
             count = len(np.where(train_labels[:, i] > 0 )[0])
-            inverse_class_weights[i] = count
-        max_weight = max(inverse_class_weights.values())
-        for key, value in inverse_class_weights.items():
+            class_weights[i] = count
+        max_weight = max(class_weights.values())
+        for key, value in class_weights.items():
             if value > 0:
-                # reduce the weights of those tools which have not been used recently
-                #adjusted_decay = (time_decay[key] // 6) + 1
-                adjusted_decay = 1
-                inverse_class_weights[key] = (float(max_weight) / (value * adjusted_decay))
-        return inverse_class_weights
+                inverted_wt = float(max_weight) / value 
+                class_weights[key] = inverted_wt * predicted_usage[key]
+        utils.write_file("data/generated_files/class_weights.txt", class_weights)
+        return class_weights
 
     @classmethod
     def get_data_labels_matrices(self, workflow_paths, months_last_used, old_data_dictionary={}):
@@ -250,11 +249,13 @@ class PrepareData:
         #self.verify_overlap(train_paths, test_paths)
         
         train_data, train_labels = self.randomize_data(train_data, train_labels)
+        
+        usage = utils.read_file("data/generated_files.usage_prediction.txt")
 
         # get time decay information
-        time_decay = self.fetch_time_decay(dictionary, months_last_used)
+        tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
 
         # get inverse class weights
-        inverse_class_weights = self.assign_class_weights(train_labels, time_decay)
+        inverse_class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
 
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights

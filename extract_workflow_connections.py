@@ -43,8 +43,8 @@ class ExtractWorkflowConnections:
                     workflows[ wf_id ].append((in_tool, out_tool))
                     # update the most recent usage time for each tool
                     month_time = utils.convert_timestamp(row[ 1 ])
-                    formatted_in_tool = self.format_tool_id(in_tool)
-                    formatted_out_tool = self.format_tool_id(out_tool)
+                    formatted_in_tool = utils.format_tool_id(in_tool)
+                    formatted_out_tool = utils.format_tool_id(out_tool)
                     if formatted_in_tool in months_last_used:
                         if month_time < months_last_used[formatted_in_tool]:
                             months_last_used[formatted_in_tool] = month_time
@@ -80,7 +80,7 @@ class ExtractWorkflowConnections:
         # remove slashes from the tool ids
         wf_paths_no_slash = list()
         for path in workflow_paths:
-            path_no_slash = [self.format_tool_id(tool_id) for tool_id in path]
+            path_no_slash = [utils.format_tool_id(tool_id) for tool_id in path]
             wf_paths_no_slash.append(path_no_slash)
 
         print("# paths in workflows with no slashes: %d" % len(wf_paths_no_slash))
@@ -96,8 +96,9 @@ class ExtractWorkflowConnections:
         print("# paths: %d" % len(unique_paths))
         no_dup_paths = list(set(unique_paths))
         print("# no duplicated paths: %d" % len(no_dup_paths))
-        print( "Finding compatible next tools..." )
-        compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
+        #print( "Finding compatible next tools..." )
+        #compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
+        compatible_next_tools = []
         return unique_paths, compatible_next_tools, months_last_used
 
     @classmethod
@@ -161,9 +162,3 @@ class ExtractWorkflowConnections:
                     for tool_path in new_tools_paths:
                         path_list.append( tool_path )
         return path_list
-
-    @classmethod
-    def format_tool_id( self, tool_link ):
-        tool_id_split = tool_link.split( "/" )
-        tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
-        return tool_id
