@@ -192,7 +192,11 @@ class PrepareData:
         usage = dict()
         usage[0] = 0.0
         for k, v in data_dictionary.items():
-            usage[v] = predicted_usage[k]
+            try: 
+                usage[v] = predicted_usage[k]
+            except Exception:
+                usage[v] = 1.0
+                continue
         return usage
 
     @classmethod
@@ -211,6 +215,9 @@ class PrepareData:
             if value > 0:
                 inverted_wt = float(max_weight) / value 
                 class_weights[key] = inverted_wt * predicted_usage[key]
+        max_wt = max(class_weights.values())
+        for key, value in class_weights.items():
+            class_weights[key] = class_weights[key] / float(max_wt)
         utils.write_file("data/generated_files/class_weights.txt", class_weights)
         return class_weights
 
@@ -250,7 +257,7 @@ class PrepareData:
         
         train_data, train_labels = self.randomize_data(train_data, train_labels)
         
-        usage = utils.read_file("data/generated_files.usage_prediction.txt")
+        usage = utils.read_file("data/generated_files/usage_prediction.txt")
 
         # get time decay information
         tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
