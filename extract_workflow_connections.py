@@ -27,7 +27,6 @@ class ExtractWorkflowConnections:
         workflow_paths = list()
         unique_paths = list()
         tool_name_display = dict()
-        months_last_used = dict()
         with open( raw_file_path, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter='\t' )
             for index, row in enumerate( workflow_connections ):
@@ -45,17 +44,6 @@ class ExtractWorkflowConnections:
                     month_time = utils.convert_timestamp(row[ 1 ])
                     formatted_in_tool = utils.format_tool_id(in_tool)
                     formatted_out_tool = utils.format_tool_id(out_tool)
-                    if formatted_in_tool in months_last_used:
-                        if month_time < months_last_used[formatted_in_tool]:
-                            months_last_used[formatted_in_tool] = month_time
-                    else:
-                        months_last_used[formatted_in_tool] = month_time
-
-                    if formatted_out_tool in months_last_used:
-                        if month_time < months_last_used[formatted_out_tool]:
-                            months_last_used[formatted_out_tool] = month_time
-                    else:
-                        months_last_used[formatted_out_tool] = month_time
         print( "Processing workflows..." )
         wf_ctr = 0
         for wf_id in workflows:
@@ -96,10 +84,9 @@ class ExtractWorkflowConnections:
         print("# paths: %d" % len(unique_paths))
         no_dup_paths = list(set(unique_paths))
         print("# no duplicated paths: %d" % len(no_dup_paths))
-        #print( "Finding compatible next tools..." )
-        #compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
-        compatible_next_tools = []
-        return unique_paths, compatible_next_tools, months_last_used
+        print( "Finding compatible next tools..." )
+        compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
+        return unique_paths, compatible_next_tools
 
     @classmethod
     def set_compatible_next_tools( self, workflow_paths ):

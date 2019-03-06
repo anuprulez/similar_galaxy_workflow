@@ -125,8 +125,8 @@ def get_best_parameters(mdl_dict=None):
         }
     else:
         lr = float(mdl_dict.get("learning_rate", "0.001"))
-        embedding_size = int(mdl_dict.get("embedding_vector_size", "128"))
-        dropout = float(mdl_dict.get("dropout", "0.05"))
+        embedding_size = int(mdl_dict.get("embedding_vector_size", "256"))
+        dropout = float(mdl_dict.get("dropout", "0.1"))
         units = int(mdl_dict.get("memory_units", "256"))
         batch_size = int(mdl_dict.get("batch_size", "256"))
         loss = mdl_dict.get("loss_type", "binary_crossentropy")

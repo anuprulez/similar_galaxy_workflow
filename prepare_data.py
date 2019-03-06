@@ -183,7 +183,7 @@ class PrepareData:
         """
         intersection = list( set( train_paths ).intersection( set( test_paths ) ) )
         print( "Overlap in train and test: %d" % len( intersection ) )
-        
+
     @classmethod
     def get_predicted_usage(self, data_dictionary, predicted_usage):
         """
@@ -205,6 +205,7 @@ class PrepareData:
         Compute class weights using usage
         """
         n_classes = train_labels.shape[1]
+        inverted_weights = dict()
         class_weights = dict()
         class_weights[0] = 0.0
         for i in range(1, n_classes):
@@ -213,16 +214,19 @@ class PrepareData:
         max_weight = max(class_weights.values())
         for key, value in class_weights.items():
             if value > 0:
-                inverted_wt = float(max_weight) / value 
-                class_weights[key] = inverted_wt * predicted_usage[key]
-        max_wt = max(class_weights.values())
-        for key, value in class_weights.items():
-            class_weights[key] = class_weights[key] / float(max_wt)
+                inverted_wt = float(max_weight) / value
+                inverted_weights[key] = inverted_wt
+                usage = predicted_usage[key]
+                if usage < np.e:
+                    usage = np.e
+                combined_wt = inverted_wt * np.log(usage)
+                class_weights[key] = combined_wt
         utils.write_file("data/generated_files/class_weights.txt", class_weights)
+        utils.write_file("data/generated_files/inverted_weights.txt", inverted_weights)
         return class_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, months_last_used, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -252,12 +256,11 @@ class PrepareData:
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
         
-        #print( "Verifying overlap in train and test data..." )
-        #self.verify_overlap(train_paths, test_paths)
-        
         train_data, train_labels = self.randomize_data(train_data, train_labels)
         
         usage = utils.read_file("data/generated_files/usage_prediction.txt")
+        
+        utils.write_file("data/generated_files/data_dict.txt", dictionary)
 
         # get time decay information
         tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
