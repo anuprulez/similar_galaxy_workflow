@@ -73,17 +73,17 @@ class ToolPopularity:
             param_grid = {
                 'regressor__alpha': [0.1, 0.5, 0.75, 1.0],
             }
-            search = GridSearchCV(pipe, param_grid, iid=False, cv=4, return_train_score=False, scoring='r2', n_jobs=2, error_score=1)
+            search = GridSearchCV(pipe, param_grid, iid=False, cv=5, return_train_score=False, scoring='r2', n_jobs=2, error_score=1)
             search.fit(x_reshaped, y_reshaped)
             model = search.best_estimator_
             # set the next time point to get prediction for
             prediction_point = np.reshape([x_reshaped[-1][0] + 1], (1, 1))
             prediction = model.predict(prediction_point)
-            if prediction <= 0:
-                prediction = [1.0]
+            if prediction <= np.e:
+                prediction = [np.e]
             return prediction[0]
         except Exception:
-            return 1.0
+            return np.e
 
 
     @classmethod

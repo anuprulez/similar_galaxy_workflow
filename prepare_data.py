@@ -217,10 +217,8 @@ class PrepareData:
                 inverted_wt = float(max_weight) / value
                 inverted_weights[key] = inverted_wt
                 usage = predicted_usage[key]
-                if usage < np.e:
-                    usage = np.e
-                combined_wt = inverted_wt * np.log(usage)
-                class_weights[key] = combined_wt
+                combined_wt = np.log(usage)
+                class_weights[key] = np.round(combined_wt, 2)
         utils.write_file("data/generated_files/class_weights.txt", class_weights)
         utils.write_file("data/generated_files/inverted_weights.txt", inverted_weights)
         return class_weights
