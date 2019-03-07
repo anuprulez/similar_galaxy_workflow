@@ -206,26 +206,26 @@ class PrepareData:
         Compute class weights using usage
         """
         n_classes = train_labels.shape[1]
-        inverted_weights = dict()
+        inverted_frequency = dict()
         class_weights = dict()
         class_weights[0] = 0.0
         # get the count of each tool present in the label matrix
         for i in range(1, n_classes):
             count = len(np.where(train_labels[:, i] > 0)[0])
             class_weights[i] = count
-        max_weight = max(class_weights.values())
-        for key, value in class_weights.items():
-            if value > 0:
+        max_frequency = max(class_weights.values())
+        for key, frequency in class_weights.items():
+            if frequency > 0:
                 # get inverted frequency for each tool in label matrix
                 # to assign higher weight to less frequent tools
                 # and lower weight to more frequent tools
-                inverted_wt = float(max_weight) / value
-                inverted_weights[key] = inverted_wt
+                inverted_freq = float(max_frequency) / frequency
+                inverted_frequency[key] = inverted_freq
                 # compute combined weight for each tool
                 # higher usage, higher weight
-                class_weights[key] = np.round(inverted_wt * predicted_usage[key], 8)
+                class_weights[key] = np.sqrt(predicted_usage[key] * inverted_freq)
         utils.write_file("data/generated_files/class_weights.txt", class_weights)
-        utils.write_file("data/generated_files/inverted_weights.txt", inverted_weights)
+        utils.write_file("data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
 
     @classmethod
