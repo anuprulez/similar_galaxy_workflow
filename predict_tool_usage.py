@@ -10,7 +10,7 @@ import warnings
 import csv
 import collections
 
-from sklearn.linear_model import ElasticNet
+from sklearn.svm import SVR
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
@@ -68,22 +68,30 @@ class ToolPopularity:
         """
         Fit a curve for the tool usage over time to predict future tool usage
         """
+        base_pred = 1.0
+        cv = 5
+        s_typ = 'neg_mean_absolute_error'
+        n_jobs = 2
+        s_error = 1
+        iid = True
+        tr_score = False
         try:
-            pipe = Pipeline(steps=[('regressor', ElasticNet())])
+            pipe = Pipeline(steps=[('regressor', SVR(gamma='scale'))])
             param_grid = {
-                'regressor__alpha': [0.1, 0.5, 0.75, 1.0],
+                'regressor__kernel': ['rbf', 'poly', 'linear'],
+                'regressor__degree': [2, 3]
             }
-            search = GridSearchCV(pipe, param_grid, iid=False, cv=5, return_train_score=False, scoring='r2', n_jobs=2, error_score=1)
-            search.fit(x_reshaped, y_reshaped)
+            search = GridSearchCV(pipe, param_grid, iid=iid, cv=cv, scoring=s_typ, n_jobs=n_jobs, error_score=s_error, return_train_score=tr_score)
+            search.fit(x_reshaped, y_reshaped.ravel())
             model = search.best_estimator_
             # set the next time point to get prediction for
             prediction_point = np.reshape([x_reshaped[-1][0] + 1], (1, 1))
             prediction = model.predict(prediction_point)
-            if prediction <= np.e:
-                prediction = [np.e]
+            if prediction <= base_pred:
+                prediction = [base_pred]
             return prediction[0]
         except Exception:
-            return np.e
+            return base_pred
 
 
     @classmethod
@@ -101,7 +109,7 @@ class ToolPopularity:
             x_pos = np.arange(len(x_val))
             x_reshaped = x_pos.reshape(len(x_pos), 1)
             y_reshaped = np.reshape(y_val, (len(x_pos), 1))
-            prediction = self.learn_tool_popularity(x_reshaped, y_reshaped)
+            prediction = np.round(self.learn_tool_popularity(x_reshaped, y_reshaped), 2)
             print(tool_name, prediction)
             usage_prediction[tool_name] = prediction
         utils.write_file("data/generated_files/usage_prediction.txt", usage_prediction)
