@@ -27,12 +27,12 @@ class HyperparameterOptimisation:
             parameters[item.get("name")] = values.split(",")
         possible_values = 1
         for pt in parameters:
-             parameter_names.append(pt)
-             parameter_values.append(parameters[pt])
-             possible_values *= len(parameters[pt])
+            parameter_names.append(pt)
+            parameter_values.append(parameters[pt])
+            possible_values *= len(parameters[pt])
         models = list(itertools.product(*parameter_values))
         return parameter_names, models
-        
+
     @classmethod
     def train_model(self, mdl_dict, n_epochs_optimise, reverse_dictionary, train_data, train_labels, class_weights, val_share):
         """
@@ -40,18 +40,18 @@ class HyperparameterOptimisation:
         """
         # get the network
         model = utils.set_recurrent_network(mdl_dict, reverse_dictionary)
-        
+
         model.summary()
 
         # fit the model
         model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(mdl_dict["batch_size"]), epochs=n_epochs_optimise, shuffle="batch", class_weight=class_weights, validation_split=val_share)
-        
+
         # verify model with validation loss
         validation_loss = np.round(model_fit_callbacks.history['val_loss'], 4)
-        
+
         # take the validation loss of the last training epoch
         return validation_loss[-1]
-        
+
     @classmethod
     def find_best_model(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, val_share):
         """

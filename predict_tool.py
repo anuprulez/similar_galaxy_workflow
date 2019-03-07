@@ -6,13 +6,11 @@ using machine learning (recurrent neural network)
 import sys
 import numpy as np
 import time
-import os
 import xml.etree.ElementTree as et
 import warnings
-import h5py
 
 # machine learning library
-from keras.callbacks import ModelCheckpoint, Callback, EarlyStopping
+from keras.callbacks import Callback, EarlyStopping
 
 import extract_workflow_connections
 import prepare_data
@@ -25,7 +23,7 @@ warnings.filterwarnings("ignore")
 class PredictTool:
 
     @classmethod
-    def __init__( self ):
+    def __init__(self):
         """ Init method. """
 
     @classmethod
@@ -63,7 +61,7 @@ class PredictTool:
         }
 
 
-class PredictCallback( Callback ):
+class PredictCallback(Callback):
     def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs):
         self.test_data = test_data
         self.test_labels = test_labels
@@ -78,14 +76,14 @@ class PredictCallback( Callback ):
         if epoch + 1 <= self.n_epochs:
             mean_precision = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary)
             self.abs_precision.append(mean_precision)
-            print( "Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))
+            print("Epoch %d topk absolute precision: %.2f" % (epoch + 1, mean_precision))
 
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
         print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path>")
-        exit( 1 )
+        exit(1)
     start_time = time.time()
 
     # read config parameters
@@ -112,7 +110,7 @@ if __name__ == "__main__":
     workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
-    print ("Dividing data...")
+    print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, inverse_class_weights = data.get_data_labels_matrices(workflow_paths)
 
@@ -125,4 +123,4 @@ if __name__ == "__main__":
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
 
     end_time = time.time()
-    print ("Program finished in %s seconds" % str( end_time - start_time ))
+    print("Program finished in %s seconds" % str(end_time - start_time))

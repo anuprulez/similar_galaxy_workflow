@@ -6,9 +6,7 @@ into the test and training sets
 
 import collections
 import numpy as np
-import json
 import random
-import h5py
 
 import utils
 
@@ -29,15 +27,15 @@ class PrepareData:
         """
         tokens = list()
         raw_paths = workflow_paths
-        raw_paths = [ x.replace( "\n", '' ) for x in raw_paths ]
+        raw_paths = [x.replace("\n", '') for x in raw_paths]
         for item in raw_paths:
-            split_items = item.split( "," )
+            split_items = item.split(",")
             for token in split_items:
                 if token is not "":
-                    tokens.append( token )
-        tokens = list( set( tokens ) )
-        tokens = np.array( tokens )
-        tokens = np.reshape( tokens, [ -1, ] )
+                    tokens.append(token)
+        tokens = list(set(tokens))
+        tokens = np.array(tokens)
+        tokens = np.reshape(tokens, [-1, ])
         return tokens, raw_paths
 
     @classmethod
@@ -45,7 +43,7 @@ class PrepareData:
         """
         Create new data dictionary
         """
-        reverse_dict = dict((v,k) for k,v in new_data_dict.items())
+        reverse_dict = dict((v, k) for k, v in new_data_dict.items())
         return new_data_dict, reverse_dict
 
     @classmethod
@@ -68,14 +66,14 @@ class PrepareData:
             return new_data_dict, reverse_dict
 
     @classmethod
-    def create_data_dictionary( self, words, old_data_dictionary={}):
+    def create_data_dictionary(self, words, old_data_dictionary={}):
         """
         Create two dictionaries having tools names and their indexes
         """
-        count = collections.Counter( words ).most_common()
+        count = collections.Counter(words).most_common()
         dictionary = dict()
         for word, _ in count:
-            dictionary[ word ] = len( dictionary ) + 1
+            dictionary[word] = len(dictionary) + 1
         dictionary, reverse_dictionary = self.assemble_dictionary(dictionary, old_data_dictionary)
         return dictionary, reverse_dictionary
 
@@ -86,18 +84,18 @@ class PrepareData:
         """
         sub_paths_pos = list()
         sub_paths_names = list()
-        for index, item in enumerate( paths ):
-            tools = item.split( "," )
-            len_tools = len( tools )
+        for index, item in enumerate(paths):
+            tools = item.split(",")
+            len_tools = len(tools)
             if len_tools <= self.max_tool_sequence_len:
-                for window in range( 1, len_tools ):
-                    sequence = tools[ 0: window + 1 ]
-                    tools_pos = [ str( dictionary[ str( tool_item ) ] ) for tool_item in sequence ]
-                    if len( tools_pos ) > 1:
-                        sub_paths_pos.append( ",".join( tools_pos ) )
-                        sub_paths_names.append(  ",".join( sequence ) )
-        sub_paths_pos = list( set( sub_paths_pos ) )
-        sub_paths_names = list( set( sub_paths_names ) )
+                for window in range(1, len_tools):
+                    sequence = tools[0: window + 1]
+                    tools_pos = [str(dictionary[str(tool_item)]) for tool_item in sequence]
+                    if len(tools_pos) > 1:
+                        sub_paths_pos.append(",".join(tools_pos))
+                        sub_paths_names.append(",".join(sequence))
+        sub_paths_pos = list(set(sub_paths_pos))
+        sub_paths_names = list(set(sub_paths_names))
         return sub_paths_pos
 
     @classmethod
@@ -107,21 +105,21 @@ class PrepareData:
         """
         paths_labels = dict()
         paths_labels_names = dict()
-        random.shuffle( paths )
+        random.shuffle(paths)
         for item in paths:
             if item and item not in "":
-                tools = item.split( "," )
-                label = tools[ -1 ]
-                train_tools = tools[ :len( tools ) - 1 ]
-                train_tools = ",".join( train_tools )
+                tools = item.split(",")
+                label = tools[-1]
+                train_tools = tools[:len(tools) - 1]
+                train_tools = ",".join(train_tools)
                 if train_tools in paths_labels:
-                    paths_labels[ train_tools ] += "," + label
+                    paths_labels[train_tools] += "," + label
                 else:
-                    paths_labels[ train_tools ] = label
+                    paths_labels[train_tools] = label
         for item in paths_labels:
-            path_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in item.split( "," ) ] )
-            path_label_names = ",".join( [ reverse_dictionary[ int( pos ) ] for pos in paths_labels[ item ].split( "," ) ] )
-            paths_labels_names[ path_names ] = path_label_names
+            path_names = ",".join([reverse_dictionary[int(pos)] for pos in item.split(",")])
+            path_label_names = ",".join([reverse_dictionary[int(pos)] for pos in paths_labels[item].split(",")])
+            paths_labels_names[path_names] = path_label_names
         return paths_labels
 
     @classmethod
@@ -129,17 +127,17 @@ class PrepareData:
         """
         Add padding to the tools sequences and create multi-hot encoded labels
         """
-        size_data = len( paths_dictionary )
-        data_mat = np.zeros( [ size_data, self.max_tool_sequence_len ] )
-        label_mat = np.zeros( [ size_data, num_classes + 1 ] )
+        size_data = len(paths_dictionary)
+        data_mat = np.zeros([size_data, self.max_tool_sequence_len])
+        label_mat = np.zeros([size_data, num_classes + 1])
         train_counter = 0
-        for train_seq, train_label in list( paths_dictionary.items() ):
-            positions = train_seq.split( "," )
-            start_pos = self.max_tool_sequence_len - len( positions )
-            for id_pos, pos in enumerate( positions ):
-                data_mat[ train_counter ][ start_pos + id_pos ] = int( pos )
-            for label_item in train_label.split( "," ):
-                label_mat[ train_counter ][ int( label_item ) ] = 1.0
+        for train_seq, train_label in list(paths_dictionary.items()):
+            positions = train_seq.split(",")
+            start_pos = self.max_tool_sequence_len - len(positions)
+            for id_pos, pos in enumerate(positions):
+                data_mat[train_counter][start_pos + id_pos] = int(pos)
+            for label_item in train_label.split(","):
+                label_mat[train_counter][int(label_item)] = 1.0
             train_counter += 1
         return data_mat, label_mat
 
@@ -151,13 +149,13 @@ class PrepareData:
         train_dict = dict()
         test_dict = dict()
         all_paths = multilabels_paths.keys()
-        random.shuffle( list( all_paths ) )
-        split_number = int( self.test_share * len( all_paths ) )
-        for index, path in enumerate( list( all_paths ) ):
+        random.shuffle(list(all_paths))
+        split_number = int(self.test_share * len(all_paths))
+        for index, path in enumerate(list(all_paths)):
             if index < split_number:
-                test_dict[ path ] = multilabels_paths[ path ]
+                test_dict[path] = multilabels_paths[path]
             else:
-                train_dict[ path ] = multilabels_paths[ path ]
+                train_dict[path] = multilabels_paths[path]
         return train_dict, test_dict
 
     @classmethod
@@ -167,13 +165,13 @@ class PrepareData:
         """
         size_data = train_data.shape
         size_labels = train_labels.shape
-        rand_train_data = np.zeros( [ size_data[ 0 ], size_data[ 1 ] ] )
-        rand_train_labels = np.zeros( [ size_labels[ 0 ], size_labels[ 1 ] ] )
-        indices = np.arange( size_data[ 0 ] )
-        random.shuffle( indices )
-        for index, random_index in enumerate( indices ):
-            rand_train_data[ index ] = train_data[ random_index ]
-            rand_train_labels[ index ] = train_labels[ random_index ]
+        rand_train_data = np.zeros([size_data[0], size_data[1]])
+        rand_train_labels = np.zeros([size_labels[0], size_labels[1]])
+        indices = np.arange(size_data[0])
+        random.shuffle(indices)
+        for index, random_index in enumerate(indices):
+            rand_train_data[index] = train_data[random_index]
+            rand_train_labels[index] = train_labels[random_index]
         return rand_train_data, rand_train_labels
 
     @classmethod
@@ -181,8 +179,8 @@ class PrepareData:
         """
         Verify the overlapping of samples in train and test data
         """
-        intersection = list( set( train_paths ).intersection( set( test_paths ) ) )
-        print( "Overlap in train and test: %d" % len( intersection ) )
+        intersection = list(set(train_paths).intersection(set(test_paths)))
+        print("Overlap in train and test: %d" % len(intersection))
 
     @classmethod
     def get_predicted_usage(self, data_dictionary, predicted_usage):
@@ -190,12 +188,15 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
+        # if a tool hasn't been run, assign a very small number as usage weight
+        epsilon = 1e-6
+        # 0th index has no tool
         usage[0] = 0.0
         for k, v in data_dictionary.items():
-            try: 
+            try:
                 usage[v] = predicted_usage[k]
             except Exception:
-                usage[v] = 1.0
+                usage[v] = epsilon
                 continue
         return usage
 
@@ -208,17 +209,21 @@ class PrepareData:
         inverted_weights = dict()
         class_weights = dict()
         class_weights[0] = 0.0
+        # get the count of each tool present in the label matrix
         for i in range(1, n_classes):
-            count = len(np.where(train_labels[:, i] > 0 )[0])
+            count = len(np.where(train_labels[:, i] > 0)[0])
             class_weights[i] = count
         max_weight = max(class_weights.values())
         for key, value in class_weights.items():
             if value > 0:
+                # get inverted frequency for each tool in label matrix
+                # to assign higher weight to less frequent tools
+                # and lower weight to more frequent tools
                 inverted_wt = float(max_weight) / value
                 inverted_weights[key] = inverted_wt
-                usage = predicted_usage[key]
-                combined_wt = np.log(usage)
-                class_weights[key] = np.round(combined_wt, 2)
+                # compute combined weight for each tool
+                # higher usage, higher weight
+                class_weights[key] = np.round(inverted_wt * predicted_usage[key], 8)
         utils.write_file("data/generated_files/class_weights.txt", class_weights)
         utils.write_file("data/generated_files/inverted_weights.txt", inverted_weights)
         return class_weights
@@ -235,7 +240,7 @@ class PrepareData:
         print("Raw paths: %d" % len(raw_paths))
         random.shuffle(raw_paths)
 
-        print( "Decomposing paths..." )
+        print("Decomposing paths...")
         all_unique_paths = self.decompose_paths(raw_paths, dictionary)
         random.shuffle(all_unique_paths)
 
@@ -247,17 +252,14 @@ class PrepareData:
 
         print("Train data: %d" % len(train_paths_dict))
         print("Test data: %d" % len(test_paths_dict))
-        
-        train_paths = train_paths_dict.keys()
-        test_paths = test_paths_dict.keys()
 
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
-        
+
         train_data, train_labels = self.randomize_data(train_data, train_labels)
-        
+
         usage = utils.read_file("data/generated_files/usage_prediction.txt")
-        
+
         utils.write_file("data/generated_files/data_dict.txt", dictionary)
 
         # get time decay information

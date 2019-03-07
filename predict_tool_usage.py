@@ -5,7 +5,6 @@ Predict tool usage to weigh the predicted tools
 import sys
 import numpy as np
 import time
-import os
 import warnings
 import csv
 import collections
@@ -22,9 +21,9 @@ warnings.filterwarnings("ignore")
 class ToolPopularity:
 
     @classmethod
-    def __init__( self ):
+    def __init__(self):
         """ Init method. """
-        
+
     @classmethod
     def extract_tool_usage(self, tool_usage_file, cutoff_date):
         """
@@ -62,13 +61,12 @@ class ToolPopularity:
         utils.write_file("data/generated_files/tool_usage_dict.txt", tool_usage_dict)
         return tool_usage_dict
 
-
     @classmethod
     def learn_tool_popularity(self, x_reshaped, y_reshaped):
         """
         Fit a curve for the tool usage over time to predict future tool usage
         """
-        base_pred = 1.0
+        epsilon = 1e-6
         cv = 5
         s_typ = 'neg_mean_absolute_error'
         n_jobs = 2
@@ -87,12 +85,11 @@ class ToolPopularity:
             # set the next time point to get prediction for
             prediction_point = np.reshape([x_reshaped[-1][0] + 1], (1, 1))
             prediction = model.predict(prediction_point)
-            if prediction <= base_pred:
-                prediction = [base_pred]
+            if prediction < 0.0:
+                prediction = [epsilon]
             return prediction[0]
         except Exception:
-            return base_pred
-
+            return epsilon
 
     @classmethod
     def get_pupularity_prediction(self, tools_usage):
@@ -109,7 +106,7 @@ class ToolPopularity:
             x_pos = np.arange(len(x_val))
             x_reshaped = x_pos.reshape(len(x_pos), 1)
             y_reshaped = np.reshape(y_val, (len(x_pos), 1))
-            prediction = np.round(self.learn_tool_popularity(x_reshaped, y_reshaped), 2)
+            prediction = np.round(self.learn_tool_popularity(x_reshaped, y_reshaped), 8)
             print(tool_name, prediction)
             usage_prediction[tool_name] = prediction
         utils.write_file("data/generated_files/usage_prediction.txt", usage_prediction)
@@ -119,12 +116,12 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 3:
         print("Usage: python predict_tool_usage.py <tool_usage_file> <cutoff date as yyyy-mm-dd>")
-        exit( 1 )
+        exit(1)
     start_time = time.time()
-    
+
     tool_usage = ToolPopularity()
     usage = tool_usage.extract_tool_usage(sys.argv[1], sys.argv[2])
     tool_usage.get_pupularity_prediction(usage)
-    
+
     end_time = time.time()
-    print ("Program finished in %s seconds" % str( end_time - start_time ))
+    print("Program finished in %s seconds" % str(end_time - start_time))
