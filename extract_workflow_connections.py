@@ -30,25 +30,19 @@ class ExtractWorkflowConnections:
         with open( raw_file_path, 'rt' ) as workflow_connections_file:
             workflow_connections = csv.reader( workflow_connections_file, delimiter='\t' )
             for index, row in enumerate( workflow_connections ):
-                if not index:
-                    continue
                 wf_id = str( row[ 0 ] )
-                if wf_id not in workflows:
-                    workflows[ wf_id ] = list()
                 in_tool = row[ 3 ]
                 out_tool = row[ 6 ]
-
+                if wf_id not in workflows:
+                    workflows[ wf_id ] = list()
                 if out_tool and in_tool and out_tool != in_tool:
                     workflows[ wf_id ].append((in_tool, out_tool))
-                    # update the most recent usage time for each tool
-                    month_time = utils.convert_timestamp(row[ 1 ])
-                    formatted_in_tool = utils.format_tool_id(in_tool)
-                    formatted_out_tool = utils.format_tool_id(out_tool)
         print( "Processing workflows..." )
         wf_ctr = 0
         for wf_id in workflows:
             wf_ctr += 1
             workflow_parents[ wf_id ] = self.read_workflow( wf_id, workflows[ wf_id ] )
+
         for wf_id in workflow_parents:
             flow_paths = list()
             parents_graph = workflow_parents[ wf_id ]
@@ -82,8 +76,10 @@ class ExtractWorkflowConnections:
         unique_paths = list(filter(None, unique_paths))
         random.shuffle(unique_paths)
         print("# paths: %d" % len(unique_paths))
+
         no_dup_paths = list(set(unique_paths))
         print("# no duplicated paths: %d" % len(no_dup_paths))
+
         print( "Finding compatible next tools..." )
         compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
         return unique_paths, compatible_next_tools
