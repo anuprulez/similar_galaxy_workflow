@@ -2,6 +2,7 @@
 Predict tool usage to weigh the predicted tools
 """
 
+import os
 import sys
 import numpy as np
 import time
@@ -17,6 +18,7 @@ import utils
 
 warnings.filterwarnings("ignore")
 
+main_path = os.getcwd()
 
 class ToolPopularity:
 
@@ -58,7 +60,7 @@ class ToolPopularity:
                 tool_usage_dict[tool][dt] = 0
             # sort the usage list by date
             tool_usage_dict[tool] = collections.OrderedDict(sorted(usage.items()))
-        utils.write_file("data/generated_files/tool_usage_dict.txt", tool_usage_dict)
+        utils.write_file(main_path + "/ata/generated_files/tool_usage_dict.txt", tool_usage_dict)
         return tool_usage_dict
 
     @classmethod
@@ -109,7 +111,7 @@ class ToolPopularity:
             prediction = np.round(self.learn_tool_popularity(x_reshaped, y_reshaped), 8)
             print(tool_name, prediction)
             usage_prediction[tool_name] = prediction
-        utils.write_file("data/generated_files/usage_prediction.txt", usage_prediction)
+        utils.write_file(main_path + "/data/generated_files/usage_prediction.txt", usage_prediction)
 
 
 if __name__ == "__main__":

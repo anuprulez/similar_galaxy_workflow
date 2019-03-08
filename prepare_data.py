@@ -4,12 +4,14 @@ machine learning algorithm. The paths are divided
 into the test and training sets
 """
 
+import os
 import collections
 import numpy as np
 import random
 
 import utils
 
+main_path = os.getcwd()
 
 class PrepareData:
 
@@ -224,8 +226,8 @@ class PrepareData:
                 # compute combined weight for each tool
                 # higher usage, higher weight
                 class_weights[key] = np.sqrt(predicted_usage[key] * inverted_freq)
-        utils.write_file("data/generated_files/class_weights.txt", class_weights)
-        utils.write_file("data/generated_files/inverted_weights.txt", inverted_frequency)
+        utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
+        utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
 
     @classmethod
@@ -258,9 +260,9 @@ class PrepareData:
 
         train_data, train_labels = self.randomize_data(train_data, train_labels)
 
-        usage = utils.read_file("data/generated_files/usage_prediction.txt")
+        usage = utils.read_file(main_path + "/data/generated_files/usage_prediction.txt")
 
-        utils.write_file("data/generated_files/data_dict.txt", dictionary)
+        utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
         # get time decay information
         tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
