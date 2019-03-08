@@ -60,7 +60,7 @@ class ToolPopularity:
                 tool_usage_dict[tool][dt] = 0
             # sort the usage list by date
             tool_usage_dict[tool] = collections.OrderedDict(sorted(usage.items()))
-        utils.write_file(main_path + "/ata/generated_files/tool_usage_dict.txt", tool_usage_dict)
+        utils.write_file(main_path + "/data/generated_files/tool_usage_dict.txt", tool_usage_dict)
         return tool_usage_dict
 
     @classmethod
