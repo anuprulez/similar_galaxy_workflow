@@ -12,6 +12,10 @@ from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
+from hyperopt import Trials, STATUS_OK, tpe
+from hyperas import optim
+from hyperas.distributions import choice, uniform
+
 
 def read_file(file_path):
     """
@@ -135,24 +139,28 @@ def get_best_parameters(mdl_dict=None):
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+def set_recurrent_network(reverse_dictionary):
     """
     Create a RNN network and set its parameters
     """
-    dimensions = len( reverse_dictionary ) + 1
-    lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
+    dimensions = len(reverse_dictionary) + 1
+    dropout = 0.1
+    units = 256
+    #lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
         
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, embedding_size, mask_zero=True))
-    model.add(SpatialDropout1D(dropout))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation=activation_recurrent))
-    model.add(Dropout(dropout))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation=activation_recurrent))
-    model.add(Dropout(dropout))
-    model.add(Dense(dimensions, activation=activation_output))
-    optimizer = RMSprop(lr=lr)
-    model.compile(loss=loss, optimizer=optimizer)
+    model.add(Embedding(dimensions, 256, mask_zero=True))
+    #model.add(SpatialDropout1D({{uniform(0, 1)}}))
+    #model.add(Dropout({{uniform(0, 1)}}))
+    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation="elu"))
+    #model.add(Dropout({{uniform(0, 1)}}))
+    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation="elu"))
+    #model.add(Dropout({{uniform(0, 1)}}))
+    model.add(Dense(dimensions, activation="sigmoid"))
+    #optimizer = RMSprop(lr=lr)
+    #model.compile(loss=loss, optimizer=optimizer)
+    model.compile(loss='categorical_crossentropy', optimizer={{choice(['rmsprop', 'adam'])}})
     return model
 
 

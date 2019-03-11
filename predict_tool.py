@@ -32,25 +32,23 @@ class PredictTool:
         Define recurrent neural network and train sequential data
         """
         # get the best model and train
-        if optimize is True or optimize == "True":
+        '''if optimize is True or optimize == "True":
             print("Start hyperparameter optimisation...")
-            hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, inv_class_weights, val_share)
-        else:
-            best_model_parameters = utils.get_best_parameters()
-        print("Best model: %s" % str(best_model_parameters))
+            #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+            #best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, inv_class_weights, val_share)
+        else:'''
+        #best_model_parameters = utils.get_best_parameters()
+        #print("Best model: %s" % str(best_model_parameters))
 
         # get the best network
-        model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
+        model = utils.set_recurrent_network(reverse_dictionary)
         model.summary()
 
-        # define callbacks
-        early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs)
         callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
-        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights, validation_split=val_share)
+        model_fit_callbacks = model.fit(train_data, train_labels, batch_size={{choice([64, 128])}}, epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=inv_class_weights, validation_split=val_share)
         loss_values = model_fit_callbacks.history["loss"]
 
         return {
