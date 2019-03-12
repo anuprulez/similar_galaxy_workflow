@@ -35,8 +35,8 @@ def save_processed_workflows(file_path, unique_paths):
     workflow_paths_unique = ""
     for path in unique_paths:
         workflow_paths_unique += path + "\n"
-    with open( file_path, "w" ) as workflows_file:
-        workflows_file.write( workflow_paths_unique )
+    with open(file_path, "w") as workflows_file:
+        workflows_file.write(workflow_paths_unique)
 
 
 def load_saved_model(model_config, model_weights):
@@ -54,8 +54,8 @@ def format_tool_id(tool_link):
     """
     Extract tool id from tool link
     """
-    tool_id_split = tool_link.split( "/" )
-    tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+    tool_id_split = tool_link.split("/")
+    tool_id = tool_id_split[-2] if len(tool_id_split) > 1 else tool_link
     return tool_id
 
 
@@ -139,7 +139,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     """
     Create a RNN network and set its parameters
     """
-    dimensions = len( reverse_dictionary ) + 1
+    dimensions = len(reverse_dictionary) + 1
     lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
         
     # define the architecture of the recurrent neural network
@@ -156,41 +156,58 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model
 
 
-def verify_model( model, x, y, reverse_data_dictionary ):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools):
     """
     Verify the model on test data
     """
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
-    size = y.shape[ 0 ]
+    size = y.shape[0]
     ave_abs_precision = list()
+    avg_compatible_pred = list()
     # loop over all the test samples and find prediction precision
-    for i in range( size ):
-        actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
-        topk = len( actual_classes_pos )
-        test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
+    for i in range(size):
+        actual_classes_pos = np.where(y[i] > 0)[0]
+        topk = len(actual_classes_pos)
+        test_sample = np.reshape(x[i], (1, x.shape[1]))
+        test_sample_pos = np.where(x[i] > 0)[0]
+        test_sample_tool_pos = x[i][test_sample_pos[0]:]
 
         # predict next tools for a test path
-        prediction = model.predict( test_sample, verbose=0 )
+        prediction = model.predict(test_sample, verbose=0)
         nw_dimension = prediction.shape[1]
         
         # remove the 0th position as there is no tool at this index
         prediction = np.reshape(prediction, (nw_dimension,))
 
-        prediction_pos = np.argsort( prediction, axis=-1 )
-        topk_prediction_pos = prediction_pos[ -topk: ]
+        prediction_pos = np.argsort(prediction, axis=-1)
+        topk_prediction_pos = prediction_pos[-topk:]
 
         # read tool names using reverse dictionary
-        actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
-        top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ]  for tool_pos in topk_prediction_pos if int(tool_pos) > 0 ]
+        sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
+        actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
+        top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
 
         # find false positives
-        false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
-        absolute_precision = 1 - ( len( false_positives ) / float( len( actual_classes_pos ) ) )
+        false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
+        absolute_precision = 1 - (len(false_positives) / float(len(actual_classes_pos)))
+        
+        # compute precision for tool compatibility
+        adjusted_precision = 0.0
+        seq_last_tool = sequence_tool_names[-1]
+        if seq_last_tool in next_compatible_tools:
+            next_tools = next_compatible_tools[seq_last_tool].split(",")
+            comp_tools = list(set(false_positives) & set(next_tools))
+            for tl in comp_tools:
+                adjusted_precision += 1 / float(len(actual_next_tool_names))
+            adjusted_precision += absolute_precision
         ave_abs_precision.append(absolute_precision)
+        avg_compatible_pred.append(adjusted_precision)
     mean_precision = np.mean(ave_abs_precision)
+    mean_compatible_precision = np.mean(avg_compatible_pred)
     print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
-    return mean_precision
+    print("Compatible precision on test data using current model is: %0.6f" % mean_compatible_precision)
+    return mean_precision, mean_compatible_precision
     
 
 def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
