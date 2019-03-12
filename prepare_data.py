@@ -216,6 +216,7 @@ class PrepareData:
             count = len(np.where(train_labels[:, i] > 0)[0])
             class_weights[i] = count
         max_frequency = max(class_weights.values())
+        mean_usage = np.mean(list(predicted_usage.values()))
         for key, frequency in class_weights.items():
             if frequency > 0:
                 # get inverted frequency for each tool in label matrix
@@ -225,7 +226,7 @@ class PrepareData:
                 inverted_frequency[key] = inverted_freq
                 # compute combined weight for each tool
                 # higher usage, higher weight
-                class_weights[key] = np.sqrt(predicted_usage[key] * inverted_freq)
+                class_weights[key] = np.sqrt((predicted_usage[key] / float(mean_usage)) * inverted_freq)
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
