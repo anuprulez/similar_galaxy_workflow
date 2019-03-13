@@ -191,7 +191,7 @@ class PrepareData:
         """
         usage = dict()
         # if a tool hasn't been run, assign a very small number as usage weight
-        epsilon = 1e-6
+        epsilon = 1.0
         # 0th index has no tool
         usage[0] = 0.0
         for k, v in data_dictionary.items():
@@ -216,7 +216,6 @@ class PrepareData:
             count = len(np.where(train_labels[:, i] > 0)[0])
             class_weights[i] = count
         max_frequency = max(class_weights.values())
-        mean_usage = np.mean(list(predicted_usage.values()))
         for key, frequency in class_weights.items():
             if frequency > 0:
                 # get inverted frequency for each tool in label matrix
@@ -224,15 +223,38 @@ class PrepareData:
                 # and lower weight to more frequent tools
                 inverted_freq = float(max_frequency) / frequency
                 inverted_frequency[key] = inverted_freq
+                usage = predicted_usage[key]
+                if inverted_freq < 1:
+                    inverted_freq = 1
+                if usage < 1:
+                    usage = 1
                 # compute combined weight for each tool
                 # higher usage, higher weight
-                class_weights[key] = np.add(predicted_usage[key], inverted_freq)
+                class_weights[key] = (inverted_freq * np.log(usage)) + (usage * np.log(inverted_freq))
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, old_data_dictionary={}):
+    def get_sample_weights(self, train_data, reverse_dictionary, paths_frequency):
+        """
+        Compute the frequency of paths in training data
+        """
+        path_weights = np.zeros(len(train_data))
+        all_paths = paths_frequency.keys()
+        for path_index, path in enumerate(train_data):
+            sample = np.reshape(path, (1, len(path)))
+            sample_pos = np.where(path > 0)[0]
+            sample_tool_pos = path[sample_pos[0]:]
+            path_name = ",".join([reverse_dictionary[int(tool_pos)] for tool_pos in sample_tool_pos])
+            try:
+                path_weights[path_index] = int(paths_frequency[path_name])
+            except:
+                path_weights[path_index] = 1
+        return path_weights
+
+    @classmethod
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -258,8 +280,10 @@ class PrepareData:
 
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
+        
+        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
-        train_data, train_labels = self.randomize_data(train_data, train_labels)
+        #train_data, train_labels = self.randomize_data(train_data, train_labels)
 
         usage = utils.read_file(main_path + "/data/generated_files/usage_prediction.txt")
 
@@ -271,4 +295,4 @@ class PrepareData:
         # get inverse class weights
         inverse_class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights, train_sample_weights
