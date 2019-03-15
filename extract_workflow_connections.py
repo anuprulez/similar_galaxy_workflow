@@ -80,15 +80,34 @@ class ExtractWorkflowConnections:
         frequency_paths = self.compute_path_freq(unique_paths)
         utils.write_file("data/generated_files/frequency_paths.txt", frequency_paths)
         
+        print("Computing the occurrence of tools in workflows...")
+        self.compute_tool_frequency(unique_paths)
+        
         no_dup_paths = list(set(unique_paths))
         print("# no duplicated paths: %d" % len(no_dup_paths))
         
         utils.write_file("data/generated_files/paths.txt", unique_paths)
 
         #print("Finding compatible next tools...")
-        compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
+        #compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
+        compatible_next_tools = []
         return unique_paths, compatible_next_tools, frequency_paths
         
+    @classmethod
+    def compute_tool_frequency(self, paths):
+        """
+        Count the frequency of tools
+        """
+        tool_wf_freq = dict()
+        for path in paths:
+            path_split = path.split(',')
+            for tool in path_split:
+                try:
+                    tool_wf_freq[tool] += 1
+                except:
+                    tool_wf_freq[tool] = 1
+        utils.write_file("data/generated_files/tool_wf_freq.txt", tool_wf_freq)
+   
     @classmethod
     def compute_path_freq(self, paths):
         """
