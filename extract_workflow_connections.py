@@ -85,7 +85,7 @@ class ExtractWorkflowConnections:
         
         utils.write_file("data/generated_files/paths.txt", unique_paths)
 
-        #print("Finding compatible next tools...")
+        print("Finding compatible next tools...")
         compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
         return unique_paths, compatible_next_tools, frequency_paths
         

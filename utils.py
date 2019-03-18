@@ -121,7 +121,7 @@ def get_best_parameters(mdl_dict=None):
             'batch_size': 256,
             'loss': "binary_crossentropy",
             'activation_recurrent': "elu",
-            'activation_output': "sigmoid"
+            'activation_output': "softmax"
         }
     else:
         lr = float(mdl_dict.get("learning_rate", "0.001"))
@@ -131,7 +131,7 @@ def get_best_parameters(mdl_dict=None):
         batch_size = int(mdl_dict.get("batch_size", "256"))
         loss = mdl_dict.get("loss_type", "binary_crossentropy")
         activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-        activation_output = mdl_dict.get("activation_output", "sigmoid")
+        activation_output = mdl_dict.get("activation_output", "softmax")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
@@ -156,7 +156,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model
 
 
-def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, class_weights):
     """
     Verify the model on test data
     """
@@ -165,8 +165,10 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools):
     size = y.shape[0]
     ave_abs_precision = list()
     avg_compatible_pred = list()
+    a_tools_class_scores = list()
     # loop over all the test samples and find prediction precision
     for i in range(size):
+        class_wt_scores = list()
         actual_classes_pos = np.where(y[i] > 0)[0]
         topk = len(actual_classes_pos)
         test_sample = np.reshape(x[i], (1, x.shape[1]))
@@ -187,6 +189,16 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools):
         sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
         actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
         top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
+        
+        # compute the class weights of predicted tools
+        mean_cls_score = 0
+        for t_id in topk_prediction_pos:
+            t_name = reverse_data_dictionary[int(t_id)]
+            if str(t_id) in class_weights and t_name in actual_next_tool_names: 
+                class_wt_scores.append(class_weights[str(t_id)])
+        if len(class_wt_scores) > 0:    
+            mean_cls_score = np.mean(class_wt_scores)
+        a_tools_class_scores.append(mean_cls_score)
 
         # find false positives
         false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
@@ -203,11 +215,12 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools):
             adjusted_precision += absolute_precision
         ave_abs_precision.append(absolute_precision)
         avg_compatible_pred.append(adjusted_precision)
+    
+    # compute mean across all test samples
     mean_precision = np.mean(ave_abs_precision)
     mean_compatible_precision = np.mean(avg_compatible_pred)
-    print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
-    print("Compatible precision on test data using current model is: %0.6f" % mean_compatible_precision)
-    return mean_precision, mean_compatible_precision
+    mean_predicted_class_score = np.mean(a_tools_class_scores)
+    return mean_precision, mean_compatible_precision, mean_predicted_class_score
     
 
 def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
