@@ -161,22 +161,6 @@ class PrepareData:
         return train_dict, test_dict
 
     @classmethod
-    def randomize_data(self, train_data, train_labels):
-        """
-        Randomize the train data after its inflation
-        """
-        size_data = train_data.shape
-        size_labels = train_labels.shape
-        rand_train_data = np.zeros([size_data[0], size_data[1]])
-        rand_train_labels = np.zeros([size_labels[0], size_labels[1]])
-        indices = np.arange(size_data[0])
-        random.shuffle(indices)
-        for index, random_index in enumerate(indices):
-            rand_train_data[index] = train_data[random_index]
-            rand_train_labels[index] = train_labels[random_index]
-        return rand_train_data, rand_train_labels
-
-    @classmethod
     def verify_overlap(self, train_paths, test_paths):
         """
         Verify the overlapping of samples in train and test data
@@ -190,16 +174,17 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
-        # if a tool hasn't been run, assign a very small number as usage weight
-        epsilon = 1e-6
-        # 0th index has no tool
-        usage[0] = 0.0
+        epsilon = 1.0
         for k, v in data_dictionary.items():
             try:
-                usage[v] = predicted_usage[k]
+                usg = predicted_usage[k]
+                if usg < epsilon:
+                    usg = epsilon
+                usage[v] = usg
             except Exception:
                 usage[v] = epsilon
                 continue
+        usage[str(0)] = epsilon
         return usage
 
     @classmethod
@@ -210,28 +195,56 @@ class PrepareData:
         n_classes = train_labels.shape[1]
         inverted_frequency = dict()
         class_weights = dict()
-        class_weights[0] = 0.0
+        epsilon = 1.0
         # get the count of each tool present in the label matrix
         for i in range(1, n_classes):
             count = len(np.where(train_labels[:, i] > 0)[0])
-            class_weights[i] = count
+            class_weights[str(i)] = count
         max_frequency = max(class_weights.values())
         for key, frequency in class_weights.items():
+            usage = predicted_usage[int(key)]
             if frequency > 0:
                 # get inverted frequency for each tool in label matrix
                 # to assign higher weight to less frequent tools
                 # and lower weight to more frequent tools
-                inverted_freq = float(max_frequency) / frequency
-                inverted_frequency[key] = inverted_freq
-                # compute combined weight for each tool
-                # higher usage, higher weight
-                class_weights[key] = np.sqrt(predicted_usage[key] * inverted_freq)
+                inv_freq = float(max_frequency) / frequency
+                if inv_freq < epsilon:
+                    inv_freq = epsilon
+                inverted_frequency[key] = inv_freq
+            else:
+                inverted_frequency[key] = epsilon
+            # compute combined weight for each tool
+            # higher usage, higher weight
+            class_weights[key] = np.log(inverted_frequency[key]) + np.log(usage)
+        class_weights[str(0)] = epsilon
+        inverted_frequency[str(0)] = epsilon
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, old_data_dictionary={}):
+    def get_sample_weights(self, train_data, reverse_dictionary, paths_frequency):
+        """
+        Compute the frequency of paths in training data
+        """
+        path_weights = np.zeros(len(train_data))
+        all_paths = paths_frequency.keys()
+        for path_index, path in enumerate(train_data):
+            sample = np.reshape(path, (1, len(path)))
+            sample_pos = np.where(path > 0)[0]
+            sample_tool_pos = path[sample_pos[0]:]
+            path_name = ",".join([reverse_dictionary[int(tool_pos)] for tool_pos in sample_tool_pos])
+            try:
+                path_weights[path_index] = int(paths_frequency[path_name])
+            except:
+                path_weights[path_index] = 1
+        max_path_freq = np.max(path_weights)
+        for idx, item in enumerate(path_weights):
+            path_weights[idx] = float(max_path_freq) / path_weights[idx]
+        return path_weights
+
+    @classmethod
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -255,10 +268,13 @@ class PrepareData:
         print("Train data: %d" % len(train_paths_dict))
         print("Test data: %d" % len(test_paths_dict))
 
+        utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
+        utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
+
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
-
-        train_data, train_labels = self.randomize_data(train_data, train_labels)
+        
+        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
         usage = utils.read_file(main_path + "/data/generated_files/usage_prediction.txt")
 
@@ -268,6 +284,6 @@ class PrepareData:
         tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
 
         # get inverse class weights
-        inverse_class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
+        class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, inverse_class_weights
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights

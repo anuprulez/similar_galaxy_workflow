@@ -6,6 +6,7 @@ import datetime
 import time
 
 from keras.models import model_from_json
+
 from keras.models import Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
@@ -39,8 +40,8 @@ def save_processed_workflows(file_path, unique_paths):
     workflow_paths_unique = ""
     for path in unique_paths:
         workflow_paths_unique += path + "\n"
-    with open( file_path, "w" ) as workflows_file:
-        workflows_file.write( workflow_paths_unique )
+    with open(file_path, "w") as workflows_file:
+        workflows_file.write(workflow_paths_unique)
 
 
 def load_saved_model(model_config, model_weights):
@@ -58,8 +59,8 @@ def format_tool_id(tool_link):
     """
     Extract tool id from tool link
     """
-    tool_id_split = tool_link.split( "/" )
-    tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+    tool_id_split = tool_link.split("/")
+    tool_id = tool_id_split[-2] if len(tool_id_split) > 1 else tool_link
     return tool_id
 
 
@@ -104,12 +105,36 @@ def set_trained_model(dump_file, model_values):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
-        
+
+    
 def convert_timestamp(time):
     created_time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
     now_time = datetime.datetime.now()
     month_time = ((now_time - created_time).days) / float(30)
     return month_time
+    
+
+def create_model(X_train, Y_train, X_test, Y_test):
+    model = Sequential()
+    #model.add(Embedding(Y_train.shape[1], 256, mask_zero=True))
+    #model.add(SpatialDropout1D({{uniform(0, 1)}}))
+    #model.add(GRU(256, recurrent_dropout=0.1, return_sequences=True, activation={{choice(['elu', 'relu'])}}))
+    #model.add(Dropout({{uniform(0, 1)}}))	
+    #model.add(GRU(256, recurrent_dropout=0.1, return_sequences=False, activation={{choice(['elu', 'relu'])}}))
+    #model.add(Dropout({{uniform(0, 1)}}))
+    #model.add(Dense(Y_train.shape[1], activation={{choice(['sigmoid', 'softmax'])}}))
+    #optimizer = RMSprop(lr={{choice([0.01, 0.001])}})
+    #model.compile(loss={{choice(['binary_crossentropy'])}}, optimizer=optimizer)
+    
+    model.compile(loss='binary_crossentropy', optimizer={{choice(['rmsprop'])}})
+
+    history = model.fit(X_train, Y_train,
+              batch_size={{choice([128, 256])}},
+              nb_epoch=3,
+              verbose=2,
+              validation_split=0.1)
+    val_loss = np.amin(result.history['val_loss']) 
+    return {'val_loss': val_loss, 'status': STATUS_OK, 'model': model}
 
 
 def get_best_parameters(mdl_dict=None):
@@ -125,7 +150,7 @@ def get_best_parameters(mdl_dict=None):
             'batch_size': 256,
             'loss': "binary_crossentropy",
             'activation_recurrent': "elu",
-            'activation_output': "sigmoid"
+            'activation_output': "softmax"
         }
     else:
         lr = float(mdl_dict.get("learning_rate", "0.001"))
@@ -135,70 +160,95 @@ def get_best_parameters(mdl_dict=None):
         batch_size = int(mdl_dict.get("batch_size", "256"))
         loss = mdl_dict.get("loss_type", "binary_crossentropy")
         activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-        activation_output = mdl_dict.get("activation_output", "sigmoid")
+        activation_output = mdl_dict.get("activation_output", "softmax")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
-def set_recurrent_network(reverse_dictionary):
+def set_recurrent_network(config, reverse_dictionary):
     """
     Create a RNN network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
-    dropout = 0.1
-    units = 256
     #lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
         
     # define the architecture of the recurrent neural network
+    
     model = Sequential()
-    model.add(Embedding(dimensions, 256, mask_zero=True))
-    #model.add(SpatialDropout1D({{uniform(0, 1)}}))
-    #model.add(Dropout({{uniform(0, 1)}}))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation="elu"))
-    #model.add(Dropout({{uniform(0, 1)}}))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation="elu"))
-    #model.add(Dropout({{uniform(0, 1)}}))
-    model.add(Dense(dimensions, activation="sigmoid"))
-    #optimizer = RMSprop(lr=lr)
-    #model.compile(loss=loss, optimizer=optimizer)
-    model.compile(loss='categorical_crossentropy', optimizer={{choice(['rmsprop', 'adam'])}})
+    model.add(Embedding(dimensions, config["embedding_vector_size"], mask_zero=True))
+    model.add(SpatialDropout1D(dropout))
+    model.add(GRU(units, dropout=config["dropout"], recurrent_dropout=config["dropout"], return_sequences=True, activation=config["activation_recurrent"]))
+    model.add(GRU(units, dropout=config["dropout"], recurrent_dropout=config["dropout"], return_sequences=False, activation=config["activation_recurrent"]))
+    model.add(Dense(dimensions, activation=config["activation_output"]))
+    optimizer = RMSprop(lr=config["learning_rate"])
+    model.compile(loss=config["loss_type"], optimizer=optimizer)
     return model
 
 
-def verify_model( model, x, y, reverse_data_dictionary ):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, class_weights):
     """
     Verify the model on test data
     """
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
-    size = y.shape[ 0 ]
+    size = y.shape[0]
     ave_abs_precision = list()
+    avg_compatible_pred = list()
+    a_tools_class_scores = list()
     # loop over all the test samples and find prediction precision
-    for i in range( size ):
-        actual_classes_pos = np.where( y[ i ] > 0 )[ 0 ]
-        topk = len( actual_classes_pos )
-        test_sample = np.reshape( x[ i ], ( 1, x.shape[ 1 ] ) )
+    for i in range(size):
+        class_wt_scores = list()
+        actual_classes_pos = np.where(y[i] > 0)[0]
+        topk = len(actual_classes_pos)
+        test_sample = np.reshape(x[i], (1, x.shape[1]))
+        test_sample_pos = np.where(x[i] > 0)[0]
+        test_sample_tool_pos = x[i][test_sample_pos[0]:]
 
         # predict next tools for a test path
-        prediction = model.predict( test_sample, verbose=0 )
+        prediction = model.predict(test_sample, verbose=0)
         nw_dimension = prediction.shape[1]
         
         # remove the 0th position as there is no tool at this index
         prediction = np.reshape(prediction, (nw_dimension,))
 
-        prediction_pos = np.argsort( prediction, axis=-1 )
-        topk_prediction_pos = prediction_pos[ -topk: ]
+        prediction_pos = np.argsort(prediction, axis=-1)
+        topk_prediction_pos = prediction_pos[-topk:]
 
         # read tool names using reverse dictionary
-        actual_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ] for tool_pos in actual_classes_pos ]
-        top_predicted_next_tool_names = [ reverse_data_dictionary[ int( tool_pos ) ]  for tool_pos in topk_prediction_pos if int(tool_pos) > 0 ]
+        sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
+        actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
+        top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
+        
+        # compute the class weights of predicted tools
+        mean_cls_score = 0
+        for t_id in topk_prediction_pos:
+            t_name = reverse_data_dictionary[int(t_id)]
+            if str(t_id) in class_weights and t_name in actual_next_tool_names: 
+                class_wt_scores.append(class_weights[str(t_id)])
+        if len(class_wt_scores) > 0:    
+            mean_cls_score = np.mean(class_wt_scores)
+        a_tools_class_scores.append(mean_cls_score)
 
         # find false positives
-        false_positives = [ tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names ]
-        absolute_precision = 1 - ( len( false_positives ) / float( len( actual_classes_pos ) ) )
+        false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
+        absolute_precision = 1 - (len(false_positives) / float(len(actual_classes_pos)))
+        
+        # compute precision for tool compatibility
+        adjusted_precision = 0.0
+        seq_last_tool = sequence_tool_names[-1]
+        if seq_last_tool in next_compatible_tools:
+            next_tools = next_compatible_tools[seq_last_tool].split(",")
+            comp_tools = list(set(false_positives) & set(next_tools))
+            for tl in comp_tools:
+                adjusted_precision += 1 / float(len(actual_next_tool_names))
+            adjusted_precision += absolute_precision
         ave_abs_precision.append(absolute_precision)
+        avg_compatible_pred.append(adjusted_precision)
+    
+    # compute mean across all test samples
     mean_precision = np.mean(ave_abs_precision)
-    print("Absolute precision on test data using current model is: %0.6f" % mean_precision)
-    return mean_precision
+    mean_compatible_precision = np.mean(avg_compatible_pred)
+    mean_predicted_class_score = np.mean(a_tools_class_scores)
+    return mean_precision, mean_compatible_precision, mean_predicted_class_score
     
 
 def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
