@@ -79,10 +79,10 @@ class ExtractWorkflowConnections:
         print("Computing the frequency of paths...")
         frequency_paths = self.compute_path_freq(unique_paths)
         utils.write_file("data/generated_files/frequency_paths.txt", frequency_paths)
-        
+
         no_dup_paths = list(set(unique_paths))
         print("# no duplicated paths: %d" % len(no_dup_paths))
-        
+
         utils.write_file("data/generated_files/paths.txt", unique_paths)
 
         print("Finding compatible next tools...")

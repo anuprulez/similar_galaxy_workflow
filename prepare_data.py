@@ -175,8 +175,6 @@ class PrepareData:
         """
         usage = dict()
         epsilon = 1.0
-        # 0th index has no tool
-        
         for k, v in data_dictionary.items():
             try:
                 usg = predicted_usage[k]
@@ -186,7 +184,7 @@ class PrepareData:
             except Exception:
                 usage[v] = epsilon
                 continue
-        usage["0"] = epsilon
+        usage[str(0)] = epsilon
         return usage
 
     @classmethod
@@ -213,13 +211,13 @@ class PrepareData:
                 if inv_freq < epsilon:
                     inv_freq = epsilon
                 inverted_frequency[key] = inv_freq
-                # compute combined weight for each tool
-                # higher usage, higher weight
             else:
                 inverted_frequency[key] = epsilon
+            # compute combined weight for each tool
+            # higher usage, higher weight
             class_weights[key] = np.log(inverted_frequency[key]) + np.log(usage)
-        class_weights["0"] = 1.0
-        inverted_frequency["0"] = epsilon
+        class_weights[str(0)] = epsilon
+        inverted_frequency[str(0)] = epsilon
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
         return class_weights
@@ -240,6 +238,9 @@ class PrepareData:
                 path_weights[path_index] = int(paths_frequency[path_name])
             except:
                 path_weights[path_index] = 1
+        max_path_freq = np.max(path_weights)
+        for idx, item in enumerate(path_weights):
+            path_weights[idx] = float(max_path_freq) / path_weights[idx]
         return path_weights
 
     @classmethod
