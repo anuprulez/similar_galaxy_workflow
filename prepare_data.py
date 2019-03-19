@@ -185,7 +185,7 @@ class PrepareData:
             except Exception:
                 usage[v] = epsilon
                 continue
-        usage[str(0)] = epsilon
+        usage[0] = epsilon
         return usage
 
     @classmethod
@@ -229,8 +229,6 @@ class PrepareData:
         Compute the frequency of paths in training data
         """
         path_weights = np.zeros(len(train_data))
-        max_freq = max(list(paths_frequency.values()))
-        print(max_freq)
         all_paths = paths_frequency.keys()
         for path_index, path in enumerate(train_data):
             sample = np.reshape(path, (1, len(path)))
@@ -293,4 +291,4 @@ class PrepareData:
         # get inverse class weights
         class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights, tool_predicted_usage

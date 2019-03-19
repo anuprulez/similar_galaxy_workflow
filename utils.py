@@ -156,7 +156,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model
 
 
-def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, class_weights):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores):
     """
     Verify the model on test data
     """
@@ -165,10 +165,10 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, cl
     size = y.shape[0]
     ave_abs_precision = list()
     avg_compatible_pred = list()
-    a_tools_class_scores = list()
+    a_tools_usage_scores = list()
     # loop over all the test samples and find prediction precision
     for i in range(size):
-        class_wt_scores = list()
+        usg_wt_scores = list()
         actual_classes_pos = np.where(y[i] > 0)[0]
         topk = len(actual_classes_pos)
         test_sample = np.reshape(x[i], (1, x.shape[1]))
@@ -191,14 +191,14 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, cl
         top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
         
         # compute the class weights of predicted tools
-        mean_cls_score = 0
+        mean_usg_score = 0
         for t_id in topk_prediction_pos:
             t_name = reverse_data_dictionary[int(t_id)]
-            if str(t_id) in class_weights and t_name in actual_next_tool_names: 
-                class_wt_scores.append(class_weights[str(t_id)])
-        if len(class_wt_scores) > 0:    
-            mean_cls_score = np.mean(class_wt_scores)
-        a_tools_class_scores.append(mean_cls_score)
+            if t_id in usage_scores and t_name in actual_next_tool_names: 
+                usg_wt_scores.append(usage_scores[t_id])
+        if len(usg_wt_scores) > 0:    
+            mean_usg_score = np.mean(usg_wt_scores)
+        a_tools_usage_scores.append(mean_usg_score)
 
         # find false positives
         false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
@@ -219,8 +219,8 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, cl
     # compute mean across all test samples
     mean_precision = np.mean(ave_abs_precision)
     mean_compatible_precision = np.mean(avg_compatible_pred)
-    mean_predicted_class_score = np.mean(a_tools_class_scores)
-    return mean_precision, mean_compatible_precision, mean_predicted_class_score
+    mean_predicted_usage_score = np.mean(a_tools_usage_scores)
+    return mean_precision, mean_compatible_precision, mean_predicted_usage_score
     
 
 def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):

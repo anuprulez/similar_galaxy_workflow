@@ -27,7 +27,7 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, train_sample_weights, compatible_next_tools, optimize):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, optimize):
         """
         Define recurrent neural network and train sequential data
         """
@@ -46,7 +46,7 @@ class PredictTool:
 
         # define callbacks
         early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')
-        predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, class_weights)
+        predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
         callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
@@ -58,35 +58,35 @@ class PredictTool:
             "test_loss": np.array(validation_loss),
             "test_absolute_precision": predict_callback_test.abs_precision,
             "test_compatible_precision": predict_callback_test.abs_compatible_precision,
-            "pred_class_scores": predict_callback_test.pred_class_scores,
+            "pred_usage_scores": predict_callback_test.usage_prediction_scores,
             "model": model,
             "best_parameters": best_model_parameters
         }
 
 
 class PredictCallback(Callback):
-    def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs, next_compatible_tools, class_weights):
+    def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs, next_compatible_tools, usg_scores):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
         self.abs_precision = list()
         self.abs_compatible_precision = list()
-        self.pred_class_scores = list()
+        self.usage_prediction_scores = list()
         self.n_epochs = n_epochs
         self.next_compatible_tools = next_compatible_tools
-        self.class_weights = class_weights
+        self.pred_usage_scores = usg_scores
 
     def on_epoch_end(self, epoch, logs={}):
         """
         Compute absolute and compatible precision for test data
         """
-        mean_abs_precision, mean_compatible_precision, mean_predicted_class_score = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.class_weights)
+        mean_abs_precision, mean_compatible_precision, mean_predicted_usage_score = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.pred_usage_scores)
         self.abs_precision.append(mean_abs_precision)
         self.abs_compatible_precision.append(mean_compatible_precision)
-        self.pred_class_scores.append(mean_predicted_class_score)
+        self.usage_prediction_scores.append(mean_predicted_usage_score)
         print("Epoch %d topk absolute precision: %.4f" % (epoch + 1, mean_abs_precision))
         print("Epoch %d topk compatible precision: %.4f" % (epoch + 1, mean_compatible_precision))
-        print("Epoch %d mean class weights for correct predictions: %.4f" % (epoch + 1, mean_predicted_class_score))
+        print("Epoch %d mean usage scores for correct predictions: %.4f" % (epoch + 1, mean_predicted_usage_score))
 
 
 if __name__ == "__main__":
@@ -124,14 +124,14 @@ if __name__ == "__main__":
     # Process the paths from workflows
     print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
     predict_tool = PredictTool()
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
     
     # print loss and precision
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print("Test compatible precision")
     print(results_weighted["test_compatible_precision"])
     print()
-    print("Mean class weights")
-    print(results_weighted["pred_class_scores"])
+    print("Mean usage scores")
+    print(results_weighted["pred_usage_scores"])
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
