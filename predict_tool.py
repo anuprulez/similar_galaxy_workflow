@@ -91,8 +91,8 @@ class PredictCallback(Callback):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 4:
-        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path>")
+    if len(sys.argv) != 6:
+        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path> <tool_usage_data> '<cutoff date as yyyy-mm-dd>'")
         exit(1)
     start_time = time.time()
 
@@ -114,6 +114,8 @@ if __name__ == "__main__":
     hyperparameter_optimize = config['hyperparameter_optimize']
     retrain = config['retrain']
     trained_model_path = sys.argv[3]
+    tool_usage_path = sys.argv[4]
+    cutoff_date = sys.argv[5]
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
@@ -122,13 +124,13 @@ if __name__ == "__main__":
     # Process the paths from workflows
     print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights = data.get_data_labels_matrices(workflow_paths, frequency_paths)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
     predict_tool = PredictTool()
 
     # start training with weighted classes
-    print("Training with weighted classes...")
+    print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
     

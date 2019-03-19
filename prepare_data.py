@@ -9,6 +9,7 @@ import collections
 import numpy as np
 import random
 
+import predict_tool_usage
 import utils
 
 main_path = os.getcwd()
@@ -228,6 +229,8 @@ class PrepareData:
         Compute the frequency of paths in training data
         """
         path_weights = np.zeros(len(train_data))
+        max_freq = max(list(paths_frequency.values()))
+        print(max_freq)
         all_paths = paths_frequency.keys()
         for path_index, path in enumerate(train_data):
             sample = np.reshape(path, (1, len(path)))
@@ -238,13 +241,14 @@ class PrepareData:
                 path_weights[path_index] = int(paths_frequency[path_name])
             except:
                 path_weights[path_index] = 1
+        # assign inverted frequency to paths
         max_path_freq = np.max(path_weights)
         for idx, item in enumerate(path_weights):
             path_weights[idx] = float(max_path_freq) / path_weights[idx]
         return path_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, frequency_paths, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -273,14 +277,17 @@ class PrepareData:
 
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
-        
-        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
-        usage = utils.read_file(main_path + "/data/generated_files/usage_prediction.txt")
+        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
-        # get time decay information
+        # get usage data of tools
+        # Predict tools usage
+        print("Predicting tools' usage...")
+        usage_pred = predict_tool_usage.ToolPopularity()
+        usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
+        tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
         tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
 
         # get inverse class weights
