@@ -280,13 +280,12 @@ class PrepareData:
 
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
-        # get usage data of tools
         # Predict tools usage
         print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
         usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
         tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
-        tool_predicted_usage = self.get_predicted_usage(dictionary, usage)
+        tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
         # get inverse class weights
         class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)

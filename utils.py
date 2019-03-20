@@ -194,9 +194,9 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
         mean_usg_score = 0
         for t_id in topk_prediction_pos:
             t_name = reverse_data_dictionary[int(t_id)]
-            if t_id in usage_scores and t_name in actual_next_tool_names: 
+            if t_id in usage_scores and t_name in actual_next_tool_names:
                 usg_wt_scores.append(usage_scores[t_id])
-        if len(usg_wt_scores) > 0:    
+        if len(usg_wt_scores) > 0:
             mean_usg_score = np.mean(usg_wt_scores)
         a_tools_usage_scores.append(mean_usg_score)
 
