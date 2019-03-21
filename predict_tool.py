@@ -119,12 +119,12 @@ if __name__ == "__main__":
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
-    workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
+    workflow_paths, compatible_next_tools, paths_last_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
     print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, tool_usage_path, cutoff_date)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, paths_last_tools, tool_usage_path, cutoff_date)
 
     # find the best model and start training
     predict_tool = PredictTool()

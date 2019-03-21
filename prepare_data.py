@@ -145,7 +145,10 @@ class PrepareData:
                 data_mat[train_counter][start_pos + id_pos] = int(pos)
             for label_item in train_label.split(","):
                 lbl_name = reverse_dictionary[int(label_item)]
-                label_count = int(labels_freq[lbl_name])
+                if lbl_name in labels_freq:
+                   label_count = int(labels_freq[lbl_name])
+                else:
+                    label_count = 1.0
                 label_mat[train_counter][int(label_item)] = label_count
             train_counter += 1
         return data_mat, label_mat
@@ -257,23 +260,26 @@ class PrepareData:
         """
         Compute class frequencies for paths
         """
+        import time
         paths_last_tools = dict()
+        ctr = 0
         for path in multilabels_paths:
+            s_time = time.time()
             p_split = path.split(",")
             p_split_names = ",".join([reverse_dictionary[int(t_id)] for t_id in p_split])
             l_split = multilabels_paths[path].split(",")
             paths_last_tools[p_split_names] = dict()
             for label in l_split:
                 n_path = p_split_names + "," + reverse_dictionary[int(label)]
-                p_count = 0
-                for p in raw_paths:
-                    if n_path in p:
-                        p_count += 1
+                p_count = len([pt for pt in raw_paths if n_path in pt])
                 paths_last_tools[p_split_names][reverse_dictionary[int(label)]] = p_count
+            ctr += 1
+            e_time = time.time()
+            print("Time: %s" % str(e_time - s_time))
         return paths_last_tools
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, tool_usage_path, cutoff_date, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, paths_last_tools, tool_usage_path, cutoff_date, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -283,16 +289,17 @@ class PrepareData:
 
         print("Raw paths: %d" % len(raw_paths))
         random.shuffle(raw_paths)
-
+        
         print("Decomposing paths...")
         all_unique_paths = self.decompose_paths(raw_paths, dictionary)
         random.shuffle(all_unique_paths)
 
         print("Creating dictionaries...")
         multilabels_paths = self.prepare_paths_labels_dictionary(reverse_dictionary, all_unique_paths)
+        print(len(multilabels_paths))
         
-        print("Finding class frequencies for paths...")
-        paths_last_tools = self.compute_class_frequency_paths(multilabels_paths, raw_paths, dictionary, reverse_dictionary)
+        #print("Finding class frequencies for paths...")
+        #paths_last_tools = self.compute_class_frequency_paths(multilabels_paths, raw_paths, dictionary, reverse_dictionary)
 
         print("Complete data: %d" % len(multilabels_paths))
         train_paths_dict, test_paths_dict = self.split_test_train_data(multilabels_paths)
@@ -307,8 +314,6 @@ class PrepareData:
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes, dictionary, reverse_dictionary, paths_last_tools)
         
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
-
-        #train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
         # Predict tools usage
         print("Predicting tools' usage...")
