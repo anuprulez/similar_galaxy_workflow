@@ -27,7 +27,7 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, optimize):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, compatible_next_tools, optimize):
         """
         Define recurrent neural network and train sequential data
         """
@@ -50,7 +50,7 @@ class PredictTool:
         callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
-        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=class_weights, sample_weight=train_sample_weights, validation_split=val_share)
+        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(best_model_parameters["batch_size"]), epochs=n_epochs, callbacks=callbacks_list, shuffle="batch", class_weight=class_weights, validation_split=val_share)
         loss_values = model_fit_callbacks.history["loss"]
         validation_loss = model_fit_callbacks.history[ "val_loss" ]
         return {
@@ -119,19 +119,20 @@ if __name__ == "__main__":
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
-    workflow_paths, compatible_next_tools, frequency_paths = connections.read_tabular_file(sys.argv[1])
+    workflow_paths, compatible_next_tools = connections.read_tabular_file(sys.argv[1])
 
     # Process the paths from workflows
     print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
     predict_tool = PredictTool()
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, compatible_next_tools, hyperparameter_optimize)
+
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
     
     # print loss and precision

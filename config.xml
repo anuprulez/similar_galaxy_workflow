@@ -15,8 +15,8 @@
         <parameter name="memory_units" value="256" />
         <parameter name="embedding_vector_size" value="256" />
         <parameter name="activation_recurrent" value="elu" />
-        <parameter name="activation_output" value="softmax" />
-        <parameter name="loss_type" value="binary_crossentropy" />
+        <parameter name="activation_output" value="linear" />
+        <parameter name="loss_type" value="mean_squared_error" />
         <parameter name="learning_rate" value="0.001" />
     </optimise_parameters>
 </root>

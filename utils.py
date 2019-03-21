@@ -119,9 +119,9 @@ def get_best_parameters(mdl_dict=None):
             'dropout': 0.1,
             'units': 256,
             'batch_size': 256,
-            'loss': "binary_crossentropy",
+            'loss': "mean_squared_error",
             'activation_recurrent': "elu",
-            'activation_output': "softmax"
+            'activation_output': "linear"
         }
     else:
         lr = float(mdl_dict.get("learning_rate", "0.001"))
@@ -129,9 +129,9 @@ def get_best_parameters(mdl_dict=None):
         dropout = float(mdl_dict.get("dropout", "0.1"))
         units = int(mdl_dict.get("memory_units", "256"))
         batch_size = int(mdl_dict.get("batch_size", "256"))
-        loss = mdl_dict.get("loss_type", "binary_crossentropy")
+        loss = mdl_dict.get("loss_type", "mean_squared_error")
         activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-        activation_output = mdl_dict.get("activation_output", "softmax")
+        activation_output = mdl_dict.get("activation_output", "linear")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
