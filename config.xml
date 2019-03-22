@@ -4,7 +4,7 @@
         <parameter name="retrain" value="False" />
         <parameter name="hyperparameter_optimize" value="False" />
         <parameter name="n_epochs_optimise" value="5" />
-        <parameter name="n_epochs" value="10" />
+        <parameter name="n_epochs" value="20" />
         <parameter name="test_share" value="0.2" />
         <parameter name="val_share" value="0.1" />
         <parameter name="maximum_path_length" value="25" />
@@ -15,8 +15,9 @@
         <parameter name="memory_units" value="256" />
         <parameter name="embedding_vector_size" value="256" />
         <parameter name="activation_recurrent" value="elu" />
-        <parameter name="activation_output" value="linear" />
-        <parameter name="loss_type" value="mean_squared_error" />
+        <parameter name="activation_output" value="softmax" />
+        <parameter name="loss_type" value="binary_crossentropy" />
         <parameter name="learning_rate" value="0.001" />
     </optimise_parameters>
 </root>
+
