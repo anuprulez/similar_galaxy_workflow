@@ -4,7 +4,7 @@
         <parameter name="retrain" value="False" />
         <parameter name="hyperparameter_optimize" value="False" />
         <parameter name="n_epochs_optimise" value="5" />
-        <parameter name="n_epochs" value="20" />
+        <parameter name="n_epochs" value="10" />
         <parameter name="test_share" value="0.2" />
         <parameter name="val_share" value="0.1" />
         <parameter name="maximum_path_length" value="25" />

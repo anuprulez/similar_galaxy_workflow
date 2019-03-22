@@ -126,7 +126,7 @@ class PrepareData:
         return paths_labels
 
     @classmethod
-    def pad_paths(self, paths_dictionary, num_classes, dictionary, reverse_dictionary, paths_last_tools):
+    def pad_paths(self, paths_dictionary, num_classes):
         """
         Add padding to the tools sequences and create multi-hot encoded labels
         """
@@ -136,20 +136,11 @@ class PrepareData:
         train_counter = 0
         for train_seq, train_label in list(paths_dictionary.items()):
             positions = train_seq.split(",")
-            seq = ",".join([reverse_dictionary[int(item)] for item in positions])
-            labels_freq = dict()
-            if seq in paths_last_tools.keys():
-                labels_freq = paths_last_tools[seq]
             start_pos = self.max_tool_sequence_len - len(positions)
             for id_pos, pos in enumerate(positions):
                 data_mat[train_counter][start_pos + id_pos] = int(pos)
             for label_item in train_label.split(","):
-                lbl_name = reverse_dictionary[int(label_item)]
-                if lbl_name in labels_freq:
-                   label_count = int(labels_freq[lbl_name])
-                else:
-                    label_count = 1.0
-                label_mat[train_counter][int(label_item)] = label_count
+                label_mat[train_counter][int(label_item)] = 1.0
             train_counter += 1
         return data_mat, label_mat
 
@@ -194,43 +185,22 @@ class PrepareData:
             except Exception:
                 usage[v] = epsilon
                 continue
+        # index 0 does not belong to any tool
         usage[0] = epsilon
         return usage
 
     @classmethod
-    def assign_class_weights(self, train_labels, predicted_usage):
+    def assign_class_weights(self, n_classes, predicted_usage):
         """
         Compute class weights using usage
         """
-        n_classes = train_labels.shape[1]
-        inverted_frequency = dict()
         class_weights = dict()
-        epsilon = 1.0
-        # get the count of each tool present in the label matrix
-        for i in range(1, n_classes):
-            count = len(np.where(train_labels[:, i] > 0)[0])
-            class_weights[i] = count
-        max_frequency = max(list(class_weights.values()))
         for key in range(1, n_classes):
-            frequency = class_weights[key]
-            usage = predicted_usage[int(key)]
-            if frequency > 0:
-                # get inverted frequency for each tool in label matrix
-                # to assign higher weight to less frequent tools
-                # and lower weight to more frequent tools
-                inv_freq = float(max_frequency) / frequency
-                if inv_freq < epsilon:
-                    inv_freq = epsilon
-                inverted_frequency[key] = inv_freq
-            else:
-                inverted_frequency[key] = epsilon
-            # compute combined weight for each tool
-            # higher usage, higher weight
-            class_weights[key] = usage
-        class_weights[0] = epsilon
-        inverted_frequency[str(0)] = epsilon
-        utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
-        utils.write_file(main_path + "/data/generated_files/inverted_weights.txt", inverted_frequency)
+            # assign weight for each tool
+            # higher the usage, higher the weight
+            class_weights[key] = predicted_usage[int(key)]
+        class_weights[str(0)] = 1.0
+        
         return class_weights
 
     @classmethod
@@ -249,37 +219,10 @@ class PrepareData:
                 path_weights[path_index] = int(paths_frequency[path_name])
             except:
                 path_weights[path_index] = 1
-        # assign inverted frequency to paths
-        max_path_freq = np.max(path_weights)
-        for idx, item in enumerate(path_weights):
-            path_weights[idx] = float(max_path_freq) / path_weights[idx]
         return path_weights
 
     @classmethod
-    def compute_class_frequency_paths(self, multilabels_paths, raw_paths, dictionary, reverse_dictionary):
-        """
-        Compute class frequencies for paths
-        """
-        import time
-        paths_last_tools = dict()
-        ctr = 0
-        for path in multilabels_paths:
-            s_time = time.time()
-            p_split = path.split(",")
-            p_split_names = ",".join([reverse_dictionary[int(t_id)] for t_id in p_split])
-            l_split = multilabels_paths[path].split(",")
-            paths_last_tools[p_split_names] = dict()
-            for label in l_split:
-                n_path = p_split_names + "," + reverse_dictionary[int(label)]
-                p_count = len([pt for pt in raw_paths if n_path in pt])
-                paths_last_tools[p_split_names][reverse_dictionary[int(label)]] = p_count
-            ctr += 1
-            e_time = time.time()
-            print("Time: %s" % str(e_time - s_time))
-        return paths_last_tools
-
-    @classmethod
-    def get_data_labels_matrices(self, workflow_paths, paths_last_tools, tool_usage_path, cutoff_date, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -289,17 +232,13 @@ class PrepareData:
 
         print("Raw paths: %d" % len(raw_paths))
         random.shuffle(raw_paths)
-        
+
         print("Decomposing paths...")
         all_unique_paths = self.decompose_paths(raw_paths, dictionary)
         random.shuffle(all_unique_paths)
 
         print("Creating dictionaries...")
         multilabels_paths = self.prepare_paths_labels_dictionary(reverse_dictionary, all_unique_paths)
-        print(len(multilabels_paths))
-        
-        #print("Finding class frequencies for paths...")
-        #paths_last_tools = self.compute_class_frequency_paths(multilabels_paths, raw_paths, dictionary, reverse_dictionary)
 
         print("Complete data: %d" % len(multilabels_paths))
         train_paths_dict, test_paths_dict = self.split_test_train_data(multilabels_paths)
@@ -307,13 +246,11 @@ class PrepareData:
         print("Train data: %d" % len(train_paths_dict))
         print("Test data: %d" % len(test_paths_dict))
 
-        utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
-        utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
+        test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
+        train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
 
-        test_data, test_labels = self.pad_paths(test_paths_dict, num_classes, dictionary, reverse_dictionary, paths_last_tools)
-        train_data, train_labels = self.pad_paths(train_paths_dict, num_classes, dictionary, reverse_dictionary, paths_last_tools)
-        
-        utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
+        # get weights for each sample for training
+        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
         # Predict tools usage
         print("Predicting tools' usage...")
@@ -321,8 +258,13 @@ class PrepareData:
         usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
         tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
-        
-        # get inverse class weights
-        class_weights = self.assign_class_weights(train_labels, tool_predicted_usage)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage
+        # get class weights using the predicted usage for each tool
+        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
+        
+        utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
+        utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
+        utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
+        utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
+
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights, tool_predicted_usage
