@@ -3,9 +3,7 @@ Predict tool usage to weigh the predicted tools
 """
 
 import os
-import sys
 import numpy as np
-import time
 import warnings
 import csv
 import collections
@@ -19,6 +17,7 @@ import utils
 warnings.filterwarnings("ignore")
 
 main_path = os.getcwd()
+
 
 class ToolPopularity:
 

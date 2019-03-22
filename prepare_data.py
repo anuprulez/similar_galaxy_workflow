@@ -14,6 +14,7 @@ import utils
 
 main_path = os.getcwd()
 
+
 class PrepareData:
 
     @classmethod
@@ -200,7 +201,6 @@ class PrepareData:
             # higher the usage, higher the weight
             class_weights[key] = predicted_usage[int(key)]
         class_weights[str(0)] = 1.0
-        
         return class_weights
 
     @classmethod
@@ -209,15 +209,13 @@ class PrepareData:
         Compute the frequency of paths in training data
         """
         path_weights = np.zeros(len(train_data))
-        all_paths = paths_frequency.keys()
         for path_index, path in enumerate(train_data):
-            sample = np.reshape(path, (1, len(path)))
             sample_pos = np.where(path > 0)[0]
             sample_tool_pos = path[sample_pos[0]:]
             path_name = ",".join([reverse_dictionary[int(tool_pos)] for tool_pos in sample_tool_pos])
             try:
                 path_weights[path_index] = int(paths_frequency[path_name])
-            except:
+            except Exception:
                 path_weights[path_index] = 1
         return path_weights
 
@@ -261,7 +259,7 @@ class PrepareData:
 
         # get class weights using the predicted usage for each tool
         class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
-        
+
         utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
         utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)

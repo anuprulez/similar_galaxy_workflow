@@ -10,7 +10,7 @@ import xml.etree.ElementTree as et
 import warnings
 
 # machine learning library
-from keras.callbacks import Callback, EarlyStopping
+from keras.callbacks import Callback
 
 import extract_workflow_connections
 import prepare_data
@@ -45,7 +45,6 @@ class PredictTool:
         model.summary()
 
         # define callbacks
-        early_stopping = EarlyStopping(monitor='val_loss', patience=3, verbose=1, mode='min')
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
         callbacks_list = [predict_callback_test]
 
@@ -143,7 +142,7 @@ if __name__ == "__main__":
     print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
-    
+
     # print loss and precision
     print()
     print("Training loss")
@@ -162,4 +161,3 @@ if __name__ == "__main__":
     print(results_weighted["pred_usage_scores"])
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
-

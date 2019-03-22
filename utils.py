@@ -3,7 +3,6 @@ import numpy as np
 import json
 import h5py
 import datetime
-import time
 
 from keras.models import model_from_json
 from keras.models import Sequential
@@ -30,7 +29,7 @@ def write_file(file_path, content):
     with open(file_path, "w") as json_file:
         json_file.write(json.dumps(content))
 
-  
+
 def save_processed_workflows(file_path, unique_paths):
     workflow_paths_unique = ""
     for path in unique_paths:
@@ -70,11 +69,11 @@ def save_HDF5(hf_file, d_key, data, d_type=""):
     """
     Save datasets as h5 file
     """
-    if (d_type == 'json'): 
+    if (d_type == 'json'):
         data = json.dumps(data)
     hf_file.create_dataset(d_key, data=data)
 
-      
+
 def set_trained_model(dump_file, model_values):
     """
     Create an h5 file with the trained weights and associated dicts
@@ -100,7 +99,8 @@ def set_trained_model(dump_file, model_values):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
-        
+
+
 def convert_timestamp(time):
     created_time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
     now_time = datetime.datetime.now()
@@ -112,7 +112,7 @@ def get_best_parameters(mdl_dict=None):
     """
     Get param values (defaults as well)
     """
-    if mdl_dict == None:
+    if mdl_dict is None:
         return {
             'lr': 0.001,
             'embedding_size': 256,
@@ -141,7 +141,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     """
     dimensions = len(reverse_dictionary) + 1
     lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
-        
+
     # define the architecture of the recurrent neural network
     model = Sequential()
     model.add(Embedding(dimensions, embedding_size, mask_zero=True))
@@ -178,7 +178,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
         # predict next tools for a test path
         prediction = model.predict(test_sample, verbose=0)
         nw_dimension = prediction.shape[1]
-        
+
         # remove the 0th position as there is no tool at this index
         prediction = np.reshape(prediction, (nw_dimension,))
 
@@ -189,7 +189,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
         sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
         actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
         top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
-        
+
         # compute the class weights of predicted tools
         mean_usg_score = 0
         for t_id in topk_prediction_pos:
@@ -203,7 +203,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
         # find false positives
         false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
         absolute_precision = 1 - (len(false_positives) / float(len(actual_classes_pos)))
-        
+
         # compute precision for tool compatibility
         adjusted_precision = 0.0
         seq_last_tool = sequence_tool_names[-1]
@@ -215,13 +215,13 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
             adjusted_precision += absolute_precision
         ave_abs_precision.append(absolute_precision)
         avg_compatible_pred.append(adjusted_precision)
-    
+
     # compute mean across all test samples
     mean_precision = np.mean(ave_abs_precision)
     mean_compatible_precision = np.mean(avg_compatible_pred)
     mean_predicted_usage_score = np.mean(a_tools_usage_scores)
     return mean_precision, mean_compatible_precision, mean_predicted_usage_score
-    
+
 
 def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
     # save files
@@ -229,7 +229,7 @@ def save_model(results, data_dictionary, compatible_next_tools, trained_model_pa
     best_model_parameters = results["best_parameters"]
     model_config = trained_model.to_json()
     model_weights = trained_model.get_weights()
-    
+
     model_values = {
         'data_dictionary': data_dictionary,
         'model_config': model_config,
