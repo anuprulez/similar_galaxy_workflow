@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python retrain_model.py data/workflows/workflow_connections_12.tsv 10 data/weights/weights-epoch-10.hdf5
+python retrain_predict_tool.py data/workflows/workflow_connections_124.tsv config.xml data/generated_files/trained_model.hdf5
 
