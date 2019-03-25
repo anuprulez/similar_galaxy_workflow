@@ -60,22 +60,28 @@ In the set of training sequences, each one can have many labels (or categories) 
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/precision.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision.png">
 </p>
 
 The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/loss.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/loss.png">
 </p>
 
 The plot above shows the binary cross-entropy loss drop over training epochs. Both the losses, training and validation, start to drop and become stable towards the end of training epochs.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/usage.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/usage.png">
 </p>
 
 The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision_path_length.png">
+</p>
+
+The above plot shows the precision for different length of paths (tool sequences). As the length of path increases, the precision becomes better.
 
 ## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
