@@ -49,7 +49,7 @@ We create training samples and their labels in this manner and feed them to the 
 ## Data distribution
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/path_dist.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/path_dist.png">
 </p>
 
 The above plot shows the distribution of length of tool sequences. The length plays an important role to determine the dimensionality of the input dense vector. Thus, to reduce it, we take a maximum tool sequence length of 25.
