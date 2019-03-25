@@ -2,7 +2,6 @@ import os
 import numpy as np
 import json
 import h5py
-import datetime
 
 from keras.models import model_from_json
 from keras.models import Sequential
@@ -99,39 +98,20 @@ def set_trained_model(dump_file, model_values):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
+        
 
-
-def convert_timestamp(time):
-    created_time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-    now_time = datetime.datetime.now()
-    month_time = ((now_time - created_time).days) / float(30)
-    return month_time
-
-
-def get_best_parameters(mdl_dict=None):
+def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    if mdl_dict is None:
-        return {
-            'lr': 0.001,
-            'embedding_size': 256,
-            'dropout': 0.1,
-            'units': 256,
-            'batch_size': 256,
-            'loss': "binary_crossentropy",
-            'activation_recurrent': "elu",
-            'activation_output': "softmax"
-        }
-    else:
-        lr = float(mdl_dict.get("learning_rate", "0.001"))
-        embedding_size = int(mdl_dict.get("embedding_vector_size", "256"))
-        dropout = float(mdl_dict.get("dropout", "0.1"))
-        units = int(mdl_dict.get("memory_units", "256"))
-        batch_size = int(mdl_dict.get("batch_size", "256"))
-        loss = mdl_dict.get("loss_type", "binary_crossentropy")
-        activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-        activation_output = mdl_dict.get("activation_output", "softmax")
+    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    embedding_size = int(mdl_dict.get("embedding_vector_size", "512"))
+    dropout = float(mdl_dict.get("dropout", "0.2"))
+    units = int(mdl_dict.get("memory_units", "512"))
+    batch_size = int(mdl_dict.get("batch_size", "512"))
+    loss = mdl_dict.get("loss_type", "binary_crossentropy")
+    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
+    activation_output = mdl_dict.get("activation_output", "sigmoid")
     return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
 
 
