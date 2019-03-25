@@ -32,13 +32,9 @@ class PredictTool:
         Define recurrent neural network and train sequential data
         """
         # get the best model and train
-        if optimize is True or optimize == "True":
-            print("Start hyperparameter optimisation...")
-            hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-            best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, val_share)
-        else:
-            best_model_parameters = utils.get_best_parameters()
-        print("Best model: %s" % str(best_model_parameters))
+        print("Start hyperparameter optimisation...")
+        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, train_sample_weights, val_share)
 
         # get the best network
         model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
@@ -64,7 +60,7 @@ class PredictTool:
 
         return {
             "train_loss": np.array(loss_values),
-            "test_loss": np.array(validation_loss),
+            "validation_loss": np.array(validation_loss),
             "test_absolute_precision": predict_callback_test.abs_precision,
             "test_compatible_precision": predict_callback_test.abs_compatible_precision,
             "pred_usage_scores": predict_callback_test.usage_prediction_scores,
@@ -121,7 +117,6 @@ if __name__ == "__main__":
     test_share = float(config["test_share"])
     val_share = float(config["val_share"])
     hyperparameter_optimize = config['hyperparameter_optimize']
-    retrain = config['retrain']
     trained_model_path = sys.argv[3]
     tool_usage_path = sys.argv[4]
     cutoff_date = sys.argv[5]
@@ -132,7 +127,7 @@ if __name__ == "__main__":
 
     # Process the paths from workflows
     print("Dividing data...")
-    data = prepare_data.PrepareData(maximum_path_length, test_share, retrain)
+    data = prepare_data.PrepareData(maximum_path_length, test_share)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, train_sample_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
@@ -148,8 +143,8 @@ if __name__ == "__main__":
     print("Training loss")
     print(results_weighted["train_loss"])
     print()
-    print("Test loss")
-    print(results_weighted["test_loss"])
+    print("Validation loss")
+    print(results_weighted["validation_loss"])
     print()
     print("Test absolute precision")
     print(results_weighted["test_absolute_precision"])

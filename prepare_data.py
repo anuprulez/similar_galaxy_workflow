@@ -18,11 +18,10 @@ main_path = os.getcwd()
 class PrepareData:
 
     @classmethod
-    def __init__(self, max_seq_length, test_data_share, retrain=False):
+    def __init__(self, max_seq_length, test_data_share):
         """ Init method. """
         self.max_tool_sequence_len = max_seq_length
         self.test_share = test_data_share
-        self.retrain = retrain
 
     @classmethod
     def process_workflow_paths(self, workflow_paths):
@@ -55,19 +54,8 @@ class PrepareData:
         """
         Create/update tools indices in the forward and backward dictionary
         """
-        if self.retrain is True or self.retrain is "True":
-            dictionary = old_data_dictionary
-            max_prev_size = len(dictionary)
-            tool_counter = 1
-            for tool in new_data_dict:
-                if tool not in dictionary:
-                    dictionary[tool] = max_prev_size + tool_counter
-                    tool_counter += 1
-            reverse_dict = dict((v, k) for k, v in dictionary.items())
-            return dictionary, reverse_dict
-        else:
-            new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
-            return new_data_dict, reverse_dict
+        new_data_dict, reverse_dict = self.create_new_dict(new_data_dict)
+        return new_data_dict, reverse_dict
 
     @classmethod
     def create_data_dictionary(self, words, old_data_dictionary={}):

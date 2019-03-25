@@ -34,7 +34,7 @@ class HyperparameterOptimisation:
         return parameter_names, models
 
     @classmethod
-    def train_model(self, mdl_dict, n_epochs_optimise, reverse_dictionary, train_data, train_labels, class_weights, val_share):
+    def train_model(self, mdl_dict, n_epochs_optimise, reverse_dictionary, train_data, train_labels, class_weights, train_sample_weights, val_share):
         """
         Train a model and report accuracy
         """
@@ -44,16 +44,24 @@ class HyperparameterOptimisation:
         model.summary()
 
         # fit the model
-        model_fit_callbacks = model.fit(train_data, train_labels, batch_size=int(mdl_dict["batch_size"]), epochs=n_epochs_optimise, shuffle="batch", class_weight=class_weights, validation_split=val_share)
+        fit_model = model.fit(train_data,
+            train_labels,
+            batch_size=int(mdl_dict["batch_size"]),
+            epochs=n_epochs_optimise,
+            shuffle="batch",
+            class_weight=class_weights,
+            sample_weight=train_sample_weights,
+            validation_split=val_share
+        )
 
         # verify model with validation loss
-        validation_loss = np.round(model_fit_callbacks.history['val_loss'], 4)
+        validation_loss = np.round(fit_model.history['val_loss'], 4)
 
         # take the validation loss of the last training epoch
         return validation_loss[-1]
 
     @classmethod
-    def find_best_model(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, val_share):
+    def find_best_model(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, train_sample_weights, val_share):
         """
         Collect the accuracies of all model and find the best one
         """
@@ -64,7 +72,7 @@ class HyperparameterOptimisation:
         for mdl_idx, mdl in enumerate(models):
             mdl_dict = dict(zip(parameter_names, list(mdl)))
             print("Training on model(%d/%d): \n%s" % (mdl_idx + 1, n_models, str(mdl_dict)))
-            model_accuracy = self.train_model(mdl_dict, n_epochs_optimise, reverse_dictionary, train_data, train_labels, class_weights, val_share)
+            model_accuracy = self.train_model(mdl_dict, n_epochs_optimise, reverse_dictionary, train_data, train_labels, class_weights, train_sample_weights, val_share)
             model_performances.append(model_accuracy)
         best_model_idx = np.argsort(model_performances)[0]
         return dict(zip(parameter_names, list(models[best_model_idx])))
