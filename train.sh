@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python scripts/main.py data/workflows/wf_connections_0_6k.tsv config.xml data/generated_files/trained_model.hdf5 data/tool_usage/tool-popularity.tsv '2017-12-01'
+python scripts/main.py data/workflows/wf-connections.tsv config.xml data/generated_files/trained_model.hdf5 data/tool_usage/tool-popularity.tsv '2017-12-01'

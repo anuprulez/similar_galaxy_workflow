@@ -48,16 +48,10 @@ class PredictTool:
             epochs=n_epochs,
             shuffle="batch",
             class_weight=class_weights,
-            sample_weight=train_sample_weights,
-            validation_split=val_share
+            sample_weight=train_sample_weights
         )
 
-        loss_values = model_fit_callbacks.history["loss"]
-        validation_loss = model_fit_callbacks.history["val_loss"]
-
         return {
-            "train_loss": np.array(loss_values),
-            "validation_loss": np.array(validation_loss),
             "model": model,
             "best_parameters": best_model_parameters
         }
@@ -65,7 +59,7 @@ class PredictTool:
 if __name__ == "__main__":
 
     if len(sys.argv) != 6:
-        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path> <tool_usage_data> '<cutoff date as yyyy-mm-dd>'")
+        print("Usage: python main.py <workflow_file_path> <config_file_path> <trained_model_file_path> <tool_usage_data> '<cutoff date as yyyy-mm-dd>'")
         exit(1)
     start_time = time.time()
 
@@ -104,8 +98,6 @@ if __name__ == "__main__":
     print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
-    print(results_weighted)
-    print(trained_model_path)
 
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
