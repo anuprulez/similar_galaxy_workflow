@@ -49,61 +49,33 @@ We create training samples and their labels in this manner and feed them to the 
 ## Data distribution
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/tools_len_dist_2.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/path_dist.png">
 </p>
 
-The above plot shows the distribution of length of training sequences. We can see that most of the training sequences lie between length (frequency) 0 and 60. This length play an important role to determine the dimensionality of input dense vector. Thus, to reduce the input dimensionality, we take a maximum length of 40 per training sequence which still includes most of the training sequences. We lose some training sequences, but not many (~500 out of 11,000). At the same time, we gain in prediction time as the trained model needs to deal with smaller size vector.
-
-### Labels distribution
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/test_dist_2.png">
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/embedding_layer/plots/train_dist_2.png">
-</p>
-
+The above plot shows the distribution of length of tool sequences. The length plays an important role to determine the dimensionality of the input dense vector. Thus, to reduce it, we take a maximum tool sequence length of 25.
 
 ## Accuracy measure
-In our set of training samples, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top k predicted tools (top-k accuracy). `20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model.
+In the set of training sequences, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top k predicted tools (top-k accuracy). `20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model.
 
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/Acc_2.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/precision.png">
 </p>
 
-In the plot above, red line shows an increase in accuracy of the trained model over multiple training epochs. It computes an average of how many actual labels appear in the top-k predicted labels for all samples in the test data. For example, let's suppose a sequence has `4` actual labels (`4` next tools it can connect to). We check that out of these `4` actual labels, how many are present in the `top-4` predicted ones using the trained model. If `3` labels are present in the `top-4` predicted, we assign an accuracy of `3/4 = 0.75` for this sequence. In the same way, we compute this accuracy for all the samples in the test data and compute the mean. The plot shows an increase of this `mean accuracy` over `50` epochs of training.
-
-## Topk accuracy per class for test and train samples 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/Ave_topk_Cluster.png">
-</p>
-
-## Vizualizer
-
-A small animation below shows possible next tools for a sequence at each stage of creating a dummy workflow:
-
-`trim_galore → bismark_bowtie → samtools_rmdup → samtools_sort → methtools_calling → methtools_destrand → filter1 → smooth_running_window`
-
-All the paths containing this sequence of tools are also shown.
+The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/wf_pred.gif">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/loss.png">
 </p>
-<hr/>
 
-In order to run the visualizer, please follow these steps:
+The plot above shows the binary cross-entropy loss drop over training epochs. Both the losses, training and validation, start to drop and become stable towards the end of training epochs.
 
-1. Download the repository
-2. Move to the "viz" folder
-3. Install the dependencies (like Keras, Tensorflow, Numpy and h5py)
-4. Run the python server: `python viz_server.py 8001`
-5. Browse the URL: "http://localhost:8001/"
-6. Choose a tool and see the next possible tools
-7. Now, choose another tool and so on. At each step of choosing you will find a set of predicted next tools (probability in percentage).
-8. If the given combination is not present, no tools or paths are shown.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/plots/usage.png">
+</p>
 
+The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
 
 ## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
