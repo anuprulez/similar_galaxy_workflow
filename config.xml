@@ -1,18 +1,16 @@
 <?xml version="1.0"?>
 <root>
     <ml_parameters>
-        <parameter name="hyperparameter_optimize" value="True" />
         <parameter name="n_epochs_optimise" value="1" />
-        <parameter name="n_epochs" value="20" />
+        <parameter name="n_epochs" value="1" />
         <parameter name="test_share" value="0.0" />
         <parameter name="val_share" value="0.1" />
-        <parameter name="maximum_path_length" value="25" />
     </ml_parameters>
     <optimise_parameters>
-        <parameter name="batch_size" value="128" />
-        <parameter name="dropout" value="0.1" />
-        <parameter name="memory_units" value="256" />
-        <parameter name="embedding_vector_size" value="128" />
+        <parameter name="batch_size" value="64" />
+        <parameter name="dropout" value="0.1,0.2" />
+        <parameter name="memory_units" value="512" />
+        <parameter name="embedding_vector_size" value="512" />
         <parameter name="activation_recurrent" value="elu" />
         <parameter name="activation_output" value="sigmoid" />
         <parameter name="loss_type" value="binary_crossentropy" />
