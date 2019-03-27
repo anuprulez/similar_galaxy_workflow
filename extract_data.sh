@@ -7,12 +7,12 @@ psql > data/tool-popularity.tsv <<-EOF
 	COPY (
 		SELECT
 			tool_id,
-			date_trunc('day', create_time AT TIME ZONE 'UTC')::date as day,
+			date_trunc('month', create_time AT TIME ZONE 'UTC')::date as month,
 			count(*)
 		FROM job
 		WHERE create_time > (now() AT TIME ZONE 'UTC' - '24 months'::interval)
-		GROUP BY tool_id, day
-		ORDER BY day desc, count desc
+		GROUP BY tool_id, month
+		ORDER BY month desc, count desc
 	) to STDOUT with CSV DELIMITER E'\t'
 EOF
 
