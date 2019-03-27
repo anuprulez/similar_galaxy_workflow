@@ -98,21 +98,35 @@ def set_trained_model(dump_file, model_values):
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
-        
+
 
 def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
     lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_vector_size", "512"))
+    embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
-    units = int(mdl_dict.get("memory_units", "512"))
+    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
+    units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
-    loss = mdl_dict.get("loss_type", "binary_crossentropy")
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
-    return lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output
+    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
+
+    return {
+        "lr": lr,
+        "embedding_size": embedding_size,
+        "dropout": dropout,
+        "recurrent_dropout": recurrent_dropout,
+        "spatial_dropout": spatial_dropout,
+        "units": units,
+        "batch_size": batch_size,
+        "activation_recurrent": activation_recurrent,
+        "activation_output": activation_output,
+        "loss_type": loss_type
+    }
 
 
 def set_recurrent_network(mdl_dict, reverse_dictionary):
@@ -120,19 +134,19 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     Create a RNN network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
-    lr, embedding_size, dropout, units, batch_size, loss, activation_recurrent, activation_output = get_best_parameters(mdl_dict)
+    model_params = get_best_parameters(mdl_dict)
 
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, embedding_size, mask_zero=True))
-    model.add(SpatialDropout1D(dropout))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=True, activation=activation_recurrent))
-    model.add(Dropout(dropout))
-    model.add(GRU(units, dropout=dropout, recurrent_dropout=dropout, return_sequences=False, activation=activation_recurrent))
-    model.add(Dropout(dropout))
-    model.add(Dense(dimensions, activation=activation_output))
-    optimizer = RMSprop(lr=lr)
-    model.compile(loss=loss, optimizer=optimizer)
+    model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
+    model.add(SpatialDropout1D(model_params["spatial_dropout"]))
+    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
+    model.add(Dropout(model_params["dropout"]))
+    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
+    model.add(Dropout(model_params["dropout"]))
+    model.add(Dense(dimensions, activation=model_params["activation_output"]))
+    optimizer = RMSprop(lr=model_params["lr"])
+    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
     return model
 
 

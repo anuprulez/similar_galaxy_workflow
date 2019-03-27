@@ -1,22 +1,20 @@
 <?xml version="1.0"?>
 <root>
     <ml_parameters>
-        <parameter name="hyperparameter_optimize" value="True" />
-        <parameter name="n_epochs_optimise" value="1" />
-        <parameter name="n_epochs" value="20" />
-        <parameter name="test_share" value="0.0" />
-        <parameter name="val_share" value="0.1" />
-        <parameter name="maximum_path_length" value="25" />
+        <parameter name="n_epochs" value="10" />
+        <parameter name="test_share" value="0.1" />
     </ml_parameters>
     <optimise_parameters>
-        <parameter name="batch_size" value="128" />
-        <parameter name="dropout" value="0.1" />
-        <parameter name="memory_units" value="256" />
-        <parameter name="embedding_vector_size" value="128" />
-        <parameter name="activation_recurrent" value="elu" />
-        <parameter name="activation_output" value="sigmoid" />
+        <parameter name="batch_size" value="32,64,128,256,512" />
+        <parameter name="dropout" value="0.0,0.5" />
+        <parameter name="spatial_dropout" value="0.0,0.5" />
+        <parameter name="recurrent_dropout" value="0.0, 0.5" />
+        <parameter name="units" value="32,64,128,256,512" />
+        <parameter name="embedding_size" value="32,64,128,256,512" />
+        <parameter name="activation_recurrent" value="relu,elu,sigmoid" />
+        <parameter name="activation_output" value="relu,elu,sigmoid" />
         <parameter name="loss_type" value="binary_crossentropy" />
-        <parameter name="learning_rate" value="0.001" />
+        <parameter name="learning_rate" value="1e-4,1e-2" />
     </optimise_parameters>
 </root>
 

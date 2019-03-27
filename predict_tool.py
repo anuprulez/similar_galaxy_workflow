@@ -27,36 +27,40 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, optimize):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools):
         """
         Define recurrent neural network and train sequential data
         """
+
         # get the best model and train
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_model_parameters = hyper_opt.find_best_model(network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, class_weights, train_sample_weights, val_share)
+        best_model, best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights, n_epochs)
 
-        # get the best network
-        model = utils.set_recurrent_network(best_model_parameters, reverse_dictionary)
-        model.summary()
+        print(best_model)
+        print()
+        print(best_params)
 
+        # retrieve the model and train on complete dataset without validation set
+        model = utils.set_recurrent_network(best_params, reverse_dictionary)
+        
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
         callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
-        model_fit_callbacks = model.fit(train_data, train_labels,
-            batch_size=int(best_model_parameters["batch_size"]),
+        model_fit = model.fit(train_data, train_labels,
+            batch_size=int(best_params["batch_size"]),
             epochs=n_epochs,
             callbacks=callbacks_list,
             shuffle="batch",
             class_weight=class_weights,
             sample_weight=train_sample_weights,
-            validation_split=val_share
+            validation_data=(test_data, test_labels)
         )
 
-        loss_values = model_fit_callbacks.history["loss"]
-        validation_loss = model_fit_callbacks.history["val_loss"]
+        loss_values = model_fit.history["loss"]
+        validation_loss = model_fit.history["val_loss"]
 
         return {
             "train_loss": np.array(loss_values),
@@ -65,7 +69,7 @@ class PredictTool:
             "test_compatible_precision": predict_callback_test.abs_compatible_precision,
             "pred_usage_scores": predict_callback_test.usage_prediction_scores,
             "model": model,
-            "best_parameters": best_model_parameters
+            "best_parameters": best_params
         }
 
 
@@ -111,12 +115,9 @@ if __name__ == "__main__":
             optimise_parameters_node = child
         for item in child:
             config[item.get("name")] = item.get("value")
-
+    maximum_path_length = 25
     n_epochs = int(config["n_epochs"])
-    maximum_path_length = int(config["maximum_path_length"])
     test_share = float(config["test_share"])
-    val_share = float(config["val_share"])
-    hyperparameter_optimize = config['hyperparameter_optimize']
     trained_model_path = sys.argv[3]
     tool_usage_path = sys.argv[4]
     cutoff_date = sys.argv[5]
@@ -135,24 +136,8 @@ if __name__ == "__main__":
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, val_share, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools, hyperparameter_optimize)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
 
-    # print loss and precision
-    print()
-    print("Training loss")
-    print(results_weighted["train_loss"])
-    print()
-    print("Validation loss")
-    print(results_weighted["validation_loss"])
-    print()
-    print("Test absolute precision")
-    print(results_weighted["test_absolute_precision"])
-    print()
-    print("Test compatible precision")
-    print(results_weighted["test_compatible_precision"])
-    print()
-    print("Mean usage scores")
-    print(results_weighted["pred_usage_scores"])
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
