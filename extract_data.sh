@@ -1,5 +1,5 @@
 #!/bin/bash
-# Create dir if ont existing
+# Create dir if not existing
 mkdir -p data/
 
 # Run the queries
