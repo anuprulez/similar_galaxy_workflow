@@ -80,7 +80,7 @@ class HyperparameterOptimisation:
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
 
         # minimize the objective function using the set of parameters above
-        learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=2)
+        learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
         
         # set the best params with respective values
         for item in learned_params:

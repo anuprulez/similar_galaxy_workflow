@@ -2,6 +2,7 @@
 <root>
     <ml_parameters>
         <parameter name="n_epochs" value="10" />
+        <parameter name="max_evals" value="10" />
         <parameter name="test_share" value="0.1" />
     </ml_parameters>
     <optimise_parameters>
