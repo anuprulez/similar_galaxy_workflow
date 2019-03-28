@@ -35,8 +35,7 @@ class PredictTool:
         # get the best model and train
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_model, best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights, n_epochs)
-        print(best_params)
+        best_model, best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights)
 
         # retrieve the model and train on complete dataset without validation set
         model = utils.set_recurrent_network(best_params, reverse_dictionary)
@@ -55,19 +54,19 @@ class PredictTool:
             sample_weight=train_sample_weights,
             validation_data=(test_data, test_labels)
         )
-
-        loss_values = model_fit.history["loss"]
-        validation_loss = model_fit.history["val_loss"]
-
-        return {
-            "train_loss": np.array(loss_values),
-            "validation_loss": np.array(validation_loss),
-            "test_absolute_precision": predict_callback_test.abs_precision,
-            "test_compatible_precision": predict_callback_test.abs_compatible_precision,
-            "pred_usage_scores": predict_callback_test.usage_prediction_scores,
+        train_performance = {
+            "train_loss": np.array(model_fit.history["loss"]),
             "model": model,
             "best_parameters": best_params
         }
+        # if there is test data, add more information
+        if len(test_data) > 0:
+            train_performance["validation_loss"] = np.array(model_fit.history["val_loss"])
+            train_performance["test_absolute_precision"] = predict_callback_test.abs_precision
+            train_performance["test_compatible_precision"] = predict_callback_test.abs_compatible_precision
+            train_performance["pred_usage_scores"] = predict_callback_test.usage_prediction_scores
+
+        return train_performance
 
 
 class PredictCallback(Callback):
@@ -86,13 +85,14 @@ class PredictCallback(Callback):
         """
         Compute absolute and compatible precision for test data
         """
-        mean_abs_precision, mean_compatible_precision, mean_predicted_usage_score = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.pred_usage_scores)
-        self.abs_precision.append(mean_abs_precision)
-        self.abs_compatible_precision.append(mean_compatible_precision)
-        self.usage_prediction_scores.append(mean_predicted_usage_score)
-        print("Epoch %d topk absolute precision: %.4f" % (epoch + 1, mean_abs_precision))
-        print("Epoch %d topk compatible precision: %.4f" % (epoch + 1, mean_compatible_precision))
-        print("Epoch %d mean usage scores for correct predictions: %.4f" % (epoch + 1, mean_predicted_usage_score))
+        if len(self.test_data) > 0:
+            mean_abs_precision, mean_compatible_precision, mean_predicted_usage_score = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.pred_usage_scores)
+            self.abs_precision.append(mean_abs_precision)
+            self.abs_compatible_precision.append(mean_compatible_precision)
+            self.usage_prediction_scores.append(mean_predicted_usage_score)
+            print("Epoch %d topk absolute precision: %.4f" % (epoch + 1, mean_abs_precision))
+            print("Epoch %d topk compatible precision: %.4f" % (epoch + 1, mean_compatible_precision))
+            print("Epoch %d mean usage scores for correct predictions: %.4f" % (epoch + 1, mean_predicted_usage_score))
 
 
 if __name__ == "__main__":
@@ -135,6 +135,25 @@ if __name__ == "__main__":
     print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, train_sample_weights, compatible_next_tools)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
+    print()
+    print("Best parameters")
+    print(results_weighted["best_parameters"])
+    print()
+    print("Training loss")
+    print(results_weighted["train_loss"])
+    print()
+    if test_share > 0.0:
+        print("Validation loss")
+        print(results_weighted["validation_loss"])
+        print()
+        print("Absolute precision")
+        print(results_weighted["test_absolute_precision"])
+        print()
+        print("Compatible precision")
+        print(results_weighted["test_compatible_precision"])
+        print()
+        print("Predicted tools usage scores")
+        print(results_weighted["pred_usage_scores"])
 
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))

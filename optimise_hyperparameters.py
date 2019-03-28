@@ -23,7 +23,7 @@ class HyperparameterOptimisation:
         """ Init method. """
 
     @classmethod
-    def train_model(self, config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights, n_epochs):
+    def train_model(self, config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights):
         """
         Train a model and report accuracy
         """
@@ -38,16 +38,17 @@ class HyperparameterOptimisation:
         l_dropout = list(map(float, config["dropout"].split(",")))
         l_spatial_dropout = list(map(float, config["spatial_dropout"].split(",")))
         l_recurrent_dropout = list(map(float, config["recurrent_dropout"].split(",")))
+        optimize_n_epochs = int(config["optimize_n_epochs"])
+        validation_split = float(config["validation_split"])
         # get dimensions
         dimensions = len(reverse_dictionary) + 1
         trials = Trials()
         best_model_params = dict()
-        
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
-        params = {
-	    "embedding_size": hp.choice("embedding_size", l_embedding_size),
-	    "units": hp.choice("units", l_units),
-	    "batch_size": hp.choice("batch_size", l_batch_size),
+        params = {	    
+	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
+	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
+	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.uniform("learning_rate", l_learning_rate[0], l_learning_rate[1]),
@@ -58,11 +59,11 @@ class HyperparameterOptimisation:
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, params["embedding_size"], mask_zero=True))
+            model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
-            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
+            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
-            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
+            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
@@ -70,28 +71,22 @@ class HyperparameterOptimisation:
             
             model.summary()
             model_fit = model.fit(train_data, train_labels,
-                batch_size=params["batch_size"],
-                epochs=n_epochs,
+                batch_size=int(params["batch_size"]),
+                epochs=optimize_n_epochs,
                 shuffle="batch",
                 class_weight=class_weights,
                 sample_weight=train_sample_weights,
-                validation_data=(test_data, test_labels)
+                validation_split=validation_split
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
 
         # minimize the objective function using the set of parameters above
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
-        
+        print(learned_params)
         # set the best params with respective values
         for item in learned_params:
             item_val = learned_params[item]
-            if item == 'batch_size':
-                best_model_params[item] = l_batch_size[item_val]
-            elif item == 'embedding_size':
-                best_model_params[item] = l_embedding_size[item_val]
-            elif item == 'units':
-                best_model_params[item] = l_units[item_val]
-            elif item == 'activation_output':
+            if item == 'activation_output':
                 best_model_params[item] = l_output_activations[item_val]
             elif item == 'activation_recurrent':
                 best_model_params[item] = l_recurrent_activations[item_val]
