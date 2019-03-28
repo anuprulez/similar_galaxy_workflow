@@ -1,4 +1,34 @@
-# Predict next tool in Galaxy workflows
+# Predict tools in Galaxy workflows
+
+## How to execute the script
+
+1. Install the following dependencies:
+- Skicit-learn (version 0.20.1)
+- Tensorflow (version 1.10.0)
+- Keras (version 2.2.4)
+- Hyperopt (version 0.2)
+- Other packages like h5py, csv, json
+
+2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
+
+3. Execute the file `train.sh`. It has few input parameters:
+`python <<main_script>> <<workflow_tabular_file>> <<config_file>> <<path_to_created_model>> <<tool_usage_tabular_file>> <<cutoff_date>>`
+- `<<main_script>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
+- `<<workflow_tabular_file>>`: This file is extracted in the last step as `wf-connections.tsv`. Give the path of this file.
+- `<<config_file>>`: This file contains configurable values to be used by the neural network to generate model. It is present beside `train.sh` file. Give the path of this file
+- `<<path_to_created_model>>`: Give the path of the created model as `h5` file. E.g. `data/trained_model.hdf5`. Give the path of this file.
+- `<<tool_usage_tabular_file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file
+- `<<cutoff_date>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
+
+4. The training of the neural network takes a long time (> 5 hours). Once the script finishes, `h5` model file is created at the given location (`path_to_created_model`). 
+
+5. Place the new model in the Galaxy repository at `galaxy/database/trained_model.hdf5`. 
+
+6. In the `galaxy.yml` config file, make the following changes:
+- Enable and then set the property `enable_tool_recommendation` to `true`
+- Enable and then set the property `model_path` to `database/trained_model.hdf5`
+
+7. Now go to the workflow editor and choose any tool from the tool box. Then, you can see a `right-arrow` in top-right of the tool. Click on it to see the recommended tools to be used after the previously chosen tool.
 
 ## Galaxy workflows as directed graphs
 [Galaxy](https://usegalaxy.eu/) workflow is a chain of (Galaxy) tools to process biological data. These datasets undergo a transformation at each node (a tool) which includes text manipulation, sorting on a column, deletion or addition of a column and so on. Each workflow can be considered as a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) where the output of each node becomes an input to the next node(s). Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its directed graph. Choose a workflow from the dropdown and see the [Cytoscape](http://js.cytoscape.org/) graph. A typical [workflow](https://usegalaxy.org/workflow/editor?id=4ef668a0f832a731) in Galaxy looks like this:
