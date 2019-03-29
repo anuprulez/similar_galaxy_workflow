@@ -6,7 +6,6 @@
     - Skicit-learn (version 0.20.1)
     - Tensorflow (version 1.10.0)
     - Keras (version 2.2.4)
-    - Hyperopt (version 0.2)
     - Other packages like h5py, csv, json
 
 2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
