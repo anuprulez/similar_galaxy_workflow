@@ -12,6 +12,7 @@ from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
+from keras.callbacks import EarlyStopping
 
 from sklearn.model_selection import StratifiedKFold
 
@@ -35,23 +36,27 @@ class HyperparameterOptimisation:
         l_batch_size = list(map(int, config["batch_size"].split(",")))
         l_embedding_size = list(map(int, config["embedding_size"].split(",")))
         l_units = list(map(int, config["units"].split(",")))
+        
         # convert items to float
         l_learning_rate = list(map(float, config["learning_rate"].split(",")))
         l_dropout = list(map(float, config["dropout"].split(",")))
         l_spatial_dropout = list(map(float, config["spatial_dropout"].split(",")))
         l_recurrent_dropout = list(map(float, config["recurrent_dropout"].split(",")))
+        
         optimize_n_epochs = int(config["optimize_n_epochs"])
         validation_split = float(config["validation_split"])
+
         # get dimensions
         dimensions = len(reverse_dictionary) + 1
         trials = Trials()
         best_model_params = dict()
-        n_folds = 5
+        early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=2)
+
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
-	    "embedding_size": hp.choice("embedding_size", l_embedding_size),
-	    "units": hp.choice("units", l_units),
-	    "batch_size": hp.choice("batch_size", l_batch_size),
+	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
+	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
+	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.uniform("learning_rate", l_learning_rate[0], l_learning_rate[1]),
@@ -78,7 +83,8 @@ class HyperparameterOptimisation:
                 shuffle="batch",
                 class_weight=class_weights,
                 sample_weight=train_sample_weights,
-                validation_split=validation_split
+                validation_split=validation_split,
+                callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
 
@@ -92,12 +98,6 @@ class HyperparameterOptimisation:
                 best_model_params[item] = l_output_activations[item_val]
             elif item == 'activation_recurrent':
                 best_model_params[item] = l_recurrent_activations[item_val]
-            elif item == 'embedding_size':
-                best_model_params[item] = l_embedding_size[item_val]
-            elif item == 'units':
-                best_model_params[item] = l_units[item_val]
-            elif item == 'batch_size':
-                best_model_params[item] = l_batch_size[item_val]
             else:
                 best_model_params[item] = item_val
         sorted_results = sorted(trials.results, key=lambda i: i['loss'])

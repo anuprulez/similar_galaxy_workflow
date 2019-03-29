@@ -36,6 +36,8 @@ class PredictTool:
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_model, best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights, train_sample_weights)
+        
+        utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
         model = utils.set_recurrent_network(best_params, reverse_dictionary)
