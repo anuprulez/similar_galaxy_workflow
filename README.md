@@ -3,7 +3,7 @@
 ## How to execute the script
 
 1. Install the following dependencies:
-    - Skicit-learn (version 0.20.1)
+    - Scikit-learn (version 0.20.1)
     - Tensorflow (version 1.10.0)
     - Keras (version 2.2.4)
     - Other packages like h5py, csv, json
