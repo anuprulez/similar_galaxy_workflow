@@ -13,6 +13,8 @@ from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
+from sklearn.model_selection import StratifiedKFold
+
 import utils
 
 
@@ -44,11 +46,12 @@ class HyperparameterOptimisation:
         dimensions = len(reverse_dictionary) + 1
         trials = Trials()
         best_model_params = dict()
+        n_folds = 5
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
-	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
-	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
-	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
+	    "embedding_size": hp.choice("embedding_size", l_embedding_size),
+	    "units": hp.choice("units", l_units),
+	    "batch_size": hp.choice("batch_size", l_batch_size),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.uniform("learning_rate", l_learning_rate[0], l_learning_rate[1]),
@@ -68,7 +71,6 @@ class HyperparameterOptimisation:
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
             model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
-            
             model.summary()
             model_fit = model.fit(train_data, train_labels,
                 batch_size=int(params["batch_size"]),
@@ -90,6 +92,12 @@ class HyperparameterOptimisation:
                 best_model_params[item] = l_output_activations[item_val]
             elif item == 'activation_recurrent':
                 best_model_params[item] = l_recurrent_activations[item_val]
+            elif item == 'embedding_size':
+                best_model_params[item] = l_embedding_size[item_val]
+            elif item == 'units':
+                best_model_params[item] = l_units[item_val]
+            elif item == 'batch_size':
+                best_model_params[item] = l_batch_size[item_val]
             else:
                 best_model_params[item] = item_val
         sorted_results = sorted(trials.results, key=lambda i: i['loss'])
