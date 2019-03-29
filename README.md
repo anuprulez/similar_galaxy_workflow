@@ -29,6 +29,12 @@
 
 7. Now go to the workflow editor and choose any tool from the tool box. Then, you can see a `right-arrow` in top-right of the tool. Click on it to see the recommended tools to be used after the previously chosen tool.
 
+## Tool prediction in action
+
+<p align="center">
+  <img src="https://github.com/anuprulez/similar_galaxy_workflow/raw/release_tool_recommendation_v_03_19/demo/tool_prediction_demo.gif">
+</p>
+
 ## Galaxy workflows as directed graphs
 [Galaxy](https://usegalaxy.eu/) workflow is a chain of (Galaxy) tools to process biological data. These datasets undergo a transformation at each node (a tool) which includes text manipulation, sorting on a column, deletion or addition of a column and so on. Each workflow can be considered as a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) where the output of each node becomes an input to the next node(s). Visit this [website](https://rawgit.com/anuprulez/similar_galaxy_workflow/master/viz/index.html) to see all the steps of a workflow and its directed graph. Choose a workflow from the dropdown and see the [Cytoscape](http://js.cytoscape.org/) graph. A typical [workflow](https://usegalaxy.org/workflow/editor?id=4ef668a0f832a731) in Galaxy looks like this:
 
