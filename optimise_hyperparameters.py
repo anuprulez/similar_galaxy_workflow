@@ -86,7 +86,7 @@ class HyperparameterOptimisation:
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )
-            return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
+            return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK}
 
         # minimize the objective function using the set of parameters above
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
@@ -100,7 +100,6 @@ class HyperparameterOptimisation:
                 best_model_params[item] = l_recurrent_activations[item_val]
             else:
                 best_model_params[item] = item_val
-        sorted_results = sorted(trials.results, key=lambda i: i['loss'])
         model_config = utils.extract_configuration(trials.trials)
         utils.write_file("data/generated_files/trials.txt", model_config)
-        return sorted_results[0], best_model_params
+        return best_model_params
