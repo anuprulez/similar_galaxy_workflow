@@ -54,9 +54,9 @@ class HyperparameterOptimisation:
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
-	    "embedding_size": hp.uniform("embedding_size", l_embedding_size[0], l_embedding_size[1]),
-	    "units": hp.uniform("units", l_units[0], l_units[1]),
-	    "batch_size": hp.uniform("batch_size", l_batch_size[0], l_batch_size[1]),
+	    "embedding_size": scope.int(hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1)),
+	    "units": scope.int(hp.quniform("units", l_units[0], l_units[1], 1)),
+	    "batch_size": scope.int(hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1)),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
@@ -67,18 +67,18 @@ class HyperparameterOptimisation:
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
+            model.add(Embedding(dimensions, params["embedding_size"], mask_zero=True))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
+            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
+            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
             model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
             model.summary()
             model_fit = model.fit(train_data, train_labels,
-                batch_size=int(params["batch_size"]),
+                batch_size=params["batch_size"],
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 class_weight=class_weights,
