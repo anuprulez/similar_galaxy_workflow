@@ -54,9 +54,9 @@ class HyperparameterOptimisation:
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
-	    "embedding_size": scope.int(hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1)),
-	    "units": scope.int(hp.quniform("units", l_units[0], l_units[1], 1)),
-	    "batch_size": scope.int(hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1)),
+	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
+	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
+	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
