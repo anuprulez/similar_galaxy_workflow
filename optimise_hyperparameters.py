@@ -50,7 +50,7 @@ class HyperparameterOptimisation:
         dimensions = len(reverse_dictionary) + 1
         trials = Trials()
         best_model_params = dict()
-        early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=2)
+        early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-4, verbose=1, patience=1)
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
@@ -101,4 +101,5 @@ class HyperparameterOptimisation:
             else:
                 best_model_params[item] = item_val
         sorted_results = sorted(trials.results, key=lambda i: i['loss'])
+        utils.write_file("data/generated_files/trials.txt", trials.trials)
         return sorted_results[0], best_model_params
