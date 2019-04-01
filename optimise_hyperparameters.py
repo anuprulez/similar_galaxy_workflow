@@ -5,6 +5,7 @@ Find the optimal combination of hyperparameters
 import numpy as np
 import itertools
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from hyperopt.mongoexp import MongoTrials
 
 from keras.models import Model
 from keras.models import Sequential
@@ -48,7 +49,6 @@ class HyperparameterOptimisation:
 
         # get dimensions
         dimensions = len(reverse_dictionary) + 1
-        trials = Trials()
         best_model_params = dict()
         early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-4, verbose=1, patience=1)
 
@@ -87,7 +87,8 @@ class HyperparameterOptimisation:
                 callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK}
-
+        # trials = Trials()
+        trials = MongoTrials('mongo://localhost:1234/foo_db7/jobs')
         # minimize the objective function using the set of parameters above
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
         print(learned_params)
