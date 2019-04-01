@@ -3,7 +3,7 @@
     <ml_parameters>
         <parameter name="n_epochs" value="30" />
         <parameter name="optimize_n_epochs" value="5" />
-        <parameter name="max_evals" value="2" />
+        <parameter name="max_evals" value="50" />
         <parameter name="test_share" value="0.1" />
         <parameter name="validation_split" value="0.1" />
     </ml_parameters>

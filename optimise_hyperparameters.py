@@ -67,18 +67,18 @@ class HyperparameterOptimisation:
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, params["embedding_size"], mask_zero=True))
+            model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
-            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
+            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
-            model.add(GRU(params["units"], dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
+            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
             model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
             model.summary()
             model_fit = model.fit(train_data, train_labels,
-                batch_size=params["batch_size"],
+                batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 class_weight=class_weights,
