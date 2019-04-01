@@ -100,6 +100,17 @@ def remove_file(file_path):
         os.remove(file_path)
 
 
+def extract_configuration(config_object):
+    config_loss = dict()
+    for index, item in enumerate(config_object):
+        config_loss[index] = list()
+        d_config = dict()
+        d_config['loss'] = item['result']['loss']
+        d_config['params_config'] = item['misc']['vals']
+        config_loss[index].append(d_config)
+    return config_loss
+
+
 def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)

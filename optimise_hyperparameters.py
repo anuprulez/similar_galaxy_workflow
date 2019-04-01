@@ -54,12 +54,12 @@ class HyperparameterOptimisation:
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
-	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
-	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
-	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
+	    "embedding_size": hp.uniform("embedding_size", l_embedding_size[0], l_embedding_size[1]),
+	    "units": hp.uniform("units", l_units[0], l_units[1]),
+	    "batch_size": hp.uniform("batch_size", l_batch_size[0], l_batch_size[1]),
 	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
-	    "learning_rate": hp.uniform("learning_rate", l_learning_rate[0], l_learning_rate[1]),
+	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
 	    "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
 	    "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
 	    "recurrent_dropout": hp.uniform("recurrent_dropout", l_recurrent_dropout[0], l_recurrent_dropout[1])
@@ -101,5 +101,6 @@ class HyperparameterOptimisation:
             else:
                 best_model_params[item] = item_val
         sorted_results = sorted(trials.results, key=lambda i: i['loss'])
-        utils.write_file("data/generated_files/trials.txt", trials.trials)
+        model_config = utils.extract_configuration(trials.trials)
+        utils.write_file("data/generated_files/trials.txt", model_config)
         return sorted_results[0], best_model_params
