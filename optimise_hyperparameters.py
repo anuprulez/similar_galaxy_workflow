@@ -87,8 +87,8 @@ class HyperparameterOptimisation:
                 callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK}
-        # trials = Trials()
-        trials = MongoTrials('mongo://localhost:1234/foo_db7/jobs')
+        mongo_path = 'mongo://' + config["host_port"] + '/' + config["db_name"] + '/jobs'
+        trials = MongoTrials(mongo_path)
         # minimize the objective function using the set of parameters above
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
         print(learned_params)
