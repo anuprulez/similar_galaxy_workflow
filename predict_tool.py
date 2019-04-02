@@ -53,7 +53,6 @@ class PredictTool:
             callbacks=callbacks_list,
             shuffle="batch",
             class_weight=class_weights,
-            sample_weight=train_sample_weights,
             validation_data=(test_data, test_labels)
         )
         train_performance = {

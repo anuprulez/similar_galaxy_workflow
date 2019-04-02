@@ -82,7 +82,6 @@ class HyperparameterOptimisation:
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 class_weight=class_weights,
-                sample_weight=train_sample_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )
