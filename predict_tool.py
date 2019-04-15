@@ -63,10 +63,8 @@ class PredictTool:
         # if there is test data, add more information
         if len(test_data) > 0:
             train_performance["validation_loss"] = np.array(model_fit.history["val_loss"])
-            train_performance["test_absolute_precision"] = predict_callback_test.abs_precision
-            train_performance["test_compatible_precision"] = predict_callback_test.abs_compatible_precision
-            train_performance["pred_usage_scores"] = predict_callback_test.usage_prediction_scores
-
+            train_performance["precision"] = predict_callback_test.precision
+            train_performance["usage_weights"] = predict_callback_test.usage_weights
         return train_performance
 
 
@@ -75,9 +73,8 @@ class PredictCallback(Callback):
         self.test_data = test_data
         self.test_labels = test_labels
         self.reverse_data_dictionary = reverse_data_dictionary
-        self.abs_precision = list()
-        self.abs_compatible_precision = list()
-        self.usage_prediction_scores = list()
+        self.precision = list()
+        self.usage_weights = list()
         self.n_epochs = n_epochs
         self.next_compatible_tools = next_compatible_tools
         self.pred_usage_scores = usg_scores
@@ -87,13 +84,11 @@ class PredictCallback(Callback):
         Compute absolute and compatible precision for test data
         """
         if len(self.test_data) > 0:
-            mean_abs_precision, mean_compatible_precision, mean_predicted_usage_score = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.pred_usage_scores)
-            self.abs_precision.append(mean_abs_precision)
-            self.abs_compatible_precision.append(mean_compatible_precision)
-            self.usage_prediction_scores.append(mean_predicted_usage_score)
-            print("Epoch %d topk absolute precision: %.4f" % (epoch + 1, mean_abs_precision))
-            print("Epoch %d topk compatible precision: %.4f" % (epoch + 1, mean_compatible_precision))
-            print("Epoch %d mean usage scores for correct predictions: %.4f" % (epoch + 1, mean_predicted_usage_score))
+            precision, usage_weights = utils.verify_model(self.model, self.test_data, self.test_labels, self.reverse_data_dictionary, self.next_compatible_tools, self.pred_usage_scores)
+            self.precision.append(precision)
+            self.usage_weights.append(usage_weights)
+            print("Epoch %d precision: %s" % (epoch + 1, precision))
+            print("Epoch %d usage weights: %s" % (epoch + 1, usage_weights))
 
 
 if __name__ == "__main__":
@@ -142,19 +137,20 @@ if __name__ == "__main__":
     print()
     print("Training loss")
     print(results_weighted["train_loss"])
+    np.savetxt("data/generated_files/train_loss.txt", results_weighted["train_loss"])
     print()
     if test_share > 0.0:
         print("Validation loss")
         print(results_weighted["validation_loss"])
+        np.savetxt("data/generated_files/validation_loss.txt", results_weighted["validation_loss"])
         print()
-        print("Absolute precision")
-        print(results_weighted["test_absolute_precision"])
+        print("Precision")
+        print(results_weighted["precision"])
+        np.savetxt("data/generated_files/precision.txt", results_weighted["precision"])
         print()
-        print("Compatible precision")
-        print(results_weighted["test_compatible_precision"])
-        print()
-        print("Predicted tools usage scores")
-        print(results_weighted["pred_usage_scores"])
+        print("Usage weights")
+        print(results_weighted["usage_weights"])
+        np.savetxt("data/generated_files/usage_weights.txt", results_weighted["usage_weights"])
 
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
