@@ -50,6 +50,7 @@ class PredictTool:
         model_fit = model.fit(train_data, train_labels,
             batch_size=int(best_params["batch_size"]),
             epochs=n_epochs,
+            verbose=2,
             callbacks=callbacks_list,
             shuffle="batch",
             class_weight=class_weights,

@@ -81,6 +81,7 @@ class HyperparameterOptimisation:
                 batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
                 shuffle="batch",
+                verbose=2,
                 class_weight=class_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
