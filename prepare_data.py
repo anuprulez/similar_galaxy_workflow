@@ -75,19 +75,13 @@ class PrepareData:
         Decompose the paths to variable length sub-paths keeping the first tool fixed
         """
         sub_paths_pos = list()
-        sub_paths_names = list()
         for index, item in enumerate(paths):
             tools = item.split(",")
-            len_tools = len(tools)
-            if len_tools <= self.max_tool_sequence_len:
-                for window in range(1, len_tools):
-                    sequence = tools[0: window + 1]
-                    tools_pos = [str(dictionary[str(tool_item)]) for tool_item in sequence]
-                    if len(tools_pos) > 1:
-                        sub_paths_pos.append(",".join(tools_pos))
-                        sub_paths_names.append(",".join(sequence))
+            if len(tools) <= self.max_tool_sequence_len:
+                tools_pos = [str(dictionary[str(tool_item)]) for tool_item in tools]
+                if len(tools_pos) > 1:
+                    sub_paths_pos.append(",".join(tools_pos))
         sub_paths_pos = list(set(sub_paths_pos))
-        sub_paths_names = list(set(sub_paths_names))
         return sub_paths_pos
 
     @classmethod
