@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <root>
     <ml_parameters>
-        <parameter name="test_share" value="0.1" />
-        <parameter name="max_evals" value="100" />
+        <parameter name="test_share" value="0.2" />
+        <parameter name="max_evals" value="200" />
     </ml_parameters>
     <optimise_parameters>
-        <parameter name="n_estimators" value="1,200" />
+        <parameter name="n_estimators" value="1,100" />
         <parameter name="max_depth" value="1,100" />
-        <parameter name="min_samples_split" value="0.1,0.5" />
-        <parameter name="min_samples_leaf" value="0.1,0.5" />
+        <parameter name="min_samples_split" value="1e-5,0.5" />
+        <parameter name="min_samples_leaf" value="1e-5,0.5" />
     </optimise_parameters>
 </root>

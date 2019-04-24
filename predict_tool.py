@@ -39,7 +39,7 @@ class PredictTool:
         
         utils.write_file("data/generated_files/best_params.txt", best_params)
         
-        classifier = ExtraTreesClassifier(
+        classifier = RandomForestClassifier(
             n_estimators=int(best_params["n_estimators"]),
             max_depth=int(best_params["max_depth"]),
             min_samples_split=float(best_params["min_samples_split"]),

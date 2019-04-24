@@ -37,7 +37,7 @@ class HyperparameterOptimisation:
         }
 
         def create_model(params):
-            clf = ExtraTreesClassifier(
+            clf = RandomForestClassifier(
                 n_estimators=int(params["n_estimators"]),
                 max_depth=int(params["max_depth"]),
                 min_samples_split=float(params["min_samples_split"]),
