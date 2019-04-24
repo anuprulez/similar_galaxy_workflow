@@ -2,7 +2,6 @@
 <root>
     <ml_parameters>
         <parameter name="test_share" value="0.1" />
-        <parameter name="validation_split" value="0.1" />
         <parameter name="max_evals" value="100" />
     </ml_parameters>
     <optimise_parameters>

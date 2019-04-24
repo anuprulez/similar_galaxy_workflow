@@ -5,9 +5,8 @@ Find the optimal combination of hyperparameters
 import numpy as np
 import itertools
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
-from hyperopt.mongoexp import MongoTrials
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.metrics import log_loss
 
 import utils
@@ -29,8 +28,6 @@ class HyperparameterOptimisation:
         l_min_samples_split = list(map(float, config["min_samples_split"].split(",")))
         l_min_samples_leaf = list(map(float, config["min_samples_leaf"].split(",")))
 
-        validation_split = float(config["validation_split"])
-
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
 	    "n_estimators": hp.quniform("n_estimators", l_n_estimators[0], l_n_estimators[1], 1),
@@ -40,9 +37,11 @@ class HyperparameterOptimisation:
         }
 
         def create_model(params):
-            clf = RandomForestClassifier(
+            clf = ExtraTreesClassifier(
                 n_estimators=int(params["n_estimators"]),
                 max_depth=int(params["max_depth"]),
+                min_samples_split=float(params["min_samples_split"]),
+                min_samples_leaf=float(params["min_samples_leaf"]),
                 class_weight=[{0: w} for w in list(class_weights.values())]
             )
             clf.fit(train_data, train_labels)

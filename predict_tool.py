@@ -10,7 +10,7 @@ import xml.etree.ElementTree as et
 import warnings
 
 # machine learning library
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.metrics import log_loss
 
 import extract_workflow_connections
@@ -39,9 +39,12 @@ class PredictTool:
         
         utils.write_file("data/generated_files/best_params.txt", best_params)
         
-        classifier = RandomForestClassifier(
+        classifier = ExtraTreesClassifier(
             n_estimators=int(best_params["n_estimators"]),
-            max_depth=int(best_params["max_depth"])
+            max_depth=int(best_params["max_depth"]),
+            min_samples_split=float(best_params["min_samples_split"]),
+            min_samples_leaf=float(best_params["min_samples_leaf"]),
+            class_weight=[{0: w} for w in list(class_weights.values())]
         )
         classifier.fit(train_data, train_labels)
 
