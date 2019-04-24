@@ -7,7 +7,7 @@
     <optimise_parameters>
         <parameter name="n_estimators" value="1,100" />
         <parameter name="max_depth" value="1,100" />
-        <parameter name="min_samples_split" value="1e-5,0.5" />
-        <parameter name="min_samples_leaf" value="1e-5,0.5" />
+        <parameter name="min_samples_split" value="0.1,0.5" />
+        <parameter name="min_samples_leaf" value="0.1,0.5" />
     </optimise_parameters>
 </root>
