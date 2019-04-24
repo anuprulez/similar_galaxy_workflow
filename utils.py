@@ -57,44 +57,6 @@ def format_tool_id(tool_link):
     return tool_id
 
 
-def get_HDF5(hf, d_key):
-    """
-    Read h5 file to get train and test data
-    """
-    return hf.get(d_key).value
-
-
-def save_HDF5(hf_file, d_key, data, d_type=""):
-    """
-    Save datasets as h5 file
-    """
-    if (d_type == 'json'):
-        data = json.dumps(data)
-    hf_file.create_dataset(d_key, data=data)
-
-
-def set_trained_model(dump_file, model_values):
-    """
-    Create an h5 file with the trained weights and associated dicts
-    """
-    hf_file = h5py.File(dump_file, 'w')
-    for key in model_values:
-        value = model_values[key]
-        if key == 'model_weights':
-            for idx, item in enumerate(value):
-                w_key = "weight_" + str(idx)
-                if w_key in hf_file:
-                    hf_file.modify(w_key, item)
-                else:
-                    hf_file.create_dataset(w_key, data=item)
-        else:
-            if key in hf_file:
-                hf_file.modify(key, json.dumps(value))
-            else:
-                hf_file.create_dataset(key, data=json.dumps(value))
-    hf_file.close()
-
-
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -109,57 +71,6 @@ def extract_configuration(config_object):
         d_config['params_config'] = item['misc']['vals']
         config_loss[index].append(d_config)
     return config_loss
-
-
-def get_best_parameters(mdl_dict):
-    """
-    Get param values (defaults as well)
-    """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_size", "512"))
-    dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
-    units = int(mdl_dict.get("units", "512"))
-    batch_size = int(mdl_dict.get("batch_size", "512"))
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
-
-    return {
-        "lr": lr,
-        "embedding_size": embedding_size,
-        "dropout": dropout,
-        "recurrent_dropout": recurrent_dropout,
-        "spatial_dropout": spatial_dropout,
-        "units": units,
-        "batch_size": batch_size,
-        "activation_recurrent": activation_recurrent,
-        "activation_output": activation_output,
-        "loss_type": loss_type
-    }
-
-
-def set_recurrent_network(mdl_dict, reverse_dictionary):
-    """
-    Create a RNN network and set its parameters
-    """
-    dimensions = len(reverse_dictionary) + 1
-    model_params = get_best_parameters(mdl_dict)
-
-    # define the architecture of the recurrent neural network
-    model = Sequential()
-    model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
-    model.add(SpatialDropout1D(model_params["spatial_dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
-    return model
-    
  
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
     """
@@ -172,7 +83,7 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     test_sample_tool_pos = x[test_sample_pos[0]:]
 
     # predict next tools for a test path
-    prediction = model.predict(test_sample, verbose=0)
+    prediction = model.predict(test_sample)
     nw_dimension = prediction.shape[1]
 
     # remove the 0th position as there is no tool at this index
@@ -233,20 +144,3 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage
-
-
-def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
-    # save files
-    trained_model = results["model"]
-    best_model_parameters = results["best_parameters"]
-    model_config = trained_model.to_json()
-    model_weights = trained_model.get_weights()
-
-    model_values = {
-        'data_dictionary': data_dictionary,
-        'model_config': model_config,
-        'best_parameters': best_model_parameters,
-        'model_weights': model_weights,
-        "compatible_tools": compatible_next_tools
-    }
-    set_trained_model(trained_model_path, model_values)
