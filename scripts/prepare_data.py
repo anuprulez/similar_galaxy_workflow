@@ -75,7 +75,6 @@ class PrepareData:
         Decompose the paths to variable length sub-paths keeping the first tool fixed
         """
         sub_paths_pos = list()
-        sub_paths_names = list()
         for index, item in enumerate(paths):
             tools = item.split(",")
             len_tools = len(tools)
@@ -85,9 +84,7 @@ class PrepareData:
                     tools_pos = [str(dictionary[str(tool_item)]) for tool_item in sequence]
                     if len(tools_pos) > 1:
                         sub_paths_pos.append(",".join(tools_pos))
-                        sub_paths_names.append(",".join(sequence))
         sub_paths_pos = list(set(sub_paths_pos))
-        sub_paths_names = list(set(sub_paths_names))
         return sub_paths_pos
 
     @classmethod
@@ -235,9 +232,6 @@ class PrepareData:
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
 
-        # get weights for each sample for training
-        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
-
         # Predict tools usage
         print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
@@ -248,4 +242,4 @@ class PrepareData:
         # get class weights using the predicted usage for each tool
         class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights, tool_predicted_usage
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage

@@ -64,6 +64,8 @@ class ExtractWorkflowConnections:
             path_no_slash = [utils.format_tool_id(tool_id) for tool_id in path]
             wf_paths_no_slash.append(path_no_slash)
 
+        print("# paths in workflows with no slashes: %d" % len(wf_paths_no_slash))
+
         # collect duplicate paths
         for path in wf_paths_no_slash:
             workflow_paths_dup += ",".join(path) + "\n"
@@ -78,6 +80,7 @@ class ExtractWorkflowConnections:
         frequency_paths = self.compute_path_freq(unique_paths)
 
         no_dup_paths = list(set(unique_paths))
+        print("# duplicated paths: %d" % len(no_dup_paths))
 
         print("Finding compatible next tools...")
         compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
