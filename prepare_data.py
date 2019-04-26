@@ -232,9 +232,6 @@ class PrepareData:
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
 
-        # get weights for each sample for training
-        train_sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
-
         # Predict tools usage
         print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
@@ -250,4 +247,4 @@ class PrepareData:
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, train_sample_weights, tool_predicted_usage
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage
