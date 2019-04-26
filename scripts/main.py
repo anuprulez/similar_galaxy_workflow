@@ -9,9 +9,6 @@ import time
 import xml.etree.ElementTree as et
 import warnings
 
-# machine learning library
-from keras.callbacks import Callback
-
 import extract_workflow_connections
 import prepare_data
 import optimise_hyperparameters
