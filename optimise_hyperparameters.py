@@ -9,13 +9,11 @@ from hyperopt.mongoexp import MongoTrials
 
 from keras.models import Model
 from keras.models import Sequential
-from keras.layers import Dense, GRU, Dropout
+from keras.layers import Dense, GRU, Dropout, Flatten
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
-
-from sklearn.model_selection import StratifiedKFold
 
 import utils
 
@@ -31,19 +29,19 @@ class HyperparameterOptimisation:
         """
         Train a model and report accuracy
         """
-        l_recurrent_activations = config["activation_recurrent"].split(",")
+        l_dense_activations = config["activation_dense"].split(",")
         l_output_activations = config["activation_output"].split(",")
         # convert items to integer
+
         l_batch_size = list(map(int, config["batch_size"].split(",")))
         l_embedding_size = list(map(int, config["embedding_size"].split(",")))
         l_units = list(map(int, config["units"].split(",")))
-        
+
         # convert items to float
         l_learning_rate = list(map(float, config["learning_rate"].split(",")))
         l_dropout = list(map(float, config["dropout"].split(",")))
         l_spatial_dropout = list(map(float, config["spatial_dropout"].split(",")))
-        l_recurrent_dropout = list(map(float, config["recurrent_dropout"].split(",")))
-        
+
         optimize_n_epochs = int(config["optimize_n_epochs"])
         validation_split = float(config["validation_split"])
 
@@ -57,25 +55,25 @@ class HyperparameterOptimisation:
 	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
 	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
 	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
-	    "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
+	    "activation_dense": hp.choice("activation_recurrent", l_dense_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
 	    "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
 	    "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
-	    "recurrent_dropout": hp.uniform("recurrent_dropout", l_recurrent_dropout[0], l_recurrent_dropout[1])
         }
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
+            model.add(Embedding(dimensions, int(params["embedding_size"])))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
+            model.add(Dense(int(params["units"]), input_shape=(dimensions,), activation=params["activation_dense"]))
             model.add(Dropout(params["dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
+            model.add(Dense(int(params["units"]), activation=params["activation_dense"]))
             model.add(Dropout(params["dropout"]))
+            model.add(Flatten())
             model.add(Dense(dimensions, activation=params["activation_output"]))
-            optimizer_rms = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
+            optimizer = Adam(lr=params["learning_rate"])
+            model.compile(loss='binary_crossentropy', optimizer=optimizer)
             model.summary()
             model_fit = model.fit(train_data, train_labels,
                 batch_size=int(params["batch_size"]),
@@ -87,8 +85,7 @@ class HyperparameterOptimisation:
                 callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK}
-        mongo_path = 'mongo://' + config["host_port"] + '/' + config["db_name"] + '/jobs'
-        #trials = MongoTrials(mongo_path)
+
         # minimize the objective function using the set of parameters above4
         trials = Trials()
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
@@ -98,7 +95,7 @@ class HyperparameterOptimisation:
             item_val = learned_params[item]
             if item == 'activation_output':
                 best_model_params[item] = l_output_activations[item_val]
-            elif item == 'activation_recurrent':
+            elif item == 'activation_dense':
                 best_model_params[item] = l_recurrent_activations[item_val]
             else:
                 best_model_params[item] = item_val

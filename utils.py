@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 
 
 def read_file(file_path):
@@ -140,9 +140,9 @@ def get_best_parameters(mdl_dict):
     }
 
 
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+def set_deep_network(mdl_dict, reverse_dictionary):
     """
-    Create a RNN network and set its parameters
+    Create a deep neural network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
@@ -151,12 +151,12 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
     model.add(SpatialDropout1D(model_params["spatial_dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
+    model.add(Dense(model_params["units"], activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
+    model.add(Dense(model_params["units"], activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    optimizer = RMSprop(lr=model_params["lr"])
+    optimizer = Adam(lr=model_params["lr"])
     model.compile(loss=model_params["loss_type"], optimizer=optimizer)
     return model
     

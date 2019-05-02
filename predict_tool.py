@@ -40,7 +40,7 @@ class PredictTool:
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_recurrent_network(best_params, reverse_dictionary)
+        model = utils.set_deep_network(best_params, reverse_dictionary)
         
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
