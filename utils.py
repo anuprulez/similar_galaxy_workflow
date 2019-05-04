@@ -116,31 +116,25 @@ def get_best_parameters(mdl_dict):
     Get param values (defaults as well)
     """
     lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
+    activation_dense = mdl_dict.get("activation_dense", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
 
     return {
         "lr": lr,
-        "embedding_size": embedding_size,
         "dropout": dropout,
-        "recurrent_dropout": recurrent_dropout,
-        "spatial_dropout": spatial_dropout,
         "units": units,
         "batch_size": batch_size,
-        "activation_recurrent": activation_recurrent,
+        "activation_dense": activation_dense,
         "activation_output": activation_output,
         "loss_type": loss_type
     }
 
 
-def set_deep_network(mdl_dict, reverse_dictionary):
+def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
     """
     Create a deep neural network and set its parameters
     """
@@ -149,9 +143,7 @@ def set_deep_network(mdl_dict, reverse_dictionary):
 
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
-    model.add(SpatialDropout1D(model_params["spatial_dropout"]))
-    model.add(Dense(model_params["units"], activation=model_params["activation_dense"]))
+    model.add(Dense(model_params["units"], input_shape=(max_path_length,), activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(model_params["units"], activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))

@@ -40,7 +40,7 @@ class PredictTool:
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_deep_network(best_params, reverse_dictionary)
+        model = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]))
         
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
@@ -109,7 +109,6 @@ if __name__ == "__main__":
             optimise_parameters_node = child
         for item in child:
             config[item.get("name")] = item.get("value")
-    maximum_path_length = 25
     n_epochs = int(config["n_epochs"])
     test_share = float(config["test_share"])
     trained_model_path = sys.argv[3]
@@ -122,7 +121,7 @@ if __name__ == "__main__":
 
     # Process the paths from workflows
     print("Dividing data...")
-    data = prepare_data.PrepareData(maximum_path_length, test_share)
+    data = prepare_data.PrepareData(int(config["maximum_path_length"]), test_share)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
