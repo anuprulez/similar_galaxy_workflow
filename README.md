@@ -17,7 +17,7 @@
     - `<<tool_usage_tabular_file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
     - `<<cutoff_date>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
 
-4. The training of the neural network takes a long time (> 5 hours). Once the script finishes, `h5` model file is created at the given location (`path_to_created_model`). 
+4. The training of the neural network takes a long time (> 24 hours). Once the script finishes, `h5` model file is created at the given location (`path_to_created_model`). 
 
 5. Place the new model in the Galaxy repository at `galaxy/database/trained_model.hdf5`. 
 
