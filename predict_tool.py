@@ -36,18 +36,20 @@ class PredictTool:
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        
+
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
         model = utils.set_recurrent_network(best_params, reverse_dictionary)
-        
+
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
         callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
-        model_fit = model.fit(train_data, train_labels,
+        model_fit = model.fit(
+            train_data,
+            train_labels,
             batch_size=int(best_params["batch_size"]),
             epochs=n_epochs,
             verbose=2,
