@@ -3,8 +3,8 @@
 ## How to execute the script
 
 1. Install the dependencies by executing the following lines:
-    1.1. conda env create -f environment.yml
-    1.2. conda activate tool_prediction
+    a.    `conda env create -f environment.yml`
+    b.    `conda activate tool_prediction`
 
 2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
