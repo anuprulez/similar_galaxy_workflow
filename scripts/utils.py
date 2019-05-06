@@ -139,6 +139,7 @@ def get_best_parameters(mdl_dict):
         "loss_type": loss_type
     }
 
+
 def set_recurrent_network(mdl_dict, reverse_dictionary):
     """
     Create a RNN network and set its parameters
@@ -158,8 +159,8 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     optimizer = RMSprop(lr=model_params["lr"])
     model.compile(loss=model_params["loss_type"], optimizer=optimizer)
     return model
-    
- 
+
+
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
     """
     Compute absolute and compatible precision
@@ -179,12 +180,12 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     prediction_pos = np.argsort(prediction, axis=-1)
     topk_prediction_pos = prediction_pos[-topk:]
-        
+
     # read tool names using reverse dictionary
     sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
     top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
-        
+
     # compute the class weights of predicted tools
     mean_usg_score = 0
     usg_wt_scores = list()
@@ -194,8 +195,8 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
             usg_wt_scores.append(usage_scores[t_id])
     if len(usg_wt_scores) > 0:
             mean_usg_score = np.mean(usg_wt_scores)
-    # absolute or compatible precision 
-    if is_absolute == True:
+    # absolute or compatible precision
+    if is_absolute is True:
         false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
         absolute_precision = 1 - (len(false_positives) / float(topk))
     else:
@@ -222,11 +223,11 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     for i in range(size):
         actual_classes_pos = np.where(y[i] > 0)[0]
         abs_topk = len(actual_classes_pos)
-        abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
+        abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
         precision[i][0] = absolute_precision
         usage_weights[i][0] = abs_mean_usg_score
         for index, comp_topk in enumerate(topk_list):
-            compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
+            compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
             precision[i][index+1] = compatible_precision
             usage_weights[i][index+1] = compatible_mean_usg_score
     mean_precision = np.mean(precision, axis=0)
