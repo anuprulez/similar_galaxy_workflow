@@ -41,6 +41,7 @@ class PredictTool:
 
         # retrieve the model and train on complete dataset without validation set
         model = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]))
+        print(model)
         
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)

@@ -236,7 +236,12 @@ class PrepareData:
         print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
         usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
-        tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
+        
+        tool_usage_prediction = dict()
+        for tool in dictionary:
+            tool_usage_prediction[tool] = 1.0
+            
+        #tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
         # get class weights using the predicted usage for each tool

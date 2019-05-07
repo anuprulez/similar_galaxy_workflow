@@ -5,10 +5,9 @@ import h5py
 
 from keras.models import model_from_json
 from keras.models import Sequential
-from keras.layers import Dense, GRU, Dropout
+from keras.layers import Dense, Dropout, Flatten, Embedding, SpatialDropout1D
 from keras.layers.embeddings import Embedding
-from keras.layers.core import SpatialDropout1D
-from keras.optimizers import Adam
+from keras.optimizers import RMSprop
 
 
 def read_file(file_path):
@@ -117,8 +116,10 @@ def get_best_parameters(mdl_dict):
     """
     lr = float(mdl_dict.get("learning_rate", "0.001"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
+    embedding_size = int(mdl_dict.get("embedding_size", "512"))
     activation_dense = mdl_dict.get("activation_dense", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
@@ -126,8 +127,10 @@ def get_best_parameters(mdl_dict):
     return {
         "lr": lr,
         "dropout": dropout,
+        "spatial_dropout": spatial_dropout,
         "units": units,
         "batch_size": batch_size,
+        "embedding_size": embedding_size,
         "activation_dense": activation_dense,
         "activation_output": activation_output,
         "loss_type": loss_type
@@ -143,12 +146,15 @@ def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
 
     # define the architecture of the recurrent neural network
     model = Sequential()
+    model.add(Embedding(dimensions, int(mdl_dict["embedding_size"]), input_length=max_path_length))
+    model.add(SpatialDropout1D(mdl_dict["spatial_dropout"]))
+    model.add(Flatten())
     model.add(Dense(model_params["units"], input_shape=(max_path_length,), activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(model_params["units"], activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    optimizer = Adam(lr=model_params["lr"])
+    optimizer = RMSprop(lr=model_params["lr"])
     model.compile(loss=model_params["loss_type"], optimizer=optimizer)
     return model
     
