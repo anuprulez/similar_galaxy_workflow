@@ -3,11 +3,9 @@ import numpy as np
 import json
 import h5py
 
-from keras.models import model_from_json
-from keras.models import Sequential
-from keras.layers import Dense, GRU, Dropout
+from keras.models import model_from_json, Sequential
+from keras.layers import Dense, Dropout, Conv1D, GlobalMaxPooling1D, MaxPooling1D, Flatten, SpatialDropout1D
 from keras.layers.embeddings import Embedding
-from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 
 
@@ -118,46 +116,47 @@ def get_best_parameters(mdl_dict):
     lr = float(mdl_dict.get("learning_rate", "0.001"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
-    units = int(mdl_dict.get("units", "512"))
+    filter_size = float(mdl_dict.get("filter_size", "512"))
+    kernel_size = float(mdl_dict.get("kernel_size", "5"))
+    deep_size = int(mdl_dict.get("deep_size", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
+    deep_activation = mdl_dict.get("deep_activation", "elu")
+    output_activation = mdl_dict.get("output_activation", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
 
     return {
         "lr": lr,
         "embedding_size": embedding_size,
         "dropout": dropout,
-        "recurrent_dropout": recurrent_dropout,
         "spatial_dropout": spatial_dropout,
-        "units": units,
+        "filter_size": filter_size,
+        "kernel_size": kernel_size,
+        "deep_size": deep_size,
         "batch_size": batch_size,
-        "activation_recurrent": activation_recurrent,
-        "activation_output": activation_output,
+        "deep_activation": deep_activation,
+        "output_activation": output_activation,
         "loss_type": loss_type
     }
 
 
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+def set_convolutional_network(mdl_dict, reverse_dictionary):
     """
-    Create a RNN network and set its parameters
+    Create a cpnvolutional network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
 
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
+    model.add(Embedding(dimensions, model_params["embedding_size"]))
     model.add(SpatialDropout1D(model_params["spatial_dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
+    model.add(Conv1D(int(model_params["filter_size"]), int(model_params["kernel_size"]), activation=model_params['deep_activation']))
+    model.add(Dropout(float(model_params["dropout"])))
+    model.add(GlobalMaxPooling1D())
+    model.add(Dense(int(model_params["deep_size"]), activation=model_params['deep_activation']))
+    model.add(Dense(dimensions, activation=model_params['output_activation']))   
+    model.compile(loss=model_params["loss_type"], optimizer=RMSprop(lr=model_params['lr']))
     return model
 
 
@@ -180,11 +179,14 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     prediction_pos = np.argsort(prediction, axis=-1)
     topk_prediction_pos = prediction_pos[-topk:]
+    
+    # remove the wrong tool position from the predicted list of tool positions
+    topk_prediction_pos = [x for x in topk_prediction_pos if x > 0]
 
     # read tool names using reverse dictionary
     sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
-    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
+    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos]
 
     # compute the class weights of predicted tools
     mean_usg_score = 0

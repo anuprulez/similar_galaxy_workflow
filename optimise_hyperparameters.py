@@ -6,9 +6,8 @@ import numpy as np
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
 from keras.models import Sequential
-from keras.layers import Dense, GRU, Dropout
+from keras.layers import Dense, Dropout, Conv1D, GlobalMaxPooling1D, MaxPooling1D, Flatten, SpatialDropout1D
 from keras.layers.embeddings import Embedding
-from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 
@@ -26,18 +25,20 @@ class HyperparameterOptimisation:
         """
         Train a model and report accuracy
         """
-        l_recurrent_activations = config["activation_recurrent"].split(",")
-        l_output_activations = config["activation_output"].split(",")
+        l_deep_activation = config["deep_activation"].split(",")
+        l_output_activation = config["output_activation"].split(",")
+
         # convert items to integer
         l_batch_size = list(map(int, config["batch_size"].split(",")))
         l_embedding_size = list(map(int, config["embedding_size"].split(",")))
-        l_units = list(map(int, config["units"].split(",")))
+        l_deep_size = list(map(int, config["deep_size"].split(",")))
+        l_kernel_size = list(map(int, config["kernel_size"].split(",")))
+        l_filter_size = list(map(int, config["filter_size"].split(",")))
 
         # convert items to float
         l_learning_rate = list(map(float, config["learning_rate"].split(",")))
         l_dropout = list(map(float, config["dropout"].split(",")))
         l_spatial_dropout = list(map(float, config["spatial_dropout"].split(",")))
-        l_recurrent_dropout = list(map(float, config["recurrent_dropout"].split(",")))
 
         optimize_n_epochs = int(config["optimize_n_epochs"])
         validation_split = float(config["validation_split"])
@@ -50,27 +51,27 @@ class HyperparameterOptimisation:
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {
             "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
-            "units": hp.quniform("units", l_units[0], l_units[1], 1),
+            "deep_size": hp.quniform("deep_size", l_deep_size[0], l_deep_size[1], 1),
             "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
-            "activation_recurrent": hp.choice("activation_recurrent", l_recurrent_activations),
-            "activation_output": hp.choice("activation_output", l_output_activations),
+            "kernel_size": hp.quniform("kernel_size", l_kernel_size[0], l_kernel_size[1], 1),
+            "filter_size": hp.quniform("filter_size", l_filter_size[0], l_filter_size[1], 1),
+            "deep_activation": hp.choice("deep_activation", l_deep_activation),
+            "output_activation": hp.choice("output_activation", l_output_activation),
             "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
             "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
             "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
-            "recurrent_dropout": hp.uniform("recurrent_dropout", l_recurrent_dropout[0], l_recurrent_dropout[1])
         }
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
+            model.add(Embedding(dimensions, int(params["embedding_size"])))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=True, activation=params["activation_recurrent"]))
+            model.add(Conv1D(int(params["filter_size"]), int(params["kernel_size"]), activation=params['deep_activation']))
             model.add(Dropout(params["dropout"]))
-            model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
-            model.add(Dropout(params["dropout"]))
-            model.add(Dense(dimensions, activation=params["activation_output"]))
-            optimizer_rms = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
+            model.add(GlobalMaxPooling1D())
+            model.add(Dense(int(params["deep_size"]), activation=params['deep_activation']))
+            model.add(Dense(dimensions, activation=params['output_activation']))
+            model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr=params["learning_rate"]))
             model.summary()
             model_fit = model.fit(
                 train_data,
@@ -91,10 +92,10 @@ class HyperparameterOptimisation:
         # set the best params with respective values
         for item in learned_params:
             item_val = learned_params[item]
-            if item == 'activation_output':
-                best_model_params[item] = l_output_activations[item_val]
-            elif item == 'activation_recurrent':
-                best_model_params[item] = l_recurrent_activations[item_val]
+            if item == 'deep_activation':
+                best_model_params[item] = l_deep_activation[item_val]
+            elif item == 'output_activation':
+                best_model_params[item] = l_output_activation[item_val]
             else:
                 best_model_params[item] = item_val
         model_config = utils.extract_configuration(trials.trials)

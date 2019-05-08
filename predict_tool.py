@@ -1,6 +1,6 @@
 """
 Predict next tools in the Galaxy workflows
-using machine learning (recurrent neural network)
+using machine learning (convolutional neural network)
 """
 
 import sys
@@ -29,10 +29,8 @@ class PredictTool:
     @classmethod
     def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools):
         """
-        Define recurrent neural network and train sequential data
+        Define convolutional neural network and train sequential data
         """
-
-        # get the best model and train
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
@@ -40,7 +38,7 @@ class PredictTool:
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_recurrent_network(best_params, reverse_dictionary)
+        model = utils.set_convolutional_network(best_params, reverse_dictionary)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
