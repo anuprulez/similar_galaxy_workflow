@@ -178,11 +178,14 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     prediction_pos = np.argsort(prediction, axis=-1)
     topk_prediction_pos = prediction_pos[-topk:]
-        
+    
+    # remove the wrong tool position from the predicted list of tool positions
+    topk_prediction_pos = [x for x in topk_prediction_pos if x > 0]
+
     # read tool names using reverse dictionary
     sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
-    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
+    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos]
         
     # compute the class weights of predicted tools
     mean_usg_score = 0
