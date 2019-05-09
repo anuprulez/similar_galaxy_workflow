@@ -136,10 +136,6 @@ def get_best_parameters(mdl_dict):
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
-    
-    '''
-    {'activation_output': 'sigmoid', 'activation_recurrent': 'elu', 'batch_size': 422.0, 'dropout': 6.700924134731695e-05, 'embedding_size': 415.0, 'learning_rate': 0.0014916662277885222, 'recurrent_dropout': 0.4120430361333309, 'spatial_dropout': 0.24554170126143574, 'units': 349.0}
-    '''
 
     return {
         "lr": lr,
@@ -173,7 +169,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
     model.compile(loss=model_params["loss_type"], optimizer=optimizer)
-    return model
+    return model, model_params
 
 
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
