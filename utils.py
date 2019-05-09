@@ -113,7 +113,7 @@ def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    '''lr = float(mdl_dict.get("learning_rate", "0.001"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
@@ -121,6 +121,18 @@ def get_best_parameters(mdl_dict):
     kernel_size = float(mdl_dict.get("kernel_size", "5"))
     deep_size = int(mdl_dict.get("deep_size", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
+    deep_activation = mdl_dict.get("deep_activation", "elu")
+    output_activation = mdl_dict.get("output_activation", "sigmoid")
+    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
+    
+    lr = float(mdl_dict.get("learning_rate", "0.0012307672546688516"))
+    embedding_size = int(mdl_dict.get("embedding_size", "472"))
+    dropout = float(mdl_dict.get("dropout", "0.004887220172808515"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.3325902753016326"))
+    filter_size = float(mdl_dict.get("filter_size", "230"))
+    kernel_size = float(mdl_dict.get("kernel_size", "8"))
+    deep_size = int(mdl_dict.get("deep_size", "78"))
+    batch_size = int(mdl_dict.get("batch_size", "485"))
     deep_activation = mdl_dict.get("deep_activation", "elu")
     output_activation = mdl_dict.get("output_activation", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
@@ -142,7 +154,7 @@ def get_best_parameters(mdl_dict):
 
 def set_convolutional_network(mdl_dict, reverse_dictionary):
     """
-    Create a cpnvolutional network and set its parameters
+    Create a convolutional network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
@@ -157,7 +169,7 @@ def set_convolutional_network(mdl_dict, reverse_dictionary):
     model.add(Dense(int(model_params["deep_size"]), activation=model_params['deep_activation']))
     model.add(Dense(dimensions, activation=model_params['output_activation']))   
     model.compile(loss=model_params["loss_type"], optimizer=RMSprop(lr=model_params['lr']))
-    return model
+    return model, model_params
 
 
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):

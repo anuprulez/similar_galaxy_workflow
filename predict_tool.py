@@ -33,13 +33,13 @@ class PredictTool:
         Define convolutional neural network and train sequential data
         """
         print("Start hyperparameter optimisation...")
-        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-
-        utils.write_file("data/generated_files/best_params.txt", best_params)
+        #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
+        #utils.write_file("data/generated_files/best_params.txt", best_params)
+        best_params = dict()
 
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_convolutional_network(best_params, reverse_dictionary)
+        model, best_params = utils.set_convolutional_network(best_params, reverse_dictionary)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
