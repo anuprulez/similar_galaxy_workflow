@@ -114,12 +114,22 @@ def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    '''lr = float(mdl_dict.get("learning_rate", "0.001"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
+    activation_dense = mdl_dict.get("activation_dense", "elu")
+    activation_output = mdl_dict.get("activation_output", "sigmoid")
+    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
+    
+    lr = float(mdl_dict.get("learning_rate", "0.0015528977390725726"))
+    dropout = float(mdl_dict.get("dropout", "0.2286990768119037"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.32613171089745985"))
+    units = int(mdl_dict.get("units", "31"))
+    batch_size = int(mdl_dict.get("batch_size", "161"))
+    embedding_size = int(mdl_dict.get("embedding_size", "133"))
     activation_dense = mdl_dict.get("activation_dense", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
@@ -146,8 +156,8 @@ def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
 
     # define the architecture of the recurrent neural network
     model = Sequential()
-    model.add(Embedding(dimensions, int(mdl_dict["embedding_size"]), input_length=max_path_length))
-    model.add(SpatialDropout1D(mdl_dict["spatial_dropout"]))
+    model.add(Embedding(dimensions, int(model_params["embedding_size"]), input_length=max_path_length))
+    model.add(SpatialDropout1D(model_params["spatial_dropout"]))
     model.add(Flatten())
     model.add(Dense(model_params["units"], input_shape=(max_path_length,), activation=model_params["activation_dense"]))
     model.add(Dropout(model_params["dropout"]))
@@ -156,8 +166,8 @@ def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
     model.compile(loss=model_params["loss_type"], optimizer=optimizer)
-    return model
-    
+    return model, model_params
+
  
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
     """
@@ -178,7 +188,7 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     prediction_pos = np.argsort(prediction, axis=-1)
     topk_prediction_pos = prediction_pos[-topk:]
-    
+
     # remove the wrong tool position from the predicted list of tool positions
     topk_prediction_pos = [x for x in topk_prediction_pos if x > 0]
 

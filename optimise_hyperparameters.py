@@ -46,7 +46,7 @@ class HyperparameterOptimisation:
         dimensions = len(reverse_dictionary) + 1
         best_model_params = dict()
         early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-4, verbose=1, patience=1)
-        max_length = int(config["maximum_path_length"])
+        maximum_path_length = int(config["maximum_path_length"])
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {	    
@@ -62,10 +62,10 @@ class HyperparameterOptimisation:
 
         def create_model(params):
             model = Sequential()
-            model.add(Embedding(dimensions, int(params["embedding_size"]), input_length=max_length))
+            model.add(Embedding(dimensions, int(params["embedding_size"]), input_length=maximum_path_length))
             model.add(SpatialDropout1D(params["spatial_dropout"]))
             model.add(Flatten())
-            model.add(Dense(int(params["units"]), input_shape=(max_length,), activation=params["activation_dense"]))
+            model.add(Dense(int(params["units"]), input_shape=(maximum_path_length,), activation=params["activation_dense"]))
             model.add(Dropout(params["dropout"]))
             model.add(Dense(int(params["units"]), activation=params["activation_dense"]))
             model.add(Dropout(params["dropout"]))

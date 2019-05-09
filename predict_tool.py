@@ -8,6 +8,7 @@ import numpy as np
 import time
 import xml.etree.ElementTree as et
 import warnings
+import argparse
 
 # machine learning library
 from keras.callbacks import Callback
@@ -31,17 +32,15 @@ class PredictTool:
         """
         Define recurrent neural network and train sequential data
         """
-
-        # get the best model and train
         print("Start hyperparameter optimisation...")
-        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        
-        utils.write_file("data/generated_files/best_params.txt", best_params)
-
+        #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
+        #utils.write_file("data/generated_files/best_params.txt", best_params)
+        best_params = dict()
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]))
-        print(model)
+        
+        model, best_params = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]))
+        print(best_params)
         
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
@@ -94,14 +93,25 @@ class PredictCallback(Callback):
 
 
 if __name__ == "__main__":
-
-    if len(sys.argv) != 6:
-        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path> <tool_usage_data> '<cutoff date as yyyy-mm-dd>'")
-        exit(1)
     start_time = time.time()
+    
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
+    arg_parser.add_argument("-cf", "--config_file", required=True, help="configuration file")
+    arg_parser.add_argument("-tm", "--trained_model_file", required=True, help="trained model file")
+    arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
+    arg_parser.add_argument("-cd", "--cutoff_date", required=True, help="earliest date for taking tool usage")
+    arg_parser.add_argument("-pl", "--maximum_path_length", required=True, help="maximum length of tool path")
+    args = vars(arg_parser.parse_args())
+
+    # get argument values
+    maximum_path_length = int(args["maximum_path_length"])
+    trained_model_path = args["trained_model_file"]
+    tool_usage_path = args["tool_usage_file"]
+    cutoff_date = args["cutoff_date"]
 
     # read config parameters
-    tree = et.parse(sys.argv[2])
+    tree = et.parse(args["config_file"])
     root = tree.getroot()
     config = dict()
     optimise_parameters_node = None
@@ -110,19 +120,18 @@ if __name__ == "__main__":
             optimise_parameters_node = child
         for item in child:
             config[item.get("name")] = item.get("value")
+    
     n_epochs = int(config["n_epochs"])
     test_share = float(config["test_share"])
-    trained_model_path = sys.argv[3]
-    tool_usage_path = sys.argv[4]
-    cutoff_date = sys.argv[5]
+    config["maximum_path_length"] = maximum_path_length
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
-    workflow_paths, compatible_next_tools, frequency_paths = connections.read_tabular_file(sys.argv[1])
+    workflow_paths, compatible_next_tools, frequency_paths = connections.read_tabular_file(args["workflow_file"])
 
     # Process the paths from workflows
     print("Dividing data...")
-    data = prepare_data.PrepareData(int(config["maximum_path_length"]), test_share)
+    data = prepare_data.PrepareData(maximum_path_length, test_share)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
 
     # find the best model and start training
