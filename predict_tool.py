@@ -8,6 +8,7 @@ import numpy as np
 import time
 import xml.etree.ElementTree as et
 import warnings
+import argparse
 
 # machine learning library
 from keras.callbacks import Callback
@@ -93,14 +94,25 @@ class PredictCallback(Callback):
 
 
 if __name__ == "__main__":
-
-    if len(sys.argv) != 6:
-        print("Usage: python predict_next_tool.py <workflow_file_path> <config_file_path> <trained_model_file_path> <tool_usage_data> '<cutoff date as yyyy-mm-dd>'")
-        exit(1)
     start_time = time.time()
 
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
+    arg_parser.add_argument("-cf", "--config_file", required=True, help="configuration file")
+    arg_parser.add_argument("-tm", "--trained_model_file", required=True, help="trained model file")
+    arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
+    arg_parser.add_argument("-cd", "--cutoff_date", required=True, help="earliest date for taking tool usage")
+    arg_parser.add_argument("-pl", "--maximum_path_length", required=True, help="maximum length of tool path")
+    args = vars(arg_parser.parse_args())
+
+    # get argument values
+    maximum_path_length = int(args["maximum_path_length"])
+    trained_model_path = args["trained_model_file"]
+    tool_usage_path = args["tool_usage_file"]
+    cutoff_date = args["cutoff_date"]
+
     # read config parameters
-    tree = et.parse(sys.argv[2])
+    tree = et.parse(args["config_file"])
     root = tree.getroot()
     config = dict()
     optimise_parameters_node = None
@@ -109,16 +121,13 @@ if __name__ == "__main__":
             optimise_parameters_node = child
         for item in child:
             config[item.get("name")] = item.get("value")
-    maximum_path_length = 25
+    
     n_epochs = int(config["n_epochs"])
     test_share = float(config["test_share"])
-    trained_model_path = sys.argv[3]
-    tool_usage_path = sys.argv[4]
-    cutoff_date = sys.argv[5]
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
-    workflow_paths, compatible_next_tools, frequency_paths = connections.read_tabular_file(sys.argv[1])
+    workflow_paths, compatible_next_tools, frequency_paths = connections.read_tabular_file(args["workflow_file"])
 
     # Process the paths from workflows
     print("Dividing data...")
