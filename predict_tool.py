@@ -35,13 +35,13 @@ class PredictTool:
 
         # get the best model and train
         print("Start hyperparameter optimisation...")
-        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-
+        #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
+        best_params = dict()
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
-        model = utils.set_recurrent_network(best_params, reverse_dictionary)
+        model, model_params = utils.set_recurrent_network(best_params, reverse_dictionary)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
@@ -51,7 +51,8 @@ class PredictTool:
         model_fit = model.fit(
             train_data,
             train_labels,
-            batch_size=int(best_params["batch_size"]),
+            #batch_size=int(best_params["batch_size"]),
+            batch_size=422,
             epochs=n_epochs,
             verbose=2,
             callbacks=callbacks_list,
