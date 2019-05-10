@@ -172,7 +172,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model, model_params
 
 
-def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
+def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk):
     """
     Compute absolute and compatible precision
     """
@@ -209,19 +209,9 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
             usg_wt_scores.append(usage_scores[t_id])
     if len(usg_wt_scores) > 0:
             mean_usg_score = np.mean(usg_wt_scores)
-    # absolute or compatible precision
-    if is_absolute is True:
-        false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
-        absolute_precision = 1 - (len(false_positives) / float(topk))
-    else:
-        seq_last_tool = sequence_tool_names[-1]
-        if seq_last_tool in next_compatible_tools:
-            next_tools = next_compatible_tools[seq_last_tool].split(",")
-            comp_tools = list(set(top_predicted_next_tool_names) & set(next_tools))
-            compatible_precision = len(comp_tools) / float(len(top_predicted_next_tool_names))
-        else:
-            compatible_precision = 0.0
-    return mean_usg_score, absolute_precision, compatible_precision
+    false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
+    absolute_precision = 1 - (len(false_positives) / float(topk))
+    return mean_usg_score, absolute_precision
 
 
 def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, topk_list=[1, 2, 3]):
@@ -231,19 +221,15 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[0]
-    precision = np.zeros([len(y), len(topk_list) + 1])
-    usage_weights = np.zeros([len(y), len(topk_list) + 1])
+    precision = np.zeros([len(y), len(topk_list)])
+    usage_weights = np.zeros([len(y), len(topk_list)])
     # loop over all the test samples and find prediction precision
     for i in range(size):
         actual_classes_pos = np.where(y[i] > 0)[0]
-        abs_topk = len(actual_classes_pos)
-        abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
-        precision[i][0] = absolute_precision
-        usage_weights[i][0] = abs_mean_usg_score
-        for index, comp_topk in enumerate(topk_list):
-            compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
-            precision[i][index+1] = compatible_precision
-            usage_weights[i][index+1] = compatible_mean_usg_score
+        for index, abs_topk in enumerate(topk_list):
+            abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
+            precision[i][index] = absolute_precision
+            usage_weights[i][index] = abs_mean_usg_score
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage
