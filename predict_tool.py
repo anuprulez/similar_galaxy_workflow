@@ -11,7 +11,7 @@ import warnings
 import argparse
 
 # machine learning library
-from keras.callbacks import Callback
+import keras.callbacks as callbacks
 
 import extract_workflow_connections
 import prepare_data
@@ -32,8 +32,6 @@ class PredictTool:
         """
         Define recurrent neural network and train sequential data
         """
-
-        # get the best model and train
         print("Start hyperparameter optimisation...")
         #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
@@ -45,7 +43,8 @@ class PredictTool:
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
-        callbacks_list = [predict_callback_test]
+        tbCallBack = callbacks.TensorBoard(log_dir='data/generated_files', histogram_freq=0, write_graph=True, write_images=True)
+        callbacks_list = [predict_callback_test, tbCallBack]
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -72,7 +71,7 @@ class PredictTool:
         return train_performance
 
 
-class PredictCallback(Callback):
+class PredictCallback(callbacks.Callback):
     def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs, next_compatible_tools, usg_scores):
         self.test_data = test_data
         self.test_labels = test_labels
