@@ -232,15 +232,18 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     usage_weights = np.zeros([len(y), len(topk_list) + 1])
     # loop over all the test samples and find prediction precision
     for i in range(size):
-        actual_classes_pos = np.where(y[i] > 0)[0]
-        abs_topk = len(actual_classes_pos)
-        abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
-        precision[i][0] = absolute_precision
-        usage_weights[i][0] = abs_mean_usg_score
-        for index, comp_topk in enumerate(topk_list):
-            compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
-            precision[i][index+1] = compatible_precision
-            usage_weights[i][index+1] = compatible_mean_usg_score
+        try:
+            actual_classes_pos = np.where(y[i] > 0)[0]
+            abs_topk = len(actual_classes_pos)
+            abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
+            precision[i][0] = absolute_precision
+            usage_weights[i][0] = abs_mean_usg_score
+            for index, comp_topk in enumerate(topk_list):
+                compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i,:], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
+                precision[i][index+1] = compatible_precision
+                usage_weights[i][index+1] = compatible_mean_usg_score
+        except Exception as exp:
+            continue
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage
