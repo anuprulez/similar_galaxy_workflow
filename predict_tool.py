@@ -33,9 +33,8 @@ class PredictTool:
         Define recurrent neural network and train sequential data
         """
         print("Start hyperparameter optimisation...")
-        #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        best_params = dict()
+        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
@@ -43,8 +42,8 @@ class PredictTool:
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
-        tbCallBack = callbacks.TensorBoard(log_dir=log_directory, histogram_freq=0, write_graph=True, write_images=True)
-        callbacks_list = [predict_callback_test, tbCallBack]
+        tensor_board = callbacks.TensorBoard(log_dir=log_directory, histogram_freq=0, write_graph=True, write_images=True)
+        callbacks_list = [predict_callback_test, tensor_board]
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -58,11 +57,13 @@ class PredictTool:
             class_weight=class_weights,
             validation_data=(test_data, test_labels)
         )
+
         train_performance = {
             "train_loss": np.array(model_fit.history["loss"]),
             "model": model,
             "best_parameters": best_params
         }
+
         # if there is test data, add more information
         if len(test_data) > 0:
             train_performance["validation_loss"] = np.array(model_fit.history["val_loss"])
