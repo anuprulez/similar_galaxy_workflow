@@ -88,7 +88,7 @@ class PrepareData:
         return sub_paths_pos
 
     @classmethod
-    def prepare_paths_labels_dictionary(self, reverse_dictionary, paths):
+    def prepare_paths_labels_dictionary(self, dictionary, reverse_dictionary, paths, compatible_next_tools):
         """
         Create a dictionary of sequences with their labels for training and test paths
         """
@@ -100,15 +100,22 @@ class PrepareData:
                 tools = item.split(",")
                 label = tools[-1]
                 train_tools = tools[:len(tools) - 1]
+                last_but_one_name = reverse_dictionary[int(train_tools[-1])]
+                try:
+                    compatible_tools = compatible_next_tools[last_but_one_name].split(",")
+                except Exception:
+                    continue
+                if len(compatible_tools) > 0:
+                    compatible_tools_ids = [str(dictionary[x]) for x in compatible_tools]
+                    compatible_tools_ids.append(label)
+                    composite_labels = ",".join(compatible_tools_ids)
                 train_tools = ",".join(train_tools)
                 if train_tools in paths_labels:
-                    paths_labels[train_tools] += "," + label
+                    paths_labels[train_tools] += "," + composite_labels
                 else:
-                    paths_labels[train_tools] = label
+                    paths_labels[train_tools] = composite_labels
         for item in paths_labels:
-            path_names = ",".join([reverse_dictionary[int(pos)] for pos in item.split(",")])
-            path_label_names = ",".join([reverse_dictionary[int(pos)] for pos in paths_labels[item].split(",")])
-            paths_labels_names[path_names] = path_label_names
+            paths_labels[item] = ",".join(list(set(paths_labels[item].split(","))))
         return paths_labels
 
     @classmethod
@@ -205,7 +212,7 @@ class PrepareData:
         return path_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -221,7 +228,7 @@ class PrepareData:
         random.shuffle(all_unique_paths)
 
         print("Creating dictionaries...")
-        multilabels_paths = self.prepare_paths_labels_dictionary(reverse_dictionary, all_unique_paths)
+        multilabels_paths = self.prepare_paths_labels_dictionary(dictionary, reverse_dictionary, all_unique_paths, compatible_next_tools)
 
         print("Complete data: %d" % len(multilabels_paths))
         train_paths_dict, test_paths_dict = self.split_test_train_data(multilabels_paths)
@@ -235,7 +242,7 @@ class PrepareData:
         # Predict tools usage
         print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
-        usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)  
+        usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
         tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
