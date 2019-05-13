@@ -11,7 +11,7 @@ import warnings
 import argparse
 
 # machine learning library
-from keras.callbacks import Callback
+import keras.callbacks as callbacks
 
 import extract_workflow_connections
 import prepare_data
@@ -28,22 +28,22 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools):
+    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, log_directory):
         """
         Define convolutional neural network and train sequential data
         """
         print("Start hyperparameter optimisation...")
-        #hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        #best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        #utils.write_file("data/generated_files/best_params.txt", best_params)
-        best_params = dict()
-
+        hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
+        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
+        utils.write_file("data/generated_files/best_params.txt", best_params)
+        
         # retrieve the model and train on complete dataset without validation set
         model, best_params = utils.set_convolutional_network(best_params, reverse_dictionary)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
-        callbacks_list = [predict_callback_test]
+        tensor_board = callbacks.TensorBoard(log_dir=log_directory, histogram_freq=0, write_graph=True, write_images=True)
+        callbacks_list = [predict_callback_test, tensor_board]
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -70,7 +70,7 @@ class PredictTool:
         return train_performance
 
 
-class PredictCallback(Callback):
+class PredictCallback(callbacks.Callback):
     def __init__(self, test_data, test_labels, reverse_data_dictionary, n_epochs, next_compatible_tools, usg_scores):
         self.test_data = test_data
         self.test_labels = test_labels
@@ -103,6 +103,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
     arg_parser.add_argument("-cd", "--cutoff_date", required=True, help="earliest date for taking tool usage")
     arg_parser.add_argument("-pl", "--maximum_path_length", required=True, help="maximum length of tool path")
+    arg_parser.add_argument("-ld", "--log_directory", required=True, help="log directory for producing tensorboard graphs")
     args = vars(arg_parser.parse_args())
 
     # get argument values
@@ -132,14 +133,14 @@ if __name__ == "__main__":
     # Process the paths from workflows
     print("Dividing data...")
     data = prepare_data.PrepareData(maximum_path_length, test_share)
-    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date)
+    train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, frequency_paths, tool_usage_path, cutoff_date, compatible_next_tools)
 
     # find the best model and start training
     predict_tool = PredictTool()
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools)
+    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, args["log_directory"])
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
     print()
     print("Best parameters")
