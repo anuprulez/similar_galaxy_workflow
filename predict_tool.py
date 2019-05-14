@@ -36,9 +36,9 @@ class PredictTool:
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
         utils.write_file("data/generated_files/best_params.txt", best_params)
-        
+
         # retrieve the model and train on complete dataset without validation set
-        model, best_params = utils.set_convolutional_network(best_params, reverse_dictionary)
+        model, best_params = utils.set_cnn_network(best_params, reverse_dictionary)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
@@ -57,11 +57,13 @@ class PredictTool:
             class_weight=class_weights,
             validation_data=(test_data, test_labels)
         )
+
         train_performance = {
             "train_loss": np.array(model_fit.history["loss"]),
             "model": model,
             "best_parameters": best_params
         }
+
         # if there is test data, add more information
         if len(test_data) > 0:
             train_performance["validation_loss"] = np.array(model_fit.history["val_loss"])
@@ -95,7 +97,7 @@ class PredictCallback(callbacks.Callback):
 
 if __name__ == "__main__":
     start_time = time.time()
-
+    
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
     arg_parser.add_argument("-cf", "--config_file", required=True, help="configuration file")
@@ -122,7 +124,6 @@ if __name__ == "__main__":
             optimise_parameters_node = child
         for item in child:
             config[item.get("name")] = item.get("value")
-    
     n_epochs = int(config["n_epochs"])
     test_share = float(config["test_share"])
 
