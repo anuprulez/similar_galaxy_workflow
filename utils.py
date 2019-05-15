@@ -154,10 +154,13 @@ def weighted_loss(class_weights):
     """
     Create a weighted loss function
     """
+    class_wt_values = list(class_weights.values())
+    max_wt = float(np.sum(class_wt_values))
+    norm_class_weights = [wt / max_wt for wt in class_wt_values]
     def loss(y_true, y_pred):
-        weight_values = K.stack(list(class_weights.values()))
+        weight_values = K.stack(norm_class_weights)
         weight_values = K.expand_dims(weight_values, axis=-1)
-        return K.dot(K.square(y_pred - y_true), weight_values)
+        return K.dot(K.binary_crossentropy(y_true, y_pred), weight_values)
     return loss
 
 
