@@ -9,6 +9,7 @@ from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
+from keras import backend as K
 
 
 def read_file(file_path):
@@ -172,6 +173,15 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     return model, model_params
 
 
+def analyze_output_layer(model, test_sample, dimensions, iter_num=10):
+    output_last = K.function([model.layers[0].input, K.learning_phase()], [model.layers[-1].output])
+    result = np.zeros((iter_num,) + (1, dimensions))
+    for idx in range(iter_num):
+        result[idx] = output_last([test_sample, 1])[0]
+    prediction = result.mean(axis=0)
+    uncertainty = result.var(axis=0)
+
+
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk):
     """
     Compute absolute and compatible precision
@@ -184,6 +194,9 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     # predict next tools for a test path
     prediction = model.predict(test_sample, verbose=0)
+
+    #analyze_output_layer(model, test_sample, len(reverse_data_dictionary) + 1)
+    
     nw_dimension = prediction.shape[1]
 
     # remove the 0th position as there is no tool at this index
