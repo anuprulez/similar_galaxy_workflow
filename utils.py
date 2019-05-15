@@ -116,7 +116,7 @@ def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    '''lr = float(mdl_dict.get("learning_rate", "0.001"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
     recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
@@ -125,9 +125,9 @@ def get_best_parameters(mdl_dict):
     batch_size = int(mdl_dict.get("batch_size", "512"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
+    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
     
-    '''lr = float(mdl_dict.get("learning_rate", "0.0014916662277885222"))
+    lr = float(mdl_dict.get("learning_rate", "0.0014916662277885222"))
     embedding_size = int(mdl_dict.get("embedding_size", "415"))
     dropout = float(mdl_dict.get("dropout", "6.700924134731695e-05"))
     recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.4120430361333309"))
@@ -136,7 +136,6 @@ def get_best_parameters(mdl_dict):
     batch_size = int(mdl_dict.get("batch_size", "422"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
 
     return {
         "lr": lr,
@@ -148,18 +147,31 @@ def get_best_parameters(mdl_dict):
         "batch_size": batch_size,
         "activation_recurrent": activation_recurrent,
         "activation_output": activation_output,
-        "loss_type": loss_type
     }
+    
+    
+def weighted_loss(class_weights):
+    """
+    Create a weighted loss function
+    """
+    def loss(y_true, y_pred):
+        weight_values = K.stack(list(class_weights.values()))
+        weight_values = K.expand_dims(weight_values, axis=-1)
+        return K.dot(K.square(y_pred - y_true), weight_values)
+    return loss
 
 
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     """
     Create a RNN network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
 
-    # define the architecture of the recurrent neural network
+    # get the loss function
+    loss = weighted_loss(class_weights)
+
+    # define the architecture of the neural network
     model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
     model.add(SpatialDropout1D(model_params["spatial_dropout"]))
@@ -169,7 +181,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
+    model.compile(loss=loss, optimizer=optimizer)
     return model, model_params
 
 
