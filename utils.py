@@ -124,8 +124,7 @@ def get_best_parameters(mdl_dict):
     units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
+    activation_output = mdl_dict.get("activation_output", "sigmoid")'''
     
     lr = float(mdl_dict.get("learning_rate", "0.0014916662277885222"))
     embedding_size = int(mdl_dict.get("embedding_size", "415"))
@@ -148,18 +147,17 @@ def get_best_parameters(mdl_dict):
         "activation_recurrent": activation_recurrent,
         "activation_output": activation_output,
     }
-    
-    
+
+
 def weighted_loss(class_weights):
     """
-    Create a weighted loss function
+    Create a weighted loss function. Penalise the misclassification
+    of classes with higher usage
     """
-    class_wt_values = list(class_weights.values())
-    max_wt = float(np.sum(class_wt_values))
-    norm_class_weights = [wt / max_wt for wt in class_wt_values]
+    norm_class_weights = [np.log(wt) for wt in list(class_weights.values())]
     def loss(y_true, y_pred):
-        weight_values = K.stack(norm_class_weights)
-        weight_values = K.expand_dims(weight_values, axis=-1)
+        # add another dimension to compute dot product
+        weight_values = K.expand_dims(norm_class_weights, axis=-1)
         return K.dot(K.binary_crossentropy(y_true, y_pred), weight_values)
     return loss
 

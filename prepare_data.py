@@ -168,7 +168,7 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
-        epsilon = 0.0
+        epsilon = 1.0
         for k, v in data_dictionary.items():
             try:
                 usg = predicted_usage[k]
@@ -192,7 +192,7 @@ class PrepareData:
             # assign weight for each tool
             # higher the usage, higher the weight
             class_weights[key] = predicted_usage[int(key)]
-        class_weights[str(0)] = 0.0
+        class_weights[str(0)] = 1.0
         return class_weights
 
     @classmethod
