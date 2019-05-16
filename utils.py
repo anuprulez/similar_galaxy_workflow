@@ -155,7 +155,6 @@ def weighted_loss(class_weights):
     of classes more with the higher usage
     """
     updated_class_weights = [np.log(wt) for wt in list(class_weights.values())]
-    print(updated_class_weights)
     def loss(y_true, y_pred):
         # add another dimension to compute dot product
         weight_values = K.expand_dims(updated_class_weights, axis=-1)
