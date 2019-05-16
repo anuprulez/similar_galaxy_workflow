@@ -154,10 +154,11 @@ def weighted_loss(class_weights):
     Create a weighted loss function. Penalise the misclassification
     of classes more with the higher usage
     """
-    norm_class_weights = list(class_weights.values())
+    updated_class_weights = [np.log(wt) for wt in list(class_weights.values())]
+    print(updated_class_weights)
     def loss(y_true, y_pred):
         # add another dimension to compute dot product
-        weight_values = K.expand_dims(norm_class_weights, axis=-1)
+        weight_values = K.expand_dims(updated_class_weights, axis=-1)
         return K.dot(K.binary_crossentropy(y_true, y_pred), weight_values)
     return loss
 
