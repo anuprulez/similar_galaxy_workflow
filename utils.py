@@ -152,9 +152,9 @@ def get_best_parameters(mdl_dict):
 def weighted_loss(class_weights):
     """
     Create a weighted loss function. Penalise the misclassification
-    of classes with higher usage
+    of classes more with the higher usage
     """
-    norm_class_weights = [np.log(wt) for wt in list(class_weights.values())]
+    norm_class_weights = list(class_weights.values())
     def loss(y_true, y_pred):
         # add another dimension to compute dot product
         weight_values = K.expand_dims(norm_class_weights, axis=-1)
