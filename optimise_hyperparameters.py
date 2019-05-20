@@ -60,7 +60,7 @@ class HyperparameterOptimisation:
             "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
             "recurrent_dropout": hp.uniform("recurrent_dropout", l_recurrent_dropout[0], l_recurrent_dropout[1])
         }
-        
+
         loss = utils.weighted_loss(class_weights)
 
         def create_model(params):
