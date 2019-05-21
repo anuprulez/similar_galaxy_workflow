@@ -168,7 +168,7 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
-        epsilon = 1.0
+        epsilon = 0.0
         # index 0 does not belong to any tool
         usage[0] = epsilon
         for k, v in data_dictionary.items():
@@ -181,20 +181,33 @@ class PrepareData:
                 usage[v] = epsilon
                 continue
         return usage
-
+        
+    @classmethod
+    def get_inverse_weights(self, label_matrix, reverse_dictionary):
+        """
+        Compute inverse class frequencies from label matrix
+        """
+        class_freq = dict()
+        class_freq[0] = 0.0
+        for key in range(1, label_matrix.shape[1]):
+            column = label_matrix[:, key]
+            class_freq[key] = len(np.where(column > 0)[0])
+        mean_freq = np.mean(list(class_freq.values()))
+        for cls in class_freq:
+             if class_freq[cls] > 0:
+                 class_freq[cls] = float(mean_freq) / class_freq[cls]
+        return class_freq
+        
     @classmethod
     def assign_class_weights(self, n_classes, predicted_usage, inverse_frequencies):
         """
         Compute class weights using usage
         """
         class_weights = dict()
-        class_weights[str(0)] = 1.0
+        class_weights[str(0)] = 0.0
         for key in range(1, n_classes):
-            # assign weight for each tool
-            # higher the usage, higher the weight
-            weight = predicted_usage[key] * inverse_frequencies[key]
-            if weight < 1.0:
-                weight = 1.0
+            #np.log(1.0 + predicted_usage[key]) * np.log(1.0 + inverse_frequencies[key])
+            weight = predicted_usage[key] * np.log(1.0 + inverse_frequencies[key])
             class_weights[key] = weight
         return class_weights
 
@@ -213,22 +226,6 @@ class PrepareData:
             except Exception:
                 path_weights[path_index] = 1
         return path_weights
-        
-    @classmethod
-    def get_inverse_weights(self, label_matrix, reverse_dictionary):
-        """
-        Compute inverse class frequencies from label matrix
-        """
-        class_freq = dict()
-        class_freq[0] = 0
-        for key in range(1, label_matrix.shape[1]):
-            column = label_matrix[:, key]
-            class_freq[key] = len(np.where(column > 0)[0])
-        mean_freq = np.mean(list(class_freq.values()))
-        for cls in class_freq:
-             if class_freq[cls] > 0:
-                 class_freq[cls] = float(mean_freq) / class_freq[cls]
-        return class_freq
 
     @classmethod
     def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):

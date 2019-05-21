@@ -164,7 +164,7 @@ def weighted_loss(class_weights):
     Create a weighted loss function. Penalise the misclassification
     of classes more with the higher usage
     """
-    updated_class_weights = [np.log(wt) for wt in list(class_weights.values())]
+    updated_class_weights = list(class_weights.values()) #[np.log(wt) for wt in list(class_weights.values())]
     def loss(y_true, y_pred):
         # add another dimension to compute dot product
         weights = K.expand_dims(updated_class_weights, axis=-1)
@@ -236,9 +236,6 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
     top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos]
 
-    #print(actual_next_tool_names)
-    #print(top_predicted_next_tool_names)
-    #print([(pos, prediction[pos]) for pos in topk_prediction_pos])
     # compute the class weights of predicted tools
     mean_usg_score = 0
     usg_wt_scores = list()
@@ -250,8 +247,6 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
             mean_usg_score = np.mean(usg_wt_scores)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
-    #print(usg_wt_scores)
-    #print(mean_usg_score)
     
     return mean_usg_score, absolute_precision
 
@@ -272,10 +267,8 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
             abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
             precision[i][index] = absolute_precision
             usage_weights[i][index] = abs_mean_usg_score
-        #print("=============================================================")
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
-    #print(mean_usage)
     return mean_precision, mean_usage
 
 
