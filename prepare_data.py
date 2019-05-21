@@ -206,9 +206,7 @@ class PrepareData:
         class_weights = dict()
         class_weights[str(0)] = 0.0
         for key in range(1, n_classes):
-            #np.log(1.0 + predicted_usage[key]) * np.log(1.0 + inverse_frequencies[key])
-            weight = predicted_usage[key] * np.log(1.0 + inverse_frequencies[key])
-            class_weights[key] = weight
+            class_weights[key] = np.log((predicted_usage[key] * inverse_frequencies[key]) + 1.0)
         return class_weights
 
     @classmethod

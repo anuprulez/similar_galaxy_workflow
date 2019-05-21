@@ -122,7 +122,7 @@ def get_best_parameters(mdl_dict):
     recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
-    batch_size = int(mdl_dict.get("batch_size", "512"))
+    batch_size = int(mdl_dict.get("batch_size", "512"))	
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     
@@ -164,12 +164,13 @@ def weighted_loss(class_weights):
     Create a weighted loss function. Penalise the misclassification
     of classes more with the higher usage
     """
-    updated_class_weights = list(class_weights.values()) #[np.log(wt) for wt in list(class_weights.values())]
-    def loss(y_true, y_pred):
+    updated_class_weights = list(class_weights.values())
+    def weighted_binary_crossentropy(y_true, y_pred):
         # add another dimension to compute dot product
         weights = K.expand_dims(updated_class_weights, axis=-1)
-        return K.dot(K.binary_crossentropy(y_true, y_pred), weights)
-    return loss
+        cross_entropy = K.binary_crossentropy(y_true, y_pred)
+        return K.mean(K.dot(cross_entropy, weights))
+    return weighted_binary_crossentropy
 
 
 def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
@@ -178,9 +179,6 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
-
-    # get the loss function
-    loss = weighted_loss(class_weights)
 
     # define the architecture of the neural network
     model = Sequential()
@@ -192,7 +190,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=loss, optimizer=optimizer)
+    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
     return model, model_params
 
 
@@ -244,10 +242,9 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
         if t_id in usage_scores and t_name in actual_next_tool_names:
             usg_wt_scores.append(usage_scores[t_id])
     if len(usg_wt_scores) > 0:
-            mean_usg_score = np.mean(usg_wt_scores)
+            mean_usg_score = np.sum(usg_wt_scores)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
-    
     return mean_usg_score, absolute_precision
 
 
