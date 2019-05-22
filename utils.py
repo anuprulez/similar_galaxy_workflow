@@ -158,19 +158,30 @@ def get_best_parameters(mdl_dict):
         "activation_output": activation_output,
     }
 
-
+    
 def weighted_loss(class_weights):
     """
     Create a weighted loss function. Penalise the misclassification
     of classes more with the higher usage
     """
-    updated_class_weights = list(class_weights.values())
+    weight_values = list(class_weights.values())
     def weighted_binary_crossentropy(y_true, y_pred):
         # add another dimension to compute dot product
-        weights = K.expand_dims(updated_class_weights, axis=-1)
-        cross_entropy = K.binary_crossentropy(y_true, y_pred)
-        return K.mean(K.dot(cross_entropy, weights))
+        expanded_weights = K.expand_dims(weight_values, axis=-1)
+        weighted_predictions = K.sigmoid(y_pred * K.transpose(expanded_weights))
+        return K.binary_crossentropy(y_true, weighted_predictions)
     return weighted_binary_crossentropy
+    
+   
+def output_activation(class_weights):
+    """
+    Implement a custom activation function for output
+    """
+    weights = list(class_weights.values())
+    def weighted_sigmoid_activation(x):
+        exp_weights = K.expand_dims(weights, axis=-1)
+        return K.sigmoid(x * K.transpose(exp_weights))
+    return weighted_sigmoid_activation
 
 
 def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
@@ -180,6 +191,9 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
 
+    # get the loss function
+    activation = output_activation(class_weights)
+
     # define the architecture of the neural network
     model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
@@ -188,9 +202,9 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     model.add(Dropout(model_params["dropout"]))
     model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
     model.add(Dropout(model_params["dropout"]))
-    model.add(Dense(dimensions, activation=model_params["activation_output"]))
+    model.add(Dense(dimensions, activation=activation))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
+    model.compile(loss='binary_crossentropy', optimizer=optimizer)
     return model, model_params
 
 
@@ -242,7 +256,7 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
         if t_id in usage_scores and t_name in actual_next_tool_names:
             usg_wt_scores.append(usage_scores[t_id])
     if len(usg_wt_scores) > 0:
-            mean_usg_score = np.sum(usg_wt_scores)
+            mean_usg_score = np.mean(usg_wt_scores)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
     return mean_usg_score, absolute_precision

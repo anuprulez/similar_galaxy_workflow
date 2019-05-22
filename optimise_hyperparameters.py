@@ -61,8 +61,6 @@ class HyperparameterOptimisation:
             "recurrent_dropout": hp.uniform("recurrent_dropout", l_recurrent_dropout[0], l_recurrent_dropout[1])
         }
 
-        loss = utils.weighted_loss(class_weights)
-
         def create_model(params):
             model = Sequential()
             model.add(Embedding(dimensions, int(params["embedding_size"]), mask_zero=True))
@@ -71,9 +69,9 @@ class HyperparameterOptimisation:
             model.add(Dropout(params["dropout"]))
             model.add(GRU(int(params["units"]), dropout=params["dropout"], recurrent_dropout=params["recurrent_dropout"], return_sequences=False, activation=params["activation_recurrent"]))
             model.add(Dropout(params["dropout"]))
-            model.add(Dense(dimensions, activation=params["activation_output"]))
+            model.add(Dense(dimensions, activation=utils.output_activation(class_weights)))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
-            model.compile(loss=loss, optimizer=optimizer_rms)
+            model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
             model.summary()
             model_fit = model.fit(
                 train_data,
