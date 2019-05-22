@@ -32,12 +32,11 @@ class PredictTool:
         """
         Define recurrent neural network and train sequential data
         """
-        '''print("Start hyperparameter optimisation...")
+        print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        utils.write_file("data/generated_files/best_params.txt", best_params)'''
+        utils.write_file("data/generated_files/best_params.txt", best_params)
         
-        best_params = dict()
         # retrieve the model and train on complete dataset without validation set
         model, best_params = utils.set_recurrent_network(best_params, reverse_dictionary, class_weights)
 
@@ -142,7 +141,7 @@ if __name__ == "__main__":
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, args["log_directory"])
-    utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path)
+    utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path, class_weights)
     print()
     print("Best parameters")
     print(results_weighted["best_parameters"])

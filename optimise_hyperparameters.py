@@ -72,7 +72,6 @@ class HyperparameterOptimisation:
             model.add(Dense(dimensions, activation=utils.output_activation(class_weights)))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
             model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
-            model.summary()
             model_fit = model.fit(
                 train_data,
                 train_labels,

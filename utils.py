@@ -124,16 +124,6 @@ def get_best_parameters(mdl_dict):
     units = int(mdl_dict.get("units", "512"))
     batch_size = int(mdl_dict.get("batch_size", "512"))	
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
-    
-    lr = float(mdl_dict.get("learning_rate", "0.0014916662277885222"))
-    embedding_size = int(mdl_dict.get("embedding_size", "415"))
-    dropout = float(mdl_dict.get("dropout", "6.700924134731695e-05"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.4120430361333309"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.24554170126143574"))
-    units = int(mdl_dict.get("units", "349"))
-    batch_size = int(mdl_dict.get("batch_size", "422"))
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")'''
     
     lr = float(mdl_dict.get("learning_rate", "0.001"))
@@ -283,7 +273,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     return mean_precision, mean_usage
 
 
-def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
+def save_model(results, data_dictionary, compatible_next_tools, trained_model_path, class_weights):
     # save files
     trained_model = results["model"]
     best_model_parameters = results["best_parameters"]
@@ -295,6 +285,7 @@ def save_model(results, data_dictionary, compatible_next_tools, trained_model_pa
         'model_config': model_config,
         'best_parameters': best_model_parameters,
         'model_weights': model_weights,
-        "compatible_tools": compatible_next_tools
+        "compatible_tools": compatible_next_tools,
+        "class_weights": class_weights
     }
     set_trained_model(trained_model_path, model_values)
