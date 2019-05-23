@@ -168,7 +168,8 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
-        epsilon = 1.0
+        epsilon = 0.0
+        usage[0] = epsilon
         for k, v in data_dictionary.items():
             try:
                 usg = predicted_usage[k]
@@ -178,8 +179,6 @@ class PrepareData:
             except Exception:
                 usage[v] = epsilon
                 continue
-        # index 0 does not belong to any tool
-        usage[0] = epsilon
         return usage
 
     @classmethod
@@ -188,11 +187,11 @@ class PrepareData:
         Compute class weights using usage
         """
         class_weights = dict()
+        class_weights[str(0)] = 0.0
         for key in range(1, n_classes):
             # assign weight for each tool
             # higher the usage, higher the weight
-            class_weights[key] = predicted_usage[int(key)]
-        class_weights[str(0)] = 1.0
+            class_weights[key] = np.log(predicted_usage[int(key)] + 1.0)
         return class_weights
 
     @classmethod

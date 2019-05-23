@@ -71,7 +71,7 @@ class HyperparameterOptimisation:
             model.add(GlobalMaxPooling1D())
             model.add(Dense(int(params["deep_size"]), activation=params['deep_activation']))
             model.add(Dense(dimensions, activation=params['output_activation']))
-            model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr=params["learning_rate"]))
+            model.compile(loss=utils.weighted_loss(class_weights), optimizer=RMSprop(lr=params["learning_rate"]))
             model.summary()
             model_fit = model.fit(
                 train_data,
@@ -80,7 +80,6 @@ class HyperparameterOptimisation:
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 verbose=2,
-                class_weight=class_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )

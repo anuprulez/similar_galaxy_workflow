@@ -7,6 +7,7 @@ from keras.models import model_from_json, Sequential
 from keras.layers import Dense, Dropout, Conv1D, GlobalMaxPooling1D, MaxPooling1D, Flatten, SpatialDropout1D
 from keras.layers.embeddings import Embedding
 from keras.optimizers import RMSprop
+from keras import backend as K
 
 
 def read_file(file_path):
@@ -124,18 +125,6 @@ def get_best_parameters(mdl_dict):
     deep_activation = mdl_dict.get("deep_activation", "elu")
     output_activation = mdl_dict.get("output_activation", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
-    
-    '''lr = float(mdl_dict.get("learning_rate", "0.0012307672546688516"))
-    embedding_size = int(mdl_dict.get("embedding_size", "472"))
-    dropout = float(mdl_dict.get("dropout", "0.004887220172808515"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.3325902753016326"))
-    filter_size = float(mdl_dict.get("filter_size", "230"))
-    kernel_size = float(mdl_dict.get("kernel_size", "8"))
-    deep_size = int(mdl_dict.get("deep_size", "78"))
-    batch_size = int(mdl_dict.get("batch_size", "485"))
-    deep_activation = mdl_dict.get("deep_activation", "elu")
-    output_activation = mdl_dict.get("output_activation", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
 
     return {
         "lr": lr,
@@ -150,9 +139,22 @@ def get_best_parameters(mdl_dict):
         "output_activation": output_activation,
         "loss_type": loss_type
     }
+    
+  
+def weighted_loss(class_weights):
+    """
+    Create a weighted loss function. Penalise the misclassification
+    of classes more with the higher usage
+    """
+    weight_values = list(class_weights.values())
+    def weighted_binary_crossentropy(y_true, y_pred):
+        # add another dimension to compute dot product
+        expanded_weights = K.expand_dims(weight_values, axis=-1)
+        return K.dot(K.binary_crossentropy(y_true, y_pred), expanded_weights)
+    return weighted_binary_crossentropy
 
 
-def set_cnn_network(mdl_dict, reverse_dictionary):
+def set_cnn_network(mdl_dict, reverse_dictionary, class_weights):
     """
     Create a convolutional network and set its parameters
     """
@@ -168,7 +170,7 @@ def set_cnn_network(mdl_dict, reverse_dictionary):
     model.add(GlobalMaxPooling1D())
     model.add(Dense(int(model_params["deep_size"]), activation=model_params['deep_activation']))
     model.add(Dense(dimensions, activation=model_params['output_activation']))   
-    model.compile(loss=model_params["loss_type"], optimizer=RMSprop(lr=model_params['lr']))
+    model.compile(loss=weighted_loss(class_weights), optimizer=RMSprop(lr=model_params['lr']))
     return model, model_params
 
 
