@@ -126,17 +126,6 @@ def get_best_parameters(mdl_dict):
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
-    
-    '''lr = float(mdl_dict.get("learning_rate", "0.0014916662277885222"))
-    embedding_size = int(mdl_dict.get("embedding_size", "415"))
-    dropout = float(mdl_dict.get("dropout", "6.700924134731695e-05"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.4120430361333309"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.24554170126143574"))
-    units = int(mdl_dict.get("units", "349"))
-    batch_size = int(mdl_dict.get("batch_size", "422"))
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
 
     return {
         "lr": lr,

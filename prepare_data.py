@@ -192,7 +192,7 @@ class PrepareData:
         for key in range(1, n_classes):
             # assign weight for each tool
             # higher the usage, higher the weight
-            class_weights[key] = predicted_usage[int(key)]
+            class_weights[key] = np.log(predicted_usage[int(key)] + 1.0)
         return class_weights
 
     @classmethod
