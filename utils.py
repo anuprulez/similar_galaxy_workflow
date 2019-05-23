@@ -126,13 +126,13 @@ def get_best_parameters(mdl_dict):
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")'''
     
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_size", "256"))
-    units = int(mdl_dict.get("units", "256"))
-    batch_size = int(mdl_dict.get("batch_size", "256"))
-    dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
+    lr = float(mdl_dict.get("learning_rate", "0.002654922947599259"))
+    embedding_size = int(mdl_dict.get("embedding_size", "263"))
+    units = int(mdl_dict.get("units", "326"))
+    batch_size = int(mdl_dict.get("batch_size", "236"))
+    dropout = float(mdl_dict.get("dropout", "0.36546280071905884"))
+    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.4689479178452028"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.29389988861791083"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
 
@@ -158,20 +158,8 @@ def weighted_loss(class_weights):
     def weighted_binary_crossentropy(y_true, y_pred):
         # add another dimension to compute dot product
         expanded_weights = K.expand_dims(weight_values, axis=-1)
-        weighted_predictions = K.sigmoid(y_pred * K.transpose(expanded_weights))
-        return K.binary_crossentropy(y_true, weighted_predictions)
+        return K.dot(K.binary_crossentropy(y_true, y_pred), expanded_weights)
     return weighted_binary_crossentropy
-    
-   
-def output_activation(class_weights):
-    """
-    Implement a custom activation function for output
-    """
-    weights = list(class_weights.values())
-    def weighted_sigmoid_activation(x):
-        exp_weights = K.expand_dims(weights, axis=-1)
-        return K.sigmoid(x * K.transpose(exp_weights))
-    return weighted_sigmoid_activation
 
 
 def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
@@ -181,9 +169,6 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
 
-    # get the loss function
-    activation = output_activation(class_weights)
-
     # define the architecture of the neural network
     model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
@@ -192,9 +177,9 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     model.add(Dropout(model_params["dropout"]))
     model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
     model.add(Dropout(model_params["dropout"]))
-    model.add(Dense(dimensions, activation=activation))
+    model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss='binary_crossentropy', optimizer=optimizer)
+    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
     return model, model_params
 
 
@@ -219,8 +204,6 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     # predict next tools for a test path
     prediction = model.predict(test_sample, verbose=0)
-
-    #analyze_output_layer(model, test_sample, len(reverse_data_dictionary) + 1)
     
     nw_dimension = prediction.shape[1]
 
