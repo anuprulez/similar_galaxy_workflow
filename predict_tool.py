@@ -38,7 +38,7 @@ class PredictTool:
         utils.write_file("data/generated_files/best_params.txt", best_params)
 
         # retrieve the model and train on complete dataset without validation set
-        model, best_params = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]))
+        model, best_params = utils.set_deep_network(best_params, reverse_dictionary, int(network_config["maximum_path_length"]), class_weights)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
@@ -54,7 +54,6 @@ class PredictTool:
             verbose=2,
             callbacks=callbacks_list,
             shuffle="batch",
-            class_weight=class_weights,
             validation_data=(test_data, test_labels)
         )
 

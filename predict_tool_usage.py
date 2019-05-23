@@ -69,7 +69,7 @@ class ToolPopularity:
         """
         Fit a curve for the tool usage over time to predict future tool usage
         """
-        epsilon = 1.0
+        epsilon = 0.0
         cv = 5
         s_typ = 'neg_mean_absolute_error'
         n_jobs = 4

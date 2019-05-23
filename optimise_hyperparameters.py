@@ -71,14 +71,13 @@ class HyperparameterOptimisation:
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer)
+            model.compile(loss=utils.weighted_loss(class_weights), optimizer=optimizer)
             model.summary()
             model_fit = model.fit(train_data, train_labels,
                 batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 verbose=2,
-                class_weight=class_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )

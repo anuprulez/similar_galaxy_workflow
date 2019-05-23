@@ -3,11 +3,11 @@ import numpy as np
 import json
 import h5py
 
-from keras.models import model_from_json
-from keras.models import Sequential
+from keras.models import model_from_json, Sequential
 from keras.layers import Dense, Dropout, Flatten, Embedding, SpatialDropout1D
 from keras.layers.embeddings import Embedding
 from keras.optimizers import RMSprop
+from keras import backend as K
 
 
 def read_file(file_path):
@@ -123,16 +123,6 @@ def get_best_parameters(mdl_dict):
     activation_dense = mdl_dict.get("activation_dense", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
     loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
-    
-    '''lr = float(mdl_dict.get("learning_rate", "0.0015528977390725726"))
-    dropout = float(mdl_dict.get("dropout", "0.2286990768119037"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.32613171089745985"))
-    units = int(mdl_dict.get("units", "31"))
-    batch_size = int(mdl_dict.get("batch_size", "161"))
-    embedding_size = int(mdl_dict.get("embedding_size", "133"))
-    activation_dense = mdl_dict.get("activation_dense", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")'''
 
     return {
         "lr": lr,
@@ -145,9 +135,22 @@ def get_best_parameters(mdl_dict):
         "activation_output": activation_output,
         "loss_type": loss_type
     }
+    
+
+def weighted_loss(class_weights):
+    """
+    Create a weighted loss function. Penalise the misclassification
+    of classes more with the higher usage
+    """
+    weight_values = list(class_weights.values())
+    def weighted_binary_crossentropy(y_true, y_pred):
+        # add another dimension to compute dot product
+        expanded_weights = K.expand_dims(weight_values, axis=-1)
+        return K.dot(K.binary_crossentropy(y_true, y_pred), expanded_weights)
+    return weighted_binary_crossentropy
 
 
-def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
+def set_deep_network(mdl_dict, reverse_dictionary, max_path_length, class_weights):
     """
     Create a deep neural network and set its parameters
     """
@@ -165,7 +168,7 @@ def set_deep_network(mdl_dict, reverse_dictionary, max_path_length):
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
+    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
     return model, model_params
 
  
