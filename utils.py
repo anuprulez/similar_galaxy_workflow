@@ -206,9 +206,9 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     for t_id in topk_prediction_pos:
         t_name = reverse_data_dictionary[int(t_id)]
         if t_id in usage_scores and t_name in actual_next_tool_names:
-            usg_wt_scores.append(usage_scores[t_id])
+            usg_wt_scores.append(np.log(usage_scores[t_id] + 1.0))
     if len(usg_wt_scores) > 0:
-            mean_usg_score = np.mean(usg_wt_scores)
+            mean_usg_score = np.sum(usg_wt_scores) / float(topk)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
     return mean_usg_score, absolute_precision
@@ -235,7 +235,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     return mean_precision, mean_usage
 
 
-def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
+def save_model(results, data_dictionary, compatible_next_tools, trained_model_path, class_weights):
     # save files
     trained_model = results["model"]
     best_model_parameters = results["best_parameters"]
@@ -247,6 +247,7 @@ def save_model(results, data_dictionary, compatible_next_tools, trained_model_pa
         'model_config': model_config,
         'best_parameters': best_model_parameters,
         'model_weights': model_weights,
-        "compatible_tools": compatible_next_tools
+        "compatible_tools": compatible_next_tools,
+        "class_weights": class_weights
     }
     set_trained_model(trained_model_path, model_values)
