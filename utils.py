@@ -3,8 +3,7 @@ import numpy as np
 import json
 import h5py
 
-from keras.models import model_from_json
-from keras.models import Sequential
+from keras.models import model_from_json, Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
@@ -227,9 +226,9 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     for t_id in topk_prediction_pos:
         t_name = reverse_data_dictionary[int(t_id)]
         if t_id in usage_scores and t_name in actual_next_tool_names:
-            usg_wt_scores.append(usage_scores[t_id])
+            usg_wt_scores.append(np.log(usage_scores[t_id] + 1.0))
     if len(usg_wt_scores) > 0:
-            mean_usg_score = np.mean(usg_wt_scores)
+            mean_usg_score = np.sum(usg_wt_scores) / float(topk)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
     return mean_usg_score, absolute_precision
