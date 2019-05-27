@@ -125,13 +125,13 @@ def get_best_parameters(mdl_dict):
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")'''
     
-    lr = float(mdl_dict.get("learning_rate", "0.002654922947599259"))
-    embedding_size = int(mdl_dict.get("embedding_size", "263"))
-    units = int(mdl_dict.get("units", "326"))
-    batch_size = int(mdl_dict.get("batch_size", "236"))
-    dropout = float(mdl_dict.get("dropout", "0.36546280071905884"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.4689479178452028"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.29389988861791083"))
+    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    embedding_size = int(mdl_dict.get("embedding_size", "128"))
+    units = int(mdl_dict.get("units", "128"))
+    batch_size = int(mdl_dict.get("batch_size", "128"))
+    dropout = float(mdl_dict.get("dropout", "0.2"))
+    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
 
@@ -226,9 +226,14 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     for t_id in topk_prediction_pos:
         t_name = reverse_data_dictionary[int(t_id)]
         if t_id in usage_scores and t_name in actual_next_tool_names:
-            usg_wt_scores.append(np.log(usage_scores[t_id] + 1.0))
-    if len(usg_wt_scores) > 0:
-            mean_usg_score = np.sum(usg_wt_scores) / float(topk)
+            u_score = usage_scores[t_id]
+            if u_score < 1.0:
+                u_score += 1.0
+            usg_wt_scores.append(np.log(u_score))
+        else:
+            usg_wt_scores.append(0.0)
+    assert topk == len(usg_wt_scores), "Wrong size of usage array"
+    mean_usg_score = np.mean(usg_wt_scores)
     false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
     absolute_precision = 1 - (len(false_positives) / float(topk))
     return mean_usg_score, absolute_precision

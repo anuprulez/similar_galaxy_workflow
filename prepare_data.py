@@ -206,7 +206,10 @@ class PrepareData:
         class_weights = dict()
         class_weights[str(0)] = 0.0
         for key in range(1, n_classes):
-            class_weights[key] = np.log((predicted_usage[key]) + 1.0)
+            u_score = predicted_usage[key]
+            if u_score < 1.0:
+                u_score += 1.0
+            class_weights[key] = np.log(u_score)
         return class_weights
 
     @classmethod
