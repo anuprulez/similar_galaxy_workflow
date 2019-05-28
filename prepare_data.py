@@ -183,7 +183,7 @@ class PrepareData:
         return usage
 
     @classmethod
-    def assign_class_weights(self, n_classes, predicted_usage, inverse_frequencies):
+    def assign_class_weights(self, n_classes, predicted_usage):
         """
         Compute class weights using usage
         """
