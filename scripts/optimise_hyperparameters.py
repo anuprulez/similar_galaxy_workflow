@@ -28,6 +28,7 @@ class HyperparameterOptimisation:
         """
         l_recurrent_activations = config["activation_recurrent"].split(",")
         l_output_activations = config["activation_output"].split(",")
+
         # convert items to integer
         l_batch_size = list(map(int, config["batch_size"].split(",")))
         l_embedding_size = list(map(int, config["embedding_size"].split(",")))
@@ -70,8 +71,7 @@ class HyperparameterOptimisation:
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
-            model.summary()
+            model.compile(loss=utils.weighted_loss(class_weights), optimizer=optimizer_rms)
             model_fit = model.fit(
                 train_data,
                 train_labels,
@@ -79,7 +79,6 @@ class HyperparameterOptimisation:
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 verbose=2,
-                class_weight=class_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )
@@ -87,6 +86,7 @@ class HyperparameterOptimisation:
         # minimize the objective function using the set of parameters above4
         trials = Trials()
         learned_params = fmin(create_model, params, trials=trials, algo=tpe.suggest, max_evals=int(config["max_evals"]))
+        print(learned_params)
         # set the best params with respective values
         for item in learned_params:
             item_val = learned_params[item]
@@ -96,4 +96,5 @@ class HyperparameterOptimisation:
                 best_model_params[item] = l_recurrent_activations[item_val]
             else:
                 best_model_params[item] = item_val
+        model_config = utils.extract_configuration(trials.trials)
         return best_model_params
