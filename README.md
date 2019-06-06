@@ -77,11 +77,6 @@ The plot above shows the binary cross-entropy, unweighted and weighted, loss dro
 
 The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/rnn_custom_loss/images/precision_path_length.png">
-</p>
-
-The above plot shows the precision for different length of paths (tool sequences). As the length of path increases, the precision becomes better.
 
 ## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
