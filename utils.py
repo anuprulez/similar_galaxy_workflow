@@ -234,22 +234,22 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     return mean_usg_score, absolute_precision
 
 
-def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, topk_list=[1, 2, 3]):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores):
     """
     Verify the model on test data
     """
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[0]
-    precision = np.zeros([len(y), len(topk_list)])
-    usage_weights = np.zeros([len(y), len(topk_list)])
+    precision = np.zeros([len(y)])
+    usage_weights = np.zeros([len(y)])
     # loop over all the test samples and find prediction precision
     for i in range(size):
         actual_classes_pos = np.where(y[i] > 0)[0]
-        for index, abs_topk in enumerate(topk_list):
-            abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
-            precision[i][index] = absolute_precision
-            usage_weights[i][index] = abs_mean_usg_score
+        abs_topk = len(actual_classes_pos)
+        abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
+        precision[i] = absolute_precision
+        usage_weights[i] = abs_mean_usg_score
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage
