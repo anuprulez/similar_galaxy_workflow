@@ -82,7 +82,7 @@ We create training samples and their labels in this manner and feed them to the 
 ## Data distribution
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/path_dist.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/path_dist.png">
 </p>
 
 The above plot shows the distribution of the length of tool sequences. The length plays an important role to determine the dimensionality of the input dense vector. Thus, to reduce it, we take a maximum tool sequence length of 25.
@@ -93,28 +93,23 @@ In the set of training sequences, each one can have many labels (or categories) 
 ## Accuracy on test data
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/precision.png">
 </p>
 
 The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/loss.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/loss.png">
 </p>
 
 The plot above shows the binary cross-entropy loss drop over training epochs. Both the losses, training and validation, start to drop and become stable towards the end of training epochs.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/usage.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/usage.png">
 </p>
 
 The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision_path_length.png">
-</p>
-
-The above plot shows the precision for a different length of paths (tool sequences). As the length of a path increases, the precision becomes better.
 
 ## Literature:
 - [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
