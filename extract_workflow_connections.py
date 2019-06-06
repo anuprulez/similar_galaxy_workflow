@@ -76,10 +76,6 @@ class ExtractWorkflowConnections:
         random.shuffle(unique_paths)
         print("# paths: %d" % len(unique_paths))
 
-        print("Computing the frequency of paths...")
-        frequency_paths = self.compute_path_freq(unique_paths)
-        utils.write_file("data/generated_files/frequency_paths.txt", frequency_paths)
-
         no_dup_paths = list(set(unique_paths))
         print("# duplicated paths: %d" % len(no_dup_paths))
 
@@ -87,23 +83,7 @@ class ExtractWorkflowConnections:
 
         print("Finding compatible next tools...")
         compatible_next_tools = self.set_compatible_next_tools(no_dup_paths)
-        return unique_paths, compatible_next_tools, frequency_paths
-
-    @classmethod
-    def compute_path_freq(self, paths):
-        """
-        Compute the frequency of paths
-        """
-        path_frequency = dict()
-        for path in paths:
-            p_split = path.split(",")
-            p_no_last_tool = p_split[0:len(p_split) - 1]
-            p_no_last_tool_merged = ",".join(p_no_last_tool)
-            if p_no_last_tool_merged not in path_frequency:
-                path_frequency[p_no_last_tool_merged] = 1
-            else:
-                path_frequency[p_no_last_tool_merged] += 1
-        return path_frequency
+        return unique_paths, compatible_next_tools
 
     @classmethod
     def set_compatible_next_tools(self, workflow_paths):

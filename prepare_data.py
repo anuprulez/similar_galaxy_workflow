@@ -212,7 +212,7 @@ class PrepareData:
         return path_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
