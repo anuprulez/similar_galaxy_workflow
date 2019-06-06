@@ -3,12 +3,12 @@ import numpy as np
 import json
 import h5py
 
-from keras.models import model_from_json
-from keras.models import Sequential
+from keras.models import model_from_json, Sequential
 from keras.layers import Dense, GRU, Dropout
 from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
+from keras import backend as K
 
 
 def read_file(file_path):
@@ -115,16 +115,25 @@ def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    '''lr = float(mdl_dict.get("learning_rate", "0.001"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
     recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
-    batch_size = int(mdl_dict.get("batch_size", "512"))
+    batch_size = int(mdl_dict.get("batch_size", "512"))	
+    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
+    activation_output = mdl_dict.get("activation_output", "sigmoid")'''
+    
+    lr = float(mdl_dict.get("learning_rate", "0.001"))
+    embedding_size = int(mdl_dict.get("embedding_size", "128"))
+    units = int(mdl_dict.get("units", "128"))
+    batch_size = int(mdl_dict.get("batch_size", "128"))
+    dropout = float(mdl_dict.get("dropout", "0.2"))
+    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
-    loss_type = mdl_dict.get("loss_type", "binary_crossentropy")
 
     return {
         "lr": lr,
@@ -136,18 +145,30 @@ def get_best_parameters(mdl_dict):
         "batch_size": batch_size,
         "activation_recurrent": activation_recurrent,
         "activation_output": activation_output,
-        "loss_type": loss_type
     }
 
+    
+def weighted_loss(class_weights):
+    """
+    Create a weighted loss function. Penalise the misclassification
+    of classes more with the higher usage
+    """
+    weight_values = list(class_weights.values())
+    def weighted_binary_crossentropy(y_true, y_pred):
+        # add another dimension to compute dot product
+        expanded_weights = K.expand_dims(weight_values, axis=-1)
+        return K.dot(K.binary_crossentropy(y_true, y_pred), expanded_weights)
+    return weighted_binary_crossentropy
 
-def set_recurrent_network(mdl_dict, reverse_dictionary):
+
+def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     """
     Create a RNN network and set its parameters
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
 
-    # define the architecture of the recurrent neural network
+    # define the architecture of the neural network
     model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
     model.add(SpatialDropout1D(model_params["spatial_dropout"]))
@@ -157,11 +178,20 @@ def set_recurrent_network(mdl_dict, reverse_dictionary):
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
     optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=model_params["loss_type"], optimizer=optimizer)
-    return model
+    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
+    return model, model_params
 
 
-def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk, is_absolute=False):
+def analyze_output_layer(model, test_sample, dimensions, iter_num=10):
+    output_last = K.function([model.layers[0].input, K.learning_phase()], [model.layers[-1].output])
+    result = np.zeros((iter_num,) + (1, dimensions))
+    for idx in range(iter_num):
+        result[idx] = output_last([test_sample, 1])[0]
+    prediction = result.mean(axis=0)
+    uncertainty = result.var(axis=0)
+
+
+def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk):
     """
     Compute absolute and compatible precision
     """
@@ -173,6 +203,7 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
 
     # predict next tools for a test path
     prediction = model.predict(test_sample, verbose=0)
+    
     nw_dimension = prediction.shape[1]
 
     # remove the 0th position as there is no tool at this index
@@ -181,10 +212,13 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     prediction_pos = np.argsort(prediction, axis=-1)
     topk_prediction_pos = prediction_pos[-topk:]
 
+    # remove the wrong tool position from the predicted list of tool positions
+    topk_prediction_pos = [x for x in topk_prediction_pos if x > 0]
+
     # read tool names using reverse dictionary
     sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
-    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos if int(tool_pos) > 0]
+    top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos]
 
     # compute the class weights of predicted tools
     mean_usg_score = 0
@@ -192,50 +226,36 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     for t_id in topk_prediction_pos:
         t_name = reverse_data_dictionary[int(t_id)]
         if t_id in usage_scores and t_name in actual_next_tool_names:
-            usg_wt_scores.append(usage_scores[t_id])
+            usg_wt_scores.append(np.log(usage_scores[t_id] + 1.0))
     if len(usg_wt_scores) > 0:
-            mean_usg_score = np.mean(usg_wt_scores)
-    # absolute or compatible precision
-    if is_absolute is True:
-        false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
-        absolute_precision = 1 - (len(false_positives) / float(topk))
-    else:
-        seq_last_tool = sequence_tool_names[-1]
-        if seq_last_tool in next_compatible_tools:
-            next_tools = next_compatible_tools[seq_last_tool].split(",")
-            comp_tools = list(set(top_predicted_next_tool_names) & set(next_tools))
-            compatible_precision = len(comp_tools) / float(len(top_predicted_next_tool_names))
-        else:
-            compatible_precision = 0.0
-    return mean_usg_score, absolute_precision, compatible_precision
+            mean_usg_score = np.sum(usg_wt_scores) / float(topk)
+    false_positives = [tool_name for tool_name in top_predicted_next_tool_names if tool_name not in actual_next_tool_names]
+    absolute_precision = 1 - (len(false_positives) / float(topk))
+    return mean_usg_score, absolute_precision
 
 
-def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, topk_list=[1, 2, 3]):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores):
     """
     Verify the model on test data
     """
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[0]
-    precision = np.zeros([len(y), len(topk_list) + 1])
-    usage_weights = np.zeros([len(y), len(topk_list) + 1])
+    precision = np.zeros([len(y)])
+    usage_weights = np.zeros([len(y)])
     # loop over all the test samples and find prediction precision
     for i in range(size):
         actual_classes_pos = np.where(y[i] > 0)[0]
         abs_topk = len(actual_classes_pos)
-        abs_mean_usg_score, absolute_precision, _ = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk, True)
-        precision[i][0] = absolute_precision
-        usage_weights[i][0] = abs_mean_usg_score
-        for index, comp_topk in enumerate(topk_list):
-            compatible_mean_usg_score, _, compatible_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, comp_topk)
-            precision[i][index+1] = compatible_precision
-            usage_weights[i][index+1] = compatible_mean_usg_score
+        abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
+        precision[i] = absolute_precision
+        usage_weights[i] = abs_mean_usg_score
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage
 
 
-def save_model(results, data_dictionary, compatible_next_tools, trained_model_path):
+def save_model(results, data_dictionary, compatible_next_tools, trained_model_path, class_weights):
     # save files
     trained_model = results["model"]
     best_model_parameters = results["best_parameters"]
@@ -247,6 +267,7 @@ def save_model(results, data_dictionary, compatible_next_tools, trained_model_pa
         'model_config': model_config,
         'best_parameters': best_model_parameters,
         'model_weights': model_weights,
-        "compatible_tools": compatible_next_tools
+        "compatible_tools": compatible_next_tools,
+        "class_weights": class_weights
     }
     set_trained_model(trained_model_path, model_values)

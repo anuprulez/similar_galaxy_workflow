@@ -88,7 +88,7 @@ class PrepareData:
         return sub_paths_pos
 
     @classmethod
-    def prepare_paths_labels_dictionary(self, reverse_dictionary, paths):
+    def prepare_paths_labels_dictionary(self, dictionary, reverse_dictionary, paths, compatible_next_tools):
         """
         Create a dictionary of sequences with their labels for training and test paths
         """
@@ -100,15 +100,22 @@ class PrepareData:
                 tools = item.split(",")
                 label = tools[-1]
                 train_tools = tools[:len(tools) - 1]
+                last_but_one_name = reverse_dictionary[int(train_tools[-1])]
+                try:
+                    compatible_tools = compatible_next_tools[last_but_one_name].split(",")
+                except Exception:
+                    continue
+                if len(compatible_tools) > 0:
+                    compatible_tools_ids = [str(dictionary[x]) for x in compatible_tools]
+                    compatible_tools_ids.append(label)
+                    composite_labels = ",".join(compatible_tools_ids)
                 train_tools = ",".join(train_tools)
                 if train_tools in paths_labels:
-                    paths_labels[train_tools] += "," + label
+                    paths_labels[train_tools] += "," + composite_labels
                 else:
-                    paths_labels[train_tools] = label
+                    paths_labels[train_tools] = composite_labels
         for item in paths_labels:
-            path_names = ",".join([reverse_dictionary[int(pos)] for pos in item.split(",")])
-            path_label_names = ",".join([reverse_dictionary[int(pos)] for pos in paths_labels[item].split(",")])
-            paths_labels_names[path_names] = path_label_names
+            paths_labels[item] = ",".join(list(set(paths_labels[item].split(","))))
         return paths_labels
 
     @classmethod
@@ -161,7 +168,9 @@ class PrepareData:
         Get predicted usage for tools
         """
         usage = dict()
-        epsilon = 1.0
+        epsilon = 0.0
+        # index 0 does not belong to any tool
+        usage[0] = epsilon
         for k, v in data_dictionary.items():
             try:
                 usg = predicted_usage[k]
@@ -171,21 +180,36 @@ class PrepareData:
             except Exception:
                 usage[v] = epsilon
                 continue
-        # index 0 does not belong to any tool
-        usage[0] = epsilon
         return usage
-
+        
     @classmethod
-    def assign_class_weights(self, n_classes, predicted_usage):
+    def get_inverse_weights(self, label_matrix, reverse_dictionary):
+        """
+        Compute inverse class frequencies from label matrix
+        """
+        class_freq = dict()
+        class_freq[0] = 0.0
+        for key in range(1, label_matrix.shape[1]):
+            column = label_matrix[:, key]
+            class_freq[key] = len(np.where(column > 0)[0])
+        mean_freq = np.mean(list(class_freq.values()))
+        for cls in class_freq:
+             if class_freq[cls] > 0:
+                 class_freq[cls] = float(mean_freq) / class_freq[cls]
+        return class_freq
+        
+    @classmethod
+    def assign_class_weights(self, n_classes, predicted_usage, inverse_frequencies):
         """
         Compute class weights using usage
         """
         class_weights = dict()
+        class_weights[str(0)] = 0.0
         for key in range(1, n_classes):
-            # assign weight for each tool
-            # higher the usage, higher the weight
-            class_weights[key] = predicted_usage[int(key)]
-        class_weights[str(0)] = 1.0
+            u_score = predicted_usage[key]
+            if u_score < 1.0:
+                u_score += 1.0
+            class_weights[key] = np.log(u_score)
         return class_weights
 
     @classmethod
@@ -205,7 +229,7 @@ class PrepareData:
         return path_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, frequency_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -221,7 +245,7 @@ class PrepareData:
         random.shuffle(all_unique_paths)
 
         print("Creating dictionaries...")
-        multilabels_paths = self.prepare_paths_labels_dictionary(reverse_dictionary, all_unique_paths)
+        multilabels_paths = self.prepare_paths_labels_dictionary(dictionary, reverse_dictionary, all_unique_paths, compatible_next_tools)
 
         print("Complete data: %d" % len(multilabels_paths))
         train_paths_dict, test_paths_dict = self.split_test_train_data(multilabels_paths)
@@ -231,6 +255,9 @@ class PrepareData:
 
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
+        
+        print("Counting reverse class frequencies")
+        inverse_frequencies = self.get_inverse_weights(train_labels, reverse_dictionary)
 
         # Predict tools usage
         print("Predicting tools' usage...")
@@ -240,10 +267,11 @@ class PrepareData:
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
         # get class weights using the predicted usage for each tool
-        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
+        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage, inverse_frequencies)
 
         utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
         utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
+        utils.write_file(main_path + "/data/generated_files/inverse_frequencies.txt", inverse_frequencies)
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 

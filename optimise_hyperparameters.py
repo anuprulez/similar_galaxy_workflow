@@ -28,6 +28,7 @@ class HyperparameterOptimisation:
         """
         l_recurrent_activations = config["activation_recurrent"].split(",")
         l_output_activations = config["activation_output"].split(",")
+
         # convert items to integer
         l_batch_size = list(map(int, config["batch_size"].split(",")))
         l_embedding_size = list(map(int, config["embedding_size"].split(",")))
@@ -70,8 +71,7 @@ class HyperparameterOptimisation:
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer_rms = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer_rms)
-            model.summary()
+            model.compile(loss=utils.weighted_loss(class_weights), optimizer=optimizer_rms)
             model_fit = model.fit(
                 train_data,
                 train_labels,
@@ -79,7 +79,6 @@ class HyperparameterOptimisation:
                 epochs=optimize_n_epochs,
                 shuffle="batch",
                 verbose=2,
-                class_weight=class_weights,
                 validation_split=validation_split,
                 callbacks=[early_stopping]
             )
