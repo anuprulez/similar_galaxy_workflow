@@ -3,7 +3,6 @@ Predict next tools in the Galaxy workflows
 using machine learning (recurrent neural network)
 """
 
-import sys
 import numpy as np
 import time
 import xml.etree.ElementTree as et
@@ -32,11 +31,11 @@ class PredictTool:
         """
         Define recurrent neural network and train sequential data
         """
-        '''print("Start hyperparameter optimisation...")
+        print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
         best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
-        utils.write_file("data/generated_files/best_params.txt", best_params)'''
-        best_params = dict()
+        utils.write_file("data/generated_files/best_params.txt", best_params)
+
         # retrieve the model and train on complete dataset without validation set
         model, best_params = utils.set_recurrent_network(best_params, reverse_dictionary, class_weights)
 
@@ -96,7 +95,7 @@ class PredictCallback(callbacks.Callback):
 
 if __name__ == "__main__":
     start_time = time.time()
-    
+
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
     arg_parser.add_argument("-cf", "--config_file", required=True, help="configuration file")
