@@ -115,23 +115,13 @@ def get_best_parameters(mdl_dict):
     """
     Get param values (defaults as well)
     """
-    '''lr = float(mdl_dict.get("learning_rate", "0.001"))
+    lr = float(mdl_dict.get("learning_rate", "0.001"))
     embedding_size = int(mdl_dict.get("embedding_size", "512"))
     dropout = float(mdl_dict.get("dropout", "0.2"))
     recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
     spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
     units = int(mdl_dict.get("units", "512"))
-    batch_size = int(mdl_dict.get("batch_size", "512"))	
-    activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
-    activation_output = mdl_dict.get("activation_output", "sigmoid")'''
-    
-    lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_size", "128"))
-    units = int(mdl_dict.get("units", "128"))
-    batch_size = int(mdl_dict.get("batch_size", "128"))
-    dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
+    batch_size = int(mdl_dict.get("batch_size", "512"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
 
@@ -147,13 +137,14 @@ def get_best_parameters(mdl_dict):
         "activation_output": activation_output,
     }
 
-    
+
 def weighted_loss(class_weights):
     """
     Create a weighted loss function. Penalise the misclassification
     of classes more with the higher usage
     """
     weight_values = list(class_weights.values())
+
     def weighted_binary_crossentropy(y_true, y_pred):
         # add another dimension to compute dot product
         expanded_weights = K.expand_dims(weight_values, axis=-1)
@@ -182,28 +173,16 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     return model, model_params
 
 
-def analyze_output_layer(model, test_sample, dimensions, iter_num=10):
-    output_last = K.function([model.layers[0].input, K.learning_phase()], [model.layers[-1].output])
-    result = np.zeros((iter_num,) + (1, dimensions))
-    for idx in range(iter_num):
-        result[idx] = output_last([test_sample, 1])[0]
-    prediction = result.mean(axis=0)
-    uncertainty = result.var(axis=0)
-
-
 def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, topk):
     """
     Compute absolute and compatible precision
     """
     absolute_precision = 0.0
-    compatible_precision = 0.0
     test_sample = np.reshape(x, (1, len(x)))
-    test_sample_pos = np.where(x > 0)[0]
-    test_sample_tool_pos = x[test_sample_pos[0]:]
 
     # predict next tools for a test path
     prediction = model.predict(test_sample, verbose=0)
-    
+
     nw_dimension = prediction.shape[1]
 
     # remove the 0th position as there is no tool at this index
@@ -216,7 +195,6 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     topk_prediction_pos = [x for x in topk_prediction_pos if x > 0]
 
     # read tool names using reverse dictionary
-    sequence_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in test_sample_tool_pos]
     actual_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in actual_classes_pos]
     top_predicted_next_tool_names = [reverse_data_dictionary[int(tool_pos)] for tool_pos in topk_prediction_pos]
 
@@ -234,22 +212,22 @@ def compute_precision(model, x, y, reverse_data_dictionary, next_compatible_tool
     return mean_usg_score, absolute_precision
 
 
-def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores):
+def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, usage_scores, topk_list=[1, 2, 3]):
     """
     Verify the model on test data
     """
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[0]
-    precision = np.zeros([len(y)])
-    usage_weights = np.zeros([len(y)])
+    precision = np.zeros([len(y), len(topk_list)])
+    usage_weights = np.zeros([len(y), len(topk_list)])
     # loop over all the test samples and find prediction precision
     for i in range(size):
         actual_classes_pos = np.where(y[i] > 0)[0]
-        abs_topk = len(actual_classes_pos)
-        abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
-        precision[i] = absolute_precision
-        usage_weights[i] = abs_mean_usg_score
+        for index, abs_topk in enumerate(topk_list):
+            abs_mean_usg_score, absolute_precision = compute_precision(model, x[i, :], y, reverse_data_dictionary, next_compatible_tools, usage_scores, actual_classes_pos, abs_topk)
+            precision[i][index] = absolute_precision
+            usage_weights[i][index] = abs_mean_usg_score
     mean_precision = np.mean(precision, axis=0)
     mean_usage = np.mean(usage_weights, axis=0)
     return mean_precision, mean_usage

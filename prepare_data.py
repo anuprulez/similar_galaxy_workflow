@@ -93,7 +93,6 @@ class PrepareData:
         Create a dictionary of sequences with their labels for training and test paths
         """
         paths_labels = dict()
-        paths_labels_names = dict()
         random.shuffle(paths)
         for item in paths:
             if item and item not in "":
@@ -181,25 +180,9 @@ class PrepareData:
                 usage[v] = epsilon
                 continue
         return usage
-        
+
     @classmethod
-    def get_inverse_weights(self, label_matrix, reverse_dictionary):
-        """
-        Compute inverse class frequencies from label matrix
-        """
-        class_freq = dict()
-        class_freq[0] = 0.0
-        for key in range(1, label_matrix.shape[1]):
-            column = label_matrix[:, key]
-            class_freq[key] = len(np.where(column > 0)[0])
-        mean_freq = np.mean(list(class_freq.values()))
-        for cls in class_freq:
-             if class_freq[cls] > 0:
-                 class_freq[cls] = float(mean_freq) / class_freq[cls]
-        return class_freq
-        
-    @classmethod
-    def assign_class_weights(self, n_classes, predicted_usage, inverse_frequencies):
+    def assign_class_weights(self, n_classes, predicted_usage):
         """
         Compute class weights using usage
         """
@@ -255,9 +238,6 @@ class PrepareData:
 
         test_data, test_labels = self.pad_paths(test_paths_dict, num_classes)
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
-        
-        print("Counting reverse class frequencies")
-        inverse_frequencies = self.get_inverse_weights(train_labels, reverse_dictionary)
 
         # Predict tools usage
         print("Predicting tools' usage...")
@@ -267,11 +247,10 @@ class PrepareData:
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
         # get class weights using the predicted usage for each tool
-        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage, inverse_frequencies)
+        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
 
         utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
         utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
-        utils.write_file(main_path + "/data/generated_files/inverse_frequencies.txt", inverse_frequencies)
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
