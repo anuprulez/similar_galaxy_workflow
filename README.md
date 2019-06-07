@@ -45,7 +45,7 @@ If a Galaxy user can see a list of possible next tool(s) at all stages of creati
 
 Suppose we have a workflow:
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/workflow1.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/master/images/workflow.png">
 </p>
 
 This workflow can be broken down into following smaller sequences (or training samples):
