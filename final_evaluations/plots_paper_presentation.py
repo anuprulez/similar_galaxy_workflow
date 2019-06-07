@@ -258,5 +258,43 @@ assemble_accuracy()
 plt.show()
 
 
+############## Plot data distribution
 
+paths_path = 'data/rnn_custom_loss/run1/paths.txt'
+all_paths = list()
+
+with open(paths_path) as f:
+    all_paths = json.loads(f.read())
+
+path_size = dict()
+for path in all_paths:
+    path_split = len(path.split(","))
+    try:
+        path_size[path_split] += 1
+    except:
+        path_size[path_split] = 1
+
+keys = sorted(list(path_size.keys()))
+values = list(path_size.values())
+
+sorted_key_values = list()
+sizes = list()
+for i, ky in enumerate(keys):
+    if i in path_size:
+        sizes.append(str(i))
+        sorted_key_values.append(path_size[i])
+        
+def plot_path_size_distribution(x_val, title, xlabel, ylabel, xlabels):
+    plt.figure(figsize=fig_size)
+    x_pos = np.arange(len(x_val))
+    plt.bar(range(len(x_val)), x_val, color='skyblue')
+    plt.xlabel(xlabel, size=size_label+4)
+    plt.ylabel(ylabel, size=size_label+4)
+    plt.title(title, size=size_title+4)
+    plt.xticks(x_pos, xlabels, size=size_label+4)
+    plt.yticks(size=size_label+4)
+    plt.grid(True)
+    plt.show()
+
+plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)
 
