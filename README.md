@@ -9,15 +9,21 @@
 2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
 3. Execute the file `train.sh`. It has few input parameters:
-    `python <<main_script>> <<workflow_tabular_file>> <<config_file>> <<path_to_created_model>> <<tool_usage_tabular_file>> <<cutoff_date>>`
-    - `<<main_script>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
-    - `<<workflow_tabular_file>>`: This file is extracted in the last step as `wf-connections.tsv`. Give the path of this file.
-    - `<<config_file>>`: This file contains configurable values to be used by the neural network to generate model. It is present beside `train.sh` file. Give the path of this file.
-    - `<<path_to_created_model>>`: Give the path of the created model as `h5` file. E.g. `data/trained_model.hdf5`.
-    - `<<tool_usage_tabular_file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
-    - `<<cutoff_date>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
+    `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path> -ld <path to log directory>`
 
-4. The training of the neural network takes a long time (> 24 hours). Once the script finishes, `h5` model file is created at the given location (`path_to_created_model`). 
+    The elements of the command are explained below:
+    - `<<main python scrip>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
+    - `<<path to workflow file>>`: This file is extracted in the last step as `wf-connections.tsv`. Give the path of this file.
+    - `<<path to config file>>`: This file contains configurable values to be used by the neural network to generate model. It is present beside `train.sh` file. Give the path of this file.
+    - `<<path to trained model file>>`: Give the path of the created model as `h5` file. E.g. `data/trained_model.hdf5`.
+    - `<<path to tool popularity file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
+    - `<<earliest date for considering tool usage>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
+    - `<<maximum length of tool path`>>: The maximum number of tools in a workflow tool sequence.
+    - `<<path to log directory>>`: The path to store the log files to visualize the training process using tensorboard.
+
+    An example command: `python scripts/main.py -wf data/wf_connections_0_2k.tsv -cf config.xml -tm data/trained_model.hdf5 -tu data/tool-popularity.tsv -cd '2017-12-01' -pl 25 -ld 'data/'`
+
+4. The training of the neural network takes a long time (> 24 hours). Once the script finishes, `h5` model file is created at the given location (`path to trained model file`).
 
 5. Place the new model in the Galaxy repository at `galaxy/database/trained_model.hdf5`. 
 
