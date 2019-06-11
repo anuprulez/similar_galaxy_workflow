@@ -12,10 +12,10 @@
     `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path> -ld <path to log directory>`
 
     The elements of the command are explained below:
-    - `<<main python scrip>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
+    - `<<main python script>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
     - `<<path to workflow file>>`: This file is extracted in the last step as `wf-connections.tsv`. Give the path of this file.
-    - `<<path to config file>>`: This file contains configurable values to be used by the neural network to generate model. It is present beside `train.sh` file. Give the path of this file.
-    - `<<path to trained model file>>`: Give the path of the created model as `h5` file. E.g. `data/trained_model.hdf5`.
+    - `<<path to config file>>`: This file contains configurable values to be used by the neural network to a generate model. It is present beside the `train.sh` file. Give the path of this file.
+    - `<<path to trained model file>>`: Give the path of the created model as an `h5` file. E.g. `data/trained_model.hdf5`.
     - `<<path to tool popularity file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
     - `<<earliest date for considering tool usage>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
     - `<<maximum length of tool path`>>: The maximum number of tools in a workflow tool sequence.
