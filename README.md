@@ -9,6 +9,7 @@
 2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
 3. Execute the file `train.sh`. It has few input parameters:
+
     `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path> -ld <path to log directory>`
 
     The elements of the command are explained below:
