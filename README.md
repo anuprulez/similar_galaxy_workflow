@@ -99,20 +99,44 @@ In the set of training sequences, each one can have many labels (or categories) 
 
 ## Accuracy on test data
 
+### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/precision.png">
 </p>
 
+### Comparison of two different networks (CNN and RNN)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/precision_cnn_rnn.png">
+</p>
+
 The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
+
+### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/loss.png">
 </p>
 
-The plot above shows the binary cross-entropy loss drop over training epochs. Both the losses, training and validation, start to drop and become stable towards the end of training epochs.
+### Comparison of two different networks (CNN and RNN)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/loss_cnn_rnn.png">
+</p>
+
+The plot above shows the cross-entropy loss over training epochs.
+
+### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/usage.png">
+</p>
+
+### Comparison of two different networks (CNN and RNN)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/usage_cnn_rnn.png">
 </p>
 
 The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
