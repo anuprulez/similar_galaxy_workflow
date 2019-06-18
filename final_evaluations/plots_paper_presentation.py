@@ -25,16 +25,18 @@ all_approaches_path = ['deep_network_bc/', 'cnn_bc/', 'rnn_bc/', 'rnn_custom_los
 
 titles = ['(a) Deep network', '(b) CNN', '(c) RNN', '(d) RNN with weighted loss']
 
-font = {'family': 'serif', 'size': 14}
+
+font = {'family': 'serif', 'size': 22}
 
 alpha_fade = 0.1
 fig_size = (12, 12)
 
 plt.rc('font', **font)
 
-size_title = 18
-size_label = 16
+size_title = 24
+size_label = 22
 runs = 10
+epochs = 10
 
 def read_file(path):
     with open(path) as f:
@@ -54,7 +56,7 @@ def extract_precision(precision_path):
         data = f.read()
         data = data.split("\n")
         data.remove('')
-        
+        data = data[:epochs]
         for row in data:
             row = row.split('\n')
             row = row[0].split(' ')
@@ -94,7 +96,7 @@ def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2
 
 def assemble_loss():
     fig = plt.figure(figsize=fig_size)
-    fig.suptitle('Crossentropy loss with training epochs', size=size_title + 2)
+    fig.suptitle('Crossentropy loss with training iterations', size=size_title + 2)
     gs = gridspec.GridSpec(2,2)
     for idx, approach in enumerate(all_approaches_path):
         if idx == 0:
@@ -104,11 +106,11 @@ def assemble_loss():
             ax = plt.subplot(gs[0,1])
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Epochs", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
             ax.set_ylabel("Loss", size=size_label)
         else:
             ax = plt.subplot(gs[1,1])
-            ax.set_xlabel("Epochs", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
             
         train_loss = list()
         test_loss = list()
@@ -130,7 +132,7 @@ def assemble_loss():
         mean_tr_loss = np.mean(train_loss, axis=0)
         mean_te_loss = np.mean(test_loss, axis=0)
         plt_title = titles[idx]
-        plot_loss(ax, mean_tr_loss, mean_tr_loss - loss_tr_y1, mean_tr_loss + loss_tr_y2,             mean_te_loss, mean_te_loss - loss_te_y1, mean_te_loss + loss_te_y2,             plt_title + "", "Epochs", "Loss",  ['Training loss', 'Validation loss'])
+        plot_loss(ax, mean_tr_loss, mean_tr_loss - loss_tr_y1, mean_tr_loss + loss_tr_y2, mean_te_loss, mean_te_loss - loss_te_y1, mean_te_loss + loss_te_y2, plt_title + "", "Iterations", "Loss", ['Training loss', 'Validation loss'])
 assemble_loss()
 
 
@@ -151,7 +153,7 @@ def plot_usage(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y
 
 def assemble_usage():
     fig = plt.figure(figsize=fig_size)
-    fig.suptitle('Average log usage frequency over training epochs', size=size_title + 2)
+    fig.suptitle('Log usage frequency over training iterations', size=size_title + 2)
     gs = gridspec.GridSpec(2, 2)
     for idx, approach in enumerate(all_approaches_path):
         if idx == 0:
@@ -161,11 +163,11 @@ def assemble_usage():
             ax = plt.subplot(gs[0,1])
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Epochs", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
             ax.set_ylabel("Log usage frequency", size=size_label)
         else:
             ax = plt.subplot(gs[1,1])
-            ax.set_xlabel("Epochs", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
         usage_top1 = list()
         usage_top2 = list()
         usage_top3 = list()
@@ -189,7 +191,7 @@ def assemble_usage():
         y1_top3, y2_top3 = compute_fill_between(usage_top3)
         plt_title = titles[idx]
 
-        plot_usage(ax, mean_top1_usage, mean_top1_usage - y1_top1, mean_top1_usage + y2_top1,             mean_top2_usage, mean_top2_usage - y1_top2, mean_top2_usage + y2_top2,             mean_top3_usage, mean_top3_usage - y1_top3, mean_top3_usage + y2_top3, plt_title, "Epochs", "Log usage", ['Top1', 'Top2', 'Top3'])
+        plot_usage(ax, mean_top1_usage, mean_top1_usage - y1_top1, mean_top1_usage + y2_top1, mean_top2_usage, mean_top2_usage - y1_top2, mean_top2_usage + y2_top2, mean_top3_usage, mean_top3_usage - y1_top3, mean_top3_usage + y2_top3, plt_title, "Iterations", "Log usage frequency", ['Top1', 'Top2', 'Top3'])
 assemble_usage()
 plt.show()
 
@@ -212,22 +214,22 @@ def plot_accuracy(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3
 
 def assemble_accuracy():
     fig = plt.figure(figsize=fig_size)
-    fig.suptitle('Average precision over training epochs', size=size_title + 2)
+    fig.suptitle('Precision@k over training iterations', size=size_title + 2)
     gs = gridspec.GridSpec(2,2)
     for idx, approach in enumerate(all_approaches_path):
         if idx == 0:
             ax = plt.subplot(gs[0,0])
-            ax.set_ylabel("Average precision", size=size_label)
+            ax.set_ylabel("Precision@k", size=size_label)
         elif idx == 1:
             ax = plt.subplot(gs[0,1])
             
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Epochs", size=size_label)
-            ax.set_ylabel("Average precision", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
+            ax.set_ylabel("Precision@k", size=size_label)
         else:
             ax = plt.subplot(gs[1,1])
-            ax.set_xlabel("Epochs", size=size_label)
+            ax.set_xlabel("Iterations", size=size_label)
 
         precision_acc_top1 = list()
         precision_acc_top2 = list()
@@ -253,7 +255,7 @@ def assemble_accuracy():
         y1_top2, y2_top2 = compute_fill_between(precision_acc_top2)
         y1_top3, y2_top3 = compute_fill_between(precision_acc_top3)
         plt_title = titles[idx]
-        plot_accuracy(ax,mean_top1_acc, mean_top1_acc - y1_top1, mean_top1_acc + y2_top1,                       mean_top2_acc, mean_top2_acc - y1_top2, mean_top2_acc + y2_top2,                       mean_top3_acc, mean_top3_acc - y1_top3, mean_top3_acc + y2_top3,                       plt_title, "Epochs", "Precision", ['Top1', 'Top2', 'Top3'])
+        plot_accuracy(ax,mean_top1_acc, mean_top1_acc - y1_top1, mean_top1_acc + y2_top1, mean_top2_acc, mean_top2_acc - y1_top2, mean_top2_acc + y2_top2, mean_top3_acc, mean_top3_acc - y1_top3, mean_top3_acc + y2_top3, plt_title, "Iterations", "Precision@k", ['Top1', 'Top2', 'Top3'])
 assemble_accuracy()
 plt.show()
 
@@ -288,13 +290,24 @@ def plot_path_size_distribution(x_val, title, xlabel, ylabel, xlabels):
     plt.figure(figsize=fig_size)
     x_pos = np.arange(len(x_val))
     plt.bar(range(len(x_val)), x_val, color='skyblue')
-    plt.xlabel(xlabel, size=size_label+4)
-    plt.ylabel(ylabel, size=size_label+4)
-    plt.title(title, size=size_title+4)
-    plt.xticks(x_pos, xlabels, size=size_label+4)
-    plt.yticks(size=size_label+4)
+    plt.xlabel(xlabel, size=size_label)
+    plt.ylabel(ylabel, size=size_label)
+    plt.title(title, size=size_title)
+    plt.xticks(x_pos, xlabels, size=size_label)
+    plt.yticks(size=size_label)
     plt.grid(True)
     plt.show()
 
 plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)
+
+all_approaches_path = ['cnn_bc/', 'cnn_custom_loss/', 'rnn_bc/', 'rnn_custom_loss/']
+
+titles = ['(a) CNN', '(b) CNN (weighted loss)', '(c) RNN', '(d) RNN (weighted loss)']
+
+assemble_loss()
+plt.show()
+assemble_usage()
+plt.show()
+assemble_accuracy()
+plt.show()
 
