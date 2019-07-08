@@ -200,19 +200,20 @@ class PrepareData:
         """
         Compute the frequency of paths in training data
         """
+        max_freq_values = max(list(paths_frequency.values()))
         path_weights = np.zeros(len(train_data))
         for path_index, path in enumerate(train_data):
             sample_pos = np.where(path > 0)[0]
             sample_tool_pos = path[sample_pos[0]:]
             path_name = ",".join([reverse_dictionary[int(tool_pos)] for tool_pos in sample_tool_pos])
             try:
-                path_weights[path_index] = int(paths_frequency[path_name])
+                path_weights[path_index] = max_freq_values / float(paths_frequency[path_name])
             except Exception:
-                path_weights[path_index] = 1
+                path_weights[path_index] = max_freq_values
         return path_weights
 
     @classmethod
-    def get_data_labels_matrices(self, workflow_paths, tool_usage_path, cutoff_date, compatible_next_tools, old_data_dictionary={}):
+    def get_data_labels_matrices(self, workflow_paths, tool_usage_path, cutoff_date, compatible_next_tools, frequency_paths, old_data_dictionary={}):
         """
         Convert the training and test paths into corresponding numpy matrices
         """
@@ -248,10 +249,12 @@ class PrepareData:
 
         # get class weights using the predicted usage for each tool
         class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
+        
+        sample_weights = self.get_sample_weights(train_data, reverse_dictionary, frequency_paths)
 
         utils.write_file(main_path + "/data/generated_files/test_paths_dict.txt", test_paths_dict)
         utils.write_file(main_path + "/data/generated_files/train_paths_dict.txt", train_paths_dict)
         utils.write_file(main_path + "/data/generated_files/class_weights.txt", class_weights)
         utils.write_file(main_path + "/data/generated_files/data_dict.txt", dictionary)
 
-        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage
+        return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage, sample_weights
