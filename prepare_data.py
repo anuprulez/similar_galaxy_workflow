@@ -209,7 +209,7 @@ class PrepareData:
             try:
                 path_weights[path_index] = max_freq_values / float(paths_frequency[path_name])
             except Exception:
-                path_weights[path_index] = max_freq_values
+                path_weights[path_index] = 1
         return path_weights
 
     @classmethod
