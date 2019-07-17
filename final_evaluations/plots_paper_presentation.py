@@ -84,6 +84,12 @@ def compute_fill_between(a_list):
 
 
 def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2, title, xlabel, ylabel, leg):
+    x_val1 = x_val1[:epochs]
+    x_val2 = x_val2[:epochs]
+    loss_tr_y1 = loss_tr_y1[:epochs]
+    loss_tr_y2 = loss_tr_y2[:epochs]
+    loss_te_y1 = loss_te_y1[:epochs]
+    loss_te_y2 = loss_te_y2[:epochs]
     x_pos = np.arange(len(x_val1))
     ax.plot(x_pos, x_val1, 'r')
     ax.plot(x_pos, x_val2, 'b')
@@ -306,8 +312,8 @@ titles = ['(a) CNN', '(b) CNN (weighted loss)', '(c) RNN', '(d) RNN (weighted lo
 
 assemble_loss()
 plt.show()
-assemble_usage()
-plt.show()
-assemble_accuracy()
-plt.show()
+#assemble_usage()
+#plt.show()
+#assemble_accuracy()
+#plt.show()
 
