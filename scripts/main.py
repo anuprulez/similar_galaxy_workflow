@@ -27,7 +27,7 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, log_directory):
+    def find_train_best_network(self, network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, log_directory):
         """
         Define recurrent neural network and train sequential data
         """
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, optimise_parameters_node, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, args["log_directory"])
+    results_weighted = predict_tool.find_train_best_network(config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, args["log_directory"])
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path, class_weights)
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
