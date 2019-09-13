@@ -9,11 +9,6 @@ import json
 import warnings
 import operator
 
-import h5py
-from keras.models import model_from_json
-from keras import backend as K
-from keras.utils import get_custom_objects
-
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -23,7 +18,7 @@ base_path = 'data/'
 
 all_approaches_path = ['deep_network_bc/', 'cnn_bc/', 'rnn_bc/', 'rnn_custom_loss/']
 
-titles = ['(a) Deep network', '(b) CNN', '(c) GRU (RNN)', '(d) GRU (RNN) with weighted loss']
+titles = ['(a) Dense neural network', '(b) CNN', '(c) GRU', '(d) GRU with weighted loss']
 
 
 font = {'family': 'serif', 'size': 22}
@@ -304,17 +299,96 @@ def plot_path_size_distribution(x_val, title, xlabel, ylabel, xlabels):
     plt.grid(True)
     plt.show()
 
-plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)
+#plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)
 
 all_approaches_path = ['cnn_bc/', 'cnn_custom_loss/', 'rnn_bc/', 'rnn_custom_loss/']
 
-titles = ['(a) CNN', '(b) CNN (weighted loss)', '(c) GRU (RNN)', '(d) GRU (RNN) with weighted loss']
+titles = ['(a) CNN', '(b) CNN (weighted loss)', '(c) GRU', '(d) GRU with weighted loss']
 
 
-assemble_loss()
-plt.show()
+#assemble_loss()
+#plt.show()
 #assemble_usage()
 #plt.show()
 #assemble_accuracy()
 #plt.show()
+
+################################################################ Tool usage
+
+
+import csv
+import numpy as np
+import collections
+
+import plotly
+import plotly.graph_objs as go
+from plotly import tools
+import plotly.io as pio
+from matplotlib import pyplot as plt
+
+def format_tool_id(tool_link):
+        tool_id_split = tool_link.split( "/" )
+        tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
+        return tool_id
+
+tool_usage_file = "../data/tool_usage/tool-popularity.tsv"
+cutoff_date = '2017-12-01'
+tool_usage_dict = dict()
+tool_list = list()
+dates = list()
+with open( tool_usage_file, 'rt' ) as usage_file:
+    tool_usage = csv.reader(usage_file, delimiter='\t') 
+    for index, row in enumerate(tool_usage):
+        if (str(row[1]) > cutoff_date) is True:
+            tool_id = format_tool_id(row[0])
+            tool_list.append(tool_id)
+            if row[1] not in dates:
+                dates.append(row[1])
+            if tool_id not in tool_usage_dict:
+                tool_usage_dict[tool_id] = dict()
+                tool_usage_dict[tool_id][row[1]] = int(row[2])
+            else:
+                curr_date = row[1]
+                if curr_date in tool_usage_dict[tool_id]:
+                    tool_usage_dict[tool_id][curr_date] += int(row[2])
+                else:
+                    tool_usage_dict[tool_id][curr_date] = int(row[2])
+unique_dates = list(set(dates))
+for tool in tool_usage_dict:
+    usage = tool_usage_dict[tool]
+    dts = usage.keys()
+    dates_not_present = list(set(unique_dates) ^ set(dts))
+    for dt in dates_not_present:
+        tool_usage_dict[tool][dt] = 0
+    tool_usage_dict[tool] = collections.OrderedDict(sorted(usage.items()))
+tool_list = list(set(tool_list))
+
+colors = ['r', 'b', 'g', 'c']
+tool_names = ['Cut1', 'cufflinks', 'bowtie2', 'DatamashOps']
+legends_tools = ['Tool B', 'Tool C', 'Tool D', 'Tool E']
+xticks = ['Jan, 2018', 'Feb, 2018', 'Mar, 2018', 'Apr, 2018', 'May, 2018', 'Jun, 2018', 'Jul, 2018', 'Aug, 2018', 'Sep, 2018', 'Oct, 2018', 'Nov, 2018', 'Dec, 2018', 'Jan, 2019', 'Feb, 2019' ]
+
+def plot_tool_usage(tool_names):
+    plt.figure(figsize=(12, 12))
+    for index, tool_name in enumerate(tool_names):
+        y_val = []
+        x_val = []
+        tool_data = tool_usage_dict[tool_name]
+        for x, y in tool_data.items():
+            x_val.append(x)
+            y_val.append(y)
+        y_reshaped = np.reshape(y_val, (len(x_val), 1))
+        plt.plot(y_reshaped[:len(y_reshaped) -1], colors[index])
+
+    plt.legend(legends_tools)
+    plt.xlabel('Months', size=size_label)
+    plt.ylabel('Usage frequency', size=size_label)
+    x_val = x_val[:len(x_val) - 1]
+    plt.title("Usage frequency of tools over months")
+    plt.xticks(range(len(xticks)), xticks, size=size_label, rotation='30')
+    plt.grid(True)
+    plt.show()
+
+
+plot_tool_usage(tool_names)
 
