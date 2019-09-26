@@ -22,7 +22,7 @@ class HyperparameterOptimisation:
         """ Init method. """
 
     @classmethod
-    def train_model(self, config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights):
+    def train_model(self, config, reverse_dictionary, train_data, train_labels, class_weights):
         """
         Train a model and report accuracy
         """

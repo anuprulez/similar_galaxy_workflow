@@ -27,21 +27,20 @@ class PredictTool:
         """ Init method. """
 
     @classmethod
-    def find_train_best_network(self, network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, log_directory):
+    def find_train_best_network(self, network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools):
         """
         Define recurrent neural network and train sequential data
         """
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, class_weights)
+        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, class_weights)
 
         # retrieve the model and train on complete dataset without validation set
         model, best_params = utils.set_recurrent_network(best_params, reverse_dictionary, class_weights)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
-        tensor_board = callbacks.TensorBoard(log_dir=log_directory, histogram_freq=0, write_graph=True, write_images=True)
-        callbacks_list = [predict_callback_test, tensor_board]
+        callbacks_list = [predict_callback_test]
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -102,7 +101,6 @@ if __name__ == "__main__":
     arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
     arg_parser.add_argument("-cd", "--cutoff_date", required=True, help="earliest date for taking tool usage")
     arg_parser.add_argument("-pl", "--maximum_path_length", required=True, help="maximum length of tool path")
-    arg_parser.add_argument("-ld", "--log_directory", required=True, help="log directory for producing tensorboard graphs")
     args = vars(arg_parser.parse_args())
 
     # get argument values
@@ -138,7 +136,7 @@ if __name__ == "__main__":
 
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
-    results_weighted = predict_tool.find_train_best_network(config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools, args["log_directory"])
+    results_weighted = predict_tool.find_train_best_network(config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools)
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path, class_weights)
     end_time = time.time()
     print("Program finished in %s seconds" % str(end_time - start_time))
