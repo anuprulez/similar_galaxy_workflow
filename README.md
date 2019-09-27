@@ -28,8 +28,8 @@
 5. Place the new model in the Galaxy repository at `galaxy/database/trained_model.hdf5`. 
 
 6. In the `galaxy.yml` config file, make the following changes:
-    - Enable and then set the property `enable_tool_recommendation` to `true`
-    - Enable and then set the property `model_path` to `database/trained_model.hdf5`
+    - Enable and then set the property `enable_tool_recommendations` to `true`
+    - Enable and then set the property `tool_recommendation_model_path` to `database/trained_model.hdf5`
 
 7. Now go to the workflow editor and choose any tool from the toolbox. Then, you can see a `right-arrow` in top-right of the tool. Click on it to see the recommended tools to be used after the previously chosen tool.
 
