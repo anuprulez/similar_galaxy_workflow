@@ -10,7 +10,7 @@
 
 3. Execute the file `train.sh`. It has few input parameters:
 
-    `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path>
+    `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path>`
 
     The elements of the command are explained below:
     - `<<main python script>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
