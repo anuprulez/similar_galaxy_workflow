@@ -20,7 +20,6 @@
     - `<<path to tool popularity file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
     - `<<earliest date for considering tool usage>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
     - `<<maximum length of tool path`>>: The maximum number of tools in a workflow tool sequence.
-    - `<<path to log directory>>`: The path to store the log files to visualize the training process using tensorboard.
 
     An example command: `python scripts/main.py -wf data/wf_connections_0_2k.tsv -cf config.xml -tm data/trained_model.hdf5 -tu data/tool-popularity.tsv -cd '2017-12-01' -pl 25 -ld 'data/'`
 
