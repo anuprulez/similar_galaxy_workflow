@@ -12,6 +12,7 @@ import argparse
 # machine learning library
 import keras.callbacks as callbacks
 from tensorflow_model_optimization.sparsity import keras as sparsity
+import tensorflow as tf
 
 import extract_workflow_connections
 import prepare_data
@@ -43,6 +44,8 @@ class PredictTool:
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
 
         callbacks_list = [predict_callback_test, sparsity.UpdatePruningStep(), sparsity.PruningSummaries(log_dir='data')]
+        
+        model.summary()
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -61,6 +64,8 @@ class PredictTool:
             "model": model,
             "best_parameters": best_params
         }
+        
+        tf.keras.models.save_model(model, "data/pure_model.h5")
 
         # if there is test data, add more information
         if len(test_data) > 0:

@@ -162,22 +162,11 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     model_params = get_best_parameters(mdl_dict)
     
     pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(
-        initial_sparsity=0.0, final_sparsity=0.9, frequency=10,
-        begin_step=1, end_step=200000
+        initial_sparsity=0.0, final_sparsity=0.5, frequency=10,
+        begin_step=50, end_step=2000
     )
-        
 
-    # define the architecture of the neural network
-    '''model = Sequential()
-    model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
-    model.add(SpatialDropout1D(model_params["spatial_dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
-    model.add(Dropout(model_params["dropout"]))
-    model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    model.compile(loss=weighted_loss(class_weights), optimizer=RMSprop(lr=model_params["lr"]))'''
-    
+    # define the architecture of the neural network    
     model = tf.keras.Sequential([
         tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.Embedding(dimensions, 128, mask_zero=True), pruning_schedule),
         tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.SpatialDropout1D(model_params["spatial_dropout"])),
@@ -189,6 +178,7 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     ])
 
     model.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.RMSprop(lr=0.001))
+    
     return model, model_params
 
 
