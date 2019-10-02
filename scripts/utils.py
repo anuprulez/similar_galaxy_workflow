@@ -9,6 +9,8 @@ from keras.layers.embeddings import Embedding
 from keras.layers.core import SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras import backend as K
+import tensorflow as tf
+import tensorflow_model_optimization as tfmot
 
 
 def read_file(file_path):
@@ -116,12 +118,12 @@ def get_best_parameters(mdl_dict):
     Get param values (defaults as well)
     """
     lr = float(mdl_dict.get("learning_rate", "0.001"))
-    embedding_size = int(mdl_dict.get("embedding_size", "512"))
-    dropout = float(mdl_dict.get("dropout", "0.2"))
-    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.2"))
-    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.2"))
-    units = int(mdl_dict.get("units", "512"))
-    batch_size = int(mdl_dict.get("batch_size", "512"))
+    embedding_size = int(mdl_dict.get("embedding_size", "128"))
+    dropout = float(mdl_dict.get("dropout", "0.05"))
+    recurrent_dropout = float(mdl_dict.get("recurrent_dropout", "0.05"))
+    spatial_dropout = float(mdl_dict.get("spatial_dropout", "0.05"))
+    units = int(mdl_dict.get("units", "128"))
+    batch_size = int(mdl_dict.get("batch_size", "64"))
     activation_recurrent = mdl_dict.get("activation_recurrent", "elu")
     activation_output = mdl_dict.get("activation_output", "sigmoid")
 
@@ -158,9 +160,15 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     """
     dimensions = len(reverse_dictionary) + 1
     model_params = get_best_parameters(mdl_dict)
+    
+    pruning_schedule = tfmot.sparsity.keras.PolynomialDecay(
+        initial_sparsity=0.0, final_sparsity=0.9, frequency=10,
+        begin_step=1, end_step=200000
+    )
+        
 
     # define the architecture of the neural network
-    model = Sequential()
+    '''model = Sequential()
     model.add(Embedding(dimensions, model_params["embedding_size"], mask_zero=True))
     model.add(SpatialDropout1D(model_params["spatial_dropout"]))
     model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=True))
@@ -168,8 +176,19 @@ def set_recurrent_network(mdl_dict, reverse_dictionary, class_weights):
     model.add(GRU(model_params["units"], dropout=model_params["spatial_dropout"], recurrent_dropout=model_params["recurrent_dropout"], activation=model_params["activation_recurrent"], return_sequences=False))
     model.add(Dropout(model_params["dropout"]))
     model.add(Dense(dimensions, activation=model_params["activation_output"]))
-    optimizer = RMSprop(lr=model_params["lr"])
-    model.compile(loss=weighted_loss(class_weights), optimizer=optimizer)
+    model.compile(loss=weighted_loss(class_weights), optimizer=RMSprop(lr=model_params["lr"]))'''
+    
+    model = tf.keras.Sequential([
+        tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.Embedding(dimensions, 128, mask_zero=True), pruning_schedule),
+        tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.SpatialDropout1D(model_params["spatial_dropout"])),
+        tf.keras.layers.GRU(128, dropout=0.05, recurrent_dropout=0.05, activation='elu', return_sequences=True),
+        tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.Dropout(0.05)),
+        tf.keras.layers.GRU(128, dropout=0.05, recurrent_dropout=0.05, activation='elu', return_sequences=False),
+        tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.Dropout(0.05)),
+        tfmot.sparsity.keras.prune_low_magnitude(tf.keras.layers.Dense(dimensions, activation='sigmoid'))
+    ])
+
+    model.compile(loss='binary_crossentropy', optimizer=tf.keras.optimizers.RMSprop(lr=0.001))
     return model, model_params
 
 
@@ -216,6 +235,7 @@ def verify_model(model, x, y, reverse_data_dictionary, next_compatible_tools, us
     """
     Verify the model on test data
     """
+    print("\n")
     print("Evaluating performance on test data...")
     print("Test data size: %d" % len(y))
     size = y.shape[0]

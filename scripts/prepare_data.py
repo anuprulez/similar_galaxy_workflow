@@ -240,13 +240,15 @@ class PrepareData:
         train_data, train_labels = self.pad_paths(train_paths_dict, num_classes)
 
         # Predict tools usage
-        print("Predicting tools' usage...")
+        '''print("Predicting tools' usage...")
         usage_pred = predict_tool_usage.ToolPopularity()
         usage = usage_pred.extract_tool_usage(tool_usage_path, cutoff_date, dictionary)
         tool_usage_prediction = usage_pred.get_pupularity_prediction(usage)
         tool_predicted_usage = self.get_predicted_usage(dictionary, tool_usage_prediction)
 
         # get class weights using the predicted usage for each tool
-        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)
+        class_weights = self.assign_class_weights(train_labels.shape[1], tool_predicted_usage)'''
+        
+        class_weights = tool_predicted_usage = dict()
 
         return train_data, train_labels, test_data, test_labels, dictionary, reverse_dictionary, class_weights, tool_predicted_usage

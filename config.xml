@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <root>
     <ml_parameters>
-        <parameter name="n_epochs" value="2" />
+        <parameter name="n_epochs" value="10" />
         <parameter name="optimize_n_epochs" value="2" />
         <parameter name="max_evals" value="2" />
         <parameter name="test_share" value="0.2" />

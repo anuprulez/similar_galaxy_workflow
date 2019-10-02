@@ -11,6 +11,7 @@ import argparse
 
 # machine learning library
 import keras.callbacks as callbacks
+from tensorflow_model_optimization.sparsity import keras as sparsity
 
 import extract_workflow_connections
 import prepare_data
@@ -31,16 +32,17 @@ class PredictTool:
         """
         Define recurrent neural network and train sequential data
         """
-        print("Start hyperparameter optimisation...")
+        '''print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, class_weights)
-
+        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, class_weights)'''
+        best_params = dict()
         # retrieve the model and train on complete dataset without validation set
         model, best_params = utils.set_recurrent_network(best_params, reverse_dictionary, class_weights)
 
         # define callbacks
         predict_callback_test = PredictCallback(test_data, test_labels, reverse_dictionary, n_epochs, compatible_next_tools, usage_pred)
-        callbacks_list = [predict_callback_test]
+
+        callbacks_list = [predict_callback_test, sparsity.UpdatePruningStep(), sparsity.PruningSummaries(log_dir='data')]
 
         print("Start training on the best model...")
         model_fit = model.fit(
@@ -48,7 +50,7 @@ class PredictTool:
             train_labels,
             batch_size=int(best_params["batch_size"]),
             epochs=n_epochs,
-            verbose=2,
+            verbose=1,
             callbacks=callbacks_list,
             shuffle="batch",
             validation_data=(test_data, test_labels)
