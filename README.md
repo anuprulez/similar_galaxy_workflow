@@ -6,7 +6,7 @@
     *    `conda env create -f environment.yml`
     *    `conda activate tool_prediction`
 
-2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity-19-03.tsv` and `wf-connections-19-03.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity-19-03.tsv`) contains information about the usage of tools per month. The second file (`wf-connections-19-03.tsv`) contains workflows present as the connections of tools. Save these tabular files.
+2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
 3. Execute the file `train.sh`. It has some input parameters:
 
@@ -14,8 +14,8 @@
 
     The elements of the command are explained below:
     - `<main python script>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
-    - `<path to workflow file>`: It is a path to a tabular file containing Galaxy workflows. E.g. `data/wf-connections-19-03.tsv`.
-    - `<path to tool popularity file>`: It is a path to a tabular file containing usage frequencies of Galaxy tools. E.g. `data/tool-popularity-19-03.tsv`.
+    - `<path to workflow file>`: It is a path to a tabular file containing Galaxy workflows. E.g. `data/wf-connections.tsv`.
+    - `<path to tool popularity file>`: It is a path to a tabular file containing usage frequencies of Galaxy tools. E.g. `data/tool-popularity.tsv`.
     - `<path to trained model file>`: It is a path of the final trained model (`h5` file). E.g. `data/trained_model.hdf5`.
     
     - `<cutoff date>`: It is used to set the earliest date from which the usage frequencies of tools should be considered. The format of the date is YYYY-MM-DD. This date should be in the past. E.g. `2017-12-01`.
