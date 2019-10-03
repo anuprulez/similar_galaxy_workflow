@@ -8,16 +8,16 @@
 
 2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
-3. Execute the file `train.sh`. It has few input parameters:
+3. Execute the file `train.sh`. It has some input parameters:
 
-    `python <main python script> -wf <path to workflow file> -cf <path to config file> -tm <path to trained model file> -tu <path to tool popularity file> -cd <earliest date for considering tool usage> -pl <maximum length of tool path>`
+    `python <main python script> -wf <path to workflow file> -tu <path to tool usage file> -om <path to the final model file> -cd <cutoff date> -pl <path length> -ep <number of training iterations> -oe <number of iterations to optimise hyperparamters> -me <maximum number of evaluation to optimise hyperparameters> -ts <fraction of test data> -vs <fraction of validation data> -bs <range of batch sizes> -ut <range of hidden units> -es <range of embedding sizes> -dt <range of dropout> -sd <range of spatial dropout> -rd <range of recurrent dropout> -lr <range of learning rates> -ar <recurrent activation> -ao <output activation>`
 
     The elements of the command are explained below:
     - `<<main python script>>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
     - `<<path to workflow file>>`: This file is extracted in the last step as `wf-connections.tsv`. Give the path of this file.
-    - `<<path to config file>>`: This file contains configurable values to be used by the neural network to a generate model. It is present beside the `train.sh` file. Give the path of this file.
-    - `<<path to trained model file>>`: Give the path of the created model as an `h5` file. E.g. `data/trained_model.hdf5`.
     - `<<path to tool popularity file>>`: This file is extracted in the last step as `tool-popularity.tsv`. Give the path of this file.
+    - `<<path to trained model file>>`: Give the path of the created model as an `h5` file. E.g. `data/trained_model.hdf5`.
+    
     - `<<earliest date for considering tool usage>>`: It specifies the date from which usage of tools are extracted from `tool-popularity.tsv` file. The usage data before this date is discarded. The format of the date should be `yyyy-mm-dd`. E.g. `2017-12-01`
     - `<<maximum length of tool path`>>: The maximum number of tools in a workflow tool sequence.
 
