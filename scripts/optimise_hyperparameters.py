@@ -41,12 +41,12 @@ class HyperparameterOptimisation:
         l_recurrent_dropout = list(map(float, config["recurrent_dropout"].split(",")))
 
         optimize_n_epochs = int(config["optimize_n_epochs"])
-        validation_split = float(config["validation_split"])
+        validation_split = float(config["validation_share"])
 
         # get dimensions
         dimensions = len(reverse_dictionary) + 1
         best_model_params = dict()
-        early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-4, verbose=1, patience=1)
+        early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-1, verbose=1, patience=1)
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {
@@ -96,5 +96,4 @@ class HyperparameterOptimisation:
                 best_model_params[item] = l_recurrent_activations[item_val]
             else:
                 best_model_params[item] = item_val
-        model_config = utils.extract_configuration(trials.trials)
         return best_model_params
