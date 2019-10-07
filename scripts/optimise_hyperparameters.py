@@ -45,7 +45,7 @@ class HyperparameterOptimisation:
         # get dimensions
         dimensions = len(reverse_dictionary) + 1
         best_model_params = dict()
-        early_stopping = EarlyStopping(monitor='val_loss', mode='min', min_delta=1e-4, verbose=1, patience=1)
+        early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=1, min_delta=1e-4)
         maximum_path_length = int(config["maximum_path_length"])
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
@@ -72,13 +72,16 @@ class HyperparameterOptimisation:
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer = RMSprop(lr=params["learning_rate"])
             model.compile(loss='binary_crossentropy', optimizer=optimizer)
-            model_fit = model.fit(train_data, train_labels,
+            model_fit = model.fit(
+                train_data,
+                train_labels,
                 batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
+                class_weight=class_weights,
                 shuffle="batch",
                 verbose=2,
                 validation_split=validation_split,
-                callbacks=[early_stopping]
+                #callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
         # minimize the objective function using the set of parameters above
