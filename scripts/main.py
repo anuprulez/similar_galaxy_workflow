@@ -174,8 +174,6 @@ if __name__ == "__main__":
         allow_soft_placement=True
     )
     keras.backend.tensorflow_backend.set_session(tf.Session(config=cpu_config))
-    
-    
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
