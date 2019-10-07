@@ -66,7 +66,7 @@ class PredictTool:
                 callbacks=callbacks_list,
                 class_weight=class_weights,
                 shuffle="batch"
-            )
+            )            
         train_performance["train_loss"] = np.array(trained_model.history["loss"])
         train_performance["model"] = best_model
         train_performance["best_parameters"] = best_params
