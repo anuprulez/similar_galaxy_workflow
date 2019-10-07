@@ -8,6 +8,8 @@ import argparse
 import time
 
 # machine learning library
+import tensorflow as tf
+import keras
 import keras.callbacks as callbacks
 
 import extract_workflow_connections
@@ -97,6 +99,11 @@ class PredictCallback(callbacks.Callback):
 
 if __name__ == "__main__":
     start_time = time.time()
+    
+    # set the number of cpus
+    cpu_config = tf.ConfigProto(device_count={"CPU": 8}, intra_op_parallelism_threads=16)
+    keras.backend.tensorflow_backend.set_session(tf.Session(config=cpu_config))
+    
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
     arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
@@ -119,6 +126,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lr", "--learning_rate", required=True, help="learning rate")
     arg_parser.add_argument("-ar", "--activation_recurrent", required=True, help="activation function for recurrent layers")
     arg_parser.add_argument("-ao", "--activation_output", required=True, help="activation function for output layers")
+    
     # get argument values
     args = vars(arg_parser.parse_args())
     tool_usage_path = args["tool_usage_file"]
@@ -159,6 +167,8 @@ if __name__ == "__main__":
         'activation_recurrent': activation_recurrent,
         'activation_output': activation_output
     }
+    
+    
 
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
