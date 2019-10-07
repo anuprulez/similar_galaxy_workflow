@@ -49,6 +49,7 @@ class PredictTool:
                 epochs=n_epochs,
                 verbose=2,
                 callbacks=callbacks_list,
+                class_weight=class_weights,
                 shuffle="batch",
                 validation_data=(test_data, test_labels)
             )
@@ -63,6 +64,7 @@ class PredictTool:
                 epochs=n_epochs,
                 verbose=2,
                 callbacks=callbacks_list,
+                class_weight=class_weights,
                 shuffle="batch"
             )
         train_performance["train_loss"] = np.array(trained_model.history["loss"])
