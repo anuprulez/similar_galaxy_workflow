@@ -3,16 +3,12 @@ Find the optimal combination of hyperparameters
 """
 
 import numpy as np
-import itertools
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
-from keras.models import Model
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Embedding, SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
-
-import utils
 
 
 class HyperparameterOptimisation:
@@ -49,11 +45,11 @@ class HyperparameterOptimisation:
         maximum_path_length = int(config["maximum_path_length"])
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
-        params = {	    
+        params = {
 	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
 	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
 	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
-	    "activation_dense": hp.choice("activation_recurrent", l_dense_activations),
+	    "activation_dense": hp.choice("activation_dense", l_dense_activations),
 	    "activation_output": hp.choice("activation_output", l_output_activations),
 	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
 	    "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
@@ -95,7 +91,7 @@ class HyperparameterOptimisation:
             if item == 'activation_output':
                 best_model_params[item] = l_output_activations[item_val]
             elif item == 'activation_dense':
-                best_model_params[item] = l_recurrent_activations[item_val]
+                best_model_params[item] = l_dense_activations[item_val]
             else:
                 best_model_params[item] = item_val
         return best_model_params, best_model
