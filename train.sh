@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/bin/bash
 
-python predict_tool.py -wf data/workflows/wf-connections.tsv -cf config.xml -tm data/generated_files/trained_model.hdf5 -tu data/tool_usage/tool-popularity.tsv -cd '2017-12-01' -pl 25 -ld 'data/generated_files'
+python scripts/main.py -wf data/workflow-connections-19-03.tsv -tu data/tool-popularity-19-03.tsv -om data/tool_recommendation_model.hdf5 -cd '2017-12-01' -pl 25 -ep 20 -oe 5 -me 5 -ts 0.2 -vs 0.2 -bs '1,512' -ut '1,512' -es '1,512' -dt '0.0,0.5' -sd '0.0,0.5' -rd '0.0,0.5' -lr '0.00001,0.1' -ar 'elu' -ao 'sigmoid' -cpus 8
