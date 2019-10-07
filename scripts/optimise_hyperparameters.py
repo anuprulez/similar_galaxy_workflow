@@ -6,12 +6,10 @@ import numpy as np
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Conv1D, GlobalMaxPooling1D, MaxPooling1D, Flatten, SpatialDropout1D
+from keras.layers import Dense, Dropout, Conv1D, GlobalMaxPooling1D, SpatialDropout1D
 from keras.layers.embeddings import Embedding
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
-
-import utils
 
 
 class HyperparameterOptimisation:
@@ -25,10 +23,7 @@ class HyperparameterOptimisation:
         """
         Train a model and report accuracy
         """
-        """
-        Train a model and report accuracy
-        """
-        l_deep_activation = config["dense_activation"].split(",")
+        l_dense_activation = config["dense_activation"].split(",")
         l_output_activation = config["output_activation"].split(",")
 
         # convert items to integer
@@ -58,7 +53,7 @@ class HyperparameterOptimisation:
             "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
             "kernel_size": hp.quniform("kernel_size", l_kernel_size[0], l_kernel_size[1], 1),
             "filter_size": hp.quniform("filter_size", l_filter_size[0], l_filter_size[1], 1),
-            "dense_activation": hp.choice("dense_activation", l_deep_activation),
+            "dense_activation": hp.choice("dense_activation", l_dense_activation),
             "output_activation": hp.choice("output_activation", l_output_activation),
             "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
             "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
@@ -96,9 +91,9 @@ class HyperparameterOptimisation:
         for item in learned_params:
             item_val = learned_params[item]
             if item == 'activation_output':
-                best_model_params[item] = l_output_activations[item_val]
-            elif item == 'activation_recurrent':
-                best_model_params[item] = l_recurrent_activations[item_val]
+                best_model_params[item] = l_output_activation[item_val]
+            elif item == 'output_activation':
+                best_model_params[item] = l_dense_activation[item_val]
             else:
                 best_model_params[item] = item_val
         return best_model_params, best_model

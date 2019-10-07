@@ -106,14 +106,12 @@ if __name__ == "__main__":
     # data parameters
     arg_parser.add_argument("-cd", "--cutoff_date", required=True, help="earliest date for taking tool usage")
     arg_parser.add_argument("-pl", "--maximum_path_length", required=True, help="maximum length of tool path")
-    
     # neural network parameters
     arg_parser.add_argument("-ep", "--n_epochs", required=True, help="number of iterations to run to create model")
     arg_parser.add_argument("-oe", "--optimize_n_epochs", required=True, help="number of iterations to run to find best model parameters")
     arg_parser.add_argument("-me", "--max_evals", required=True, help="maximum number of configuration evaluations")
     arg_parser.add_argument("-ts", "--test_share", required=True, help="share of data to be used for testing")
     arg_parser.add_argument("-vs", "--validation_share", required=True, help="share of data to be used for validation")
-    
     arg_parser.add_argument("-bs", "--batch_size", required=True, help="size of the tranining batch i.e. the number of samples per batch")
     arg_parser.add_argument("-ds", "--dense_size", required=True, help="number of hidden units of dense layer")
     arg_parser.add_argument("-fs", "--filter_size", required=True, help="filter size of the convolutional layer")
@@ -124,7 +122,6 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lr", "--learning_rate", required=True, help="learning rate")
     arg_parser.add_argument("-da", "--dense_activation", required=True, help="activation function for dense layers")
     arg_parser.add_argument("-oa", "--output_activation", required=True, help="activation function for output layers")
-    
     arg_parser.add_argument("-cpus", "--num_cpus", required=True, help="number of cpus for parallelism")
 
     # get argument values
@@ -132,18 +129,16 @@ if __name__ == "__main__":
     tool_usage_path = args["tool_usage_file"]
     workflows_path = args["workflow_file"]
     trained_model_path = args["output_model"]
-    
+
     cutoff_date = args["cutoff_date"]
     maximum_path_length = int(args["maximum_path_length"])
-    
+
     n_epochs = int(args["n_epochs"])
     optimize_n_epochs = int(args["optimize_n_epochs"])
     max_evals = int(args["max_evals"])
     test_share = float(args["test_share"])
     validation_share = float(args["validation_share"])
     batch_size = args["batch_size"]
-    
-    
     dense_size = args["dense_size"]
     filter_size = args["filter_size"]
     kernel_size = args["kernel_size"]
@@ -201,7 +196,7 @@ if __name__ == "__main__":
     print(results_weighted["best_parameters"])
     print()
     utils.save_model(results_weighted, data_dictionary, compatible_next_tools, trained_model_path, class_weights)
-    
+
     # save losses, precision and usage weights
     np.savetxt("data/train_loss.txt", results_weighted["train_loss"])
     if test_share > 0.0:
