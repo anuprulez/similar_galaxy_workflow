@@ -31,10 +31,7 @@ class PredictTool:
         """
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
-        best_params = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, class_weights)
-
-        # retrieve the model and train on complete dataset without validation set
-        model, best_params = utils.set_recurrent_network(best_params, reverse_dictionary, class_weights)
+        best_params, best_model = hyper_opt.train_model(network_config, reverse_dictionary, train_data, train_labels, class_weights)
 
         # define callbacks
         early_stopping = callbacks.EarlyStopping(monitor='loss', mode='min', verbose=1, min_delta=1e-1, restore_best_weights=True)
@@ -45,7 +42,7 @@ class PredictTool:
         print("Start training on the best model...")
         train_performance = dict()
         if len(test_data) > 0:
-            trained_model = model.fit(
+            trained_model = best_model.fit(
                 train_data,
                 train_labels,
                 batch_size=int(best_params["batch_size"]),
@@ -59,7 +56,7 @@ class PredictTool:
             train_performance["precision"] = predict_callback_test.precision
             train_performance["usage_weights"] = predict_callback_test.usage_weights
         else:
-            trained_model = model.fit(
+            trained_model = best_model.fit(
                 train_data,
                 train_labels,
                 batch_size=int(best_params["batch_size"]),
@@ -69,7 +66,7 @@ class PredictTool:
                 shuffle="batch"
             )
         train_performance["train_loss"] = np.array(trained_model.history["loss"])
-        train_performance["model"] = model
+        train_performance["model"] = best_model
         train_performance["best_parameters"] = best_params
         return train_performance
 
@@ -123,7 +120,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-ar", "--activation_recurrent", required=True, help="activation function for recurrent layers")
     arg_parser.add_argument("-ao", "--activation_output", required=True, help="activation function for output layers")
     arg_parser.add_argument("-cpus", "--num_cpus", required=True, help="number of cpus for parallelism")
-    
+
     # get argument values
     args = vars(arg_parser.parse_args())
     tool_usage_path = args["tool_usage_file"]
@@ -165,7 +162,7 @@ if __name__ == "__main__":
         'activation_recurrent': activation_recurrent,
         'activation_output': activation_output
     }
-    
+
     # set the number of cpus
     cpu_config = tf.ConfigProto(
         device_count={"CPU": num_cpus},
