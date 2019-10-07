@@ -74,17 +74,17 @@ class HyperparameterOptimisation:
             model.add(GlobalMaxPooling1D())
             model.add(Dense(int(params["dense_size"]), activation=params['dense_activation']))
             model.add(Dense(dimensions, activation=params['output_activation']))
-            model.compile(loss=utils.weighted_loss(class_weights), optimizer=RMSprop(lr=params["learning_rate"]))
-            model.summary()
+            model.compile(loss='binary_crossentropy', optimizer=RMSprop(lr=params["learning_rate"]))
             model_fit = model.fit(
                 train_data,
                 train_labels,
                 batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
+                class_weight=class_weights,
                 shuffle="batch",
                 verbose=2,
                 validation_split=validation_split,
-                callbacks=[early_stopping]
+                #callbacks=[early_stopping]
             )
             return {'loss': model_fit.history["val_loss"][-1], 'status': STATUS_OK, 'model': model}
         # minimize the objective function using the set of parameters above
