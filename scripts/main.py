@@ -99,11 +99,7 @@ class PredictCallback(callbacks.Callback):
 
 if __name__ == "__main__":
     start_time = time.time()
-    
-    # set the number of cpus
-    cpu_config = tf.ConfigProto(device_count={"CPU": 8}, intra_op_parallelism_threads=16)
-    keras.backend.tensorflow_backend.set_session(tf.Session(config=cpu_config))
-    
+
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-wf", "--workflow_file", required=True, help="workflows tabular file")
     arg_parser.add_argument("-tu", "--tool_usage_file", required=True, help="tool usage file")
@@ -126,6 +122,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lr", "--learning_rate", required=True, help="learning rate")
     arg_parser.add_argument("-ar", "--activation_recurrent", required=True, help="activation function for recurrent layers")
     arg_parser.add_argument("-ao", "--activation_output", required=True, help="activation function for output layers")
+    arg_parser.add_argument("-cpus", "--num_cpus", required=True, help="number of cpus for parallelism")
     
     # get argument values
     args = vars(arg_parser.parse_args())
@@ -148,6 +145,7 @@ if __name__ == "__main__":
     learning_rate = args["learning_rate"]
     activation_recurrent = args["activation_recurrent"]
     activation_output = args["activation_output"]
+    num_cpus = int(args["num_cpus"])
 
     config = {
         'cutoff_date': cutoff_date,
@@ -167,6 +165,15 @@ if __name__ == "__main__":
         'activation_recurrent': activation_recurrent,
         'activation_output': activation_output
     }
+    
+    # set the number of cpus
+    cpu_config = tf.ConfigProto(
+        device_count={"CPU": num_cpus},
+        intra_op_parallelism_threads=num_cpus,
+        inter_op_parallelism_threads=num_cpus,
+        allow_soft_placement=True
+    )
+    keras.backend.tensorflow_backend.set_session(tf.Session(config=cpu_config))
     
     
 
