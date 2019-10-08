@@ -46,57 +46,5 @@ If there are multiple labels for a training sample (which happens to be the case
 
 We create training samples and their labels in this manner and feed them to the network. The first layer in the network is an embedding layer which learns a dense, low dimensional vector for each training sample which are largely sparse. These dense, low dimensional vectors are then fed into the LSTM layer. Dropout is added between layers in order to avoid overfitting which happens when the learning (prediction performance) becomes better on training data and stops/saturates on test (unseen) data.
 
-## Data distribution
+A neural network with only dense layers are used to learn on the sequential data.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/path_dist.png">
-</p>
-
-The above plot shows the distribution of length of tool sequences. The length plays an important role to determine the dimensionality of the input dense vector. Thus, to reduce it, we take a maximum tool sequence length of 25.
-
-## Accuracy measure
-In the set of training sequences, each one can have many labels (or categories) which means that there can be multiple (next) tools for a sequence of tools. However if we measure accuracy of our approach which predicts just one next tool, it would be partially correct. Hence, we assess the performance on top k predicted tools (top-k accuracy). `20%` of all samples are taken out for testing the trained model's performance and the rest is used to train the model.
-
-## Accuracy on test data
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision.png">
-</p>
-
-The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/loss.png">
-</p>
-
-The plot above shows the binary cross-entropy loss drop over training epochs. Both the losses, training and validation, start to drop and become stable towards the end of training epochs.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/usage.png">
-</p>
-
-The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/hyper_opt/plots/precision_path_length.png">
-</p>
-
-The above plot shows the precision for different length of paths (tool sequences). As the length of path increases, the precision becomes better.
-
-## Literature:
-- [LSTM](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
-- [A Beginner’s Guide to Recurrent Networks and LSTMs](https://deeplearning4j.org/lstm.html)
-- [LSTM by Example using Tensorflow](https://towardsdatascience.com/lstm-by-example-using-tensorflow-feb0c1968537)
-- [Learning to diagnose with LSTM Recurrent Neural Networks](https://arxiv.org/pdf/1511.03677.pdf)
-- [CNN-RNN: A Unified Framework for Multi-label Image Classification](https://arxiv.org/pdf/1604.04573.pdf)
-- [A Theoretically Grounded Application of Dropout in Recurrent Neural Network](https://arxiv.org/pdf/1512.05287.pdf)
-- [Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling](https://arxiv.org/pdf/1412.3555v1.pdf)
-- [Fast and Accurate deep network learning by exponential linear units(ELU)](https://arxiv.org/pdf/1511.07289.pdf)
-- [Recurrent Neural Network Regularization](https://arxiv.org/pdf/1409.2329.pdf)
-
-
-## Citations:
-Cytoscape.js: a graph theory library for visualisation and analysis
-Franz M, Lopes CT, Huck G, Dong Y, Sumer O, Bader GD
-Bioinformatics (2016) 32 (2): 309-311 first published online September 28, 2015 doi:10.1093/bioinformatics/btv557 (PDF)
-[PubMed Abstract](https://www.ncbi.nlm.nih.gov/pubmed/26415722)
