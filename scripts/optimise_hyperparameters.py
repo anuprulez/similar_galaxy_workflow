@@ -46,14 +46,14 @@ class HyperparameterOptimisation:
 
         # specify the search space for finding the best combination of parameters using Bayesian optimisation
         params = {
-	    "units": hp.quniform("units", l_units[0], l_units[1], 1),
-	    "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
-	    "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
-	    "activation_dense": hp.choice("activation_dense", l_dense_activations),
-	    "activation_output": hp.choice("activation_output", l_output_activations),
-	    "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
-	    "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
-	    "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
+            "units": hp.quniform("units", l_units[0], l_units[1], 1),
+            "batch_size": hp.quniform("batch_size", l_batch_size[0], l_batch_size[1], 1),
+            "embedding_size": hp.quniform("embedding_size", l_embedding_size[0], l_embedding_size[1], 1),
+            "activation_dense": hp.choice("activation_dense", l_dense_activations),
+            "activation_output": hp.choice("activation_output", l_output_activations),
+            "learning_rate": hp.loguniform("learning_rate", np.log(l_learning_rate[0]), np.log(l_learning_rate[1])),
+            "dropout": hp.uniform("dropout", l_dropout[0], l_dropout[1]),
+            "spatial_dropout": hp.uniform("spatial_dropout", l_spatial_dropout[0], l_spatial_dropout[1]),
         }
 
         def create_model(params):
