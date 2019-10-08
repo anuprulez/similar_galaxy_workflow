@@ -44,7 +44,7 @@ Now, it's time for creating the label vector. It is multi-hot encoded vector whi
 If there are multiple labels for a training sample (which happens to be the case in this work), we add `1s` to all the positions of the corresponding labels).
 - `[ 0, 1, 1, 0, 1 ]` shows a multi-hot encoded label vector.
 
-We create training samples and their labels in this manner and feed them to the network. The first layer in the network is an embedding layer which learns a dense, low dimensional vector for each training sample which are largely sparse. These dense, low dimensional vectors are then fed into the LSTM layer. Dropout is added between layers in order to avoid overfitting which happens when the learning (prediction performance) becomes better on training data and stops/saturates on test (unseen) data.
 
-A neural network with only dense layers are used to learn on the sequential data.
+A neural network with only dense layers are used to learn on the sequential data. The network has an embedding layer as the first layer and two dense layers as hidden layers and an output dense layer. The parameters are learned by using Bayesian optimisation.
+
 
