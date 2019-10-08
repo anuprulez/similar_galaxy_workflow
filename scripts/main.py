@@ -9,7 +9,7 @@ import time
 
 # machine learning library
 import tensorflow as tf
-import keras
+from keras import backend as K
 import keras.callbacks as callbacks
 
 import extract_workflow_connections
@@ -21,8 +21,16 @@ import utils
 class PredictTool:
 
     @classmethod
-    def __init__(self):
+    def __init__(self, num_cpus):
         """ Init method. """
+        # set the number of cpus
+        cpu_config = tf.ConfigProto(
+            device_count={"CPU": num_cpus},
+            intra_op_parallelism_threads=num_cpus,
+            inter_op_parallelism_threads=num_cpus,
+            allow_soft_placement=True
+        )
+        K.set_session(tf.Session(config=cpu_config))
 
     @classmethod
     def find_train_best_network(self, network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools):
@@ -165,15 +173,6 @@ if __name__ == "__main__":
         'activation_output': activation_output
     }
 
-    # set the number of cpus
-    cpu_config = tf.ConfigProto(
-        device_count={"CPU": num_cpus},
-        intra_op_parallelism_threads=num_cpus,
-        inter_op_parallelism_threads=num_cpus,
-        allow_soft_placement=True
-    )
-    keras.backend.tensorflow_backend.set_session(tf.Session(config=cpu_config))
-
     # Extract and process workflows
     connections = extract_workflow_connections.ExtractWorkflowConnections()
     workflow_paths, compatible_next_tools = connections.read_tabular_file(workflows_path)
@@ -182,7 +181,7 @@ if __name__ == "__main__":
     data = prepare_data.PrepareData(maximum_path_length, test_share)
     train_data, train_labels, test_data, test_labels, data_dictionary, reverse_dictionary, class_weights, usage_pred = data.get_data_labels_matrices(workflow_paths, tool_usage_path, cutoff_date, compatible_next_tools)
     # find the best model and start training
-    predict_tool = PredictTool()
+    predict_tool = PredictTool(num_cpus)
     # start training with weighted classes
     print("Training with weighted classes and samples ...")
     results_weighted = predict_tool.find_train_best_network(config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools)
