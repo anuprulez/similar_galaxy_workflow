@@ -70,8 +70,10 @@ def compute_fill_between(a_list):
     for i in range(0, n_cols):
         pos = a_list[:, i]
         std = np.std(pos)
-        y1.append(std)
-        y2.append(std)
+        max = np.max(pos)
+        min = np.min(pos)
+        y1.append(min)
+        y2.append(max)
     return y1, y2
 
 
@@ -133,7 +135,7 @@ def assemble_loss():
         mean_tr_loss = np.mean(train_loss, axis=0)
         mean_te_loss = np.mean(test_loss, axis=0)
         plt_title = titles[idx]
-        plot_loss(ax, mean_tr_loss, mean_tr_loss - loss_tr_y1, mean_tr_loss + loss_tr_y2, mean_te_loss, mean_te_loss - loss_te_y1, mean_te_loss + loss_te_y2, plt_title + "", "Training iterations (epochs)", "Mean loss", ['Training loss', 'Test (validation) loss'])
+        plot_loss(ax, mean_tr_loss, loss_tr_y1, loss_tr_y2, mean_te_loss, loss_te_y1, loss_te_y2, plt_title + "", "Training iterations (epochs)", "Mean loss", ['Training loss', 'Test (validation) loss'])
 assemble_loss()
 
 
@@ -192,7 +194,7 @@ def assemble_usage():
         y1_top3, y2_top3 = compute_fill_between(usage_top3)
         plt_title = titles[idx]
 
-        plot_usage(ax, mean_top1_usage, mean_top1_usage - y1_top1, mean_top1_usage + y2_top1, mean_top2_usage, mean_top2_usage - y1_top2, mean_top2_usage + y2_top2, mean_top3_usage, mean_top3_usage - y1_top3, mean_top3_usage + y2_top3, plt_title, "Training iterations (epochs)", "Mean log usage frequency", ['Top1', 'Top2', 'Top3'])
+        plot_usage(ax, mean_top1_usage, y1_top1, y2_top1, mean_top2_usage, y1_top2, y2_top2, mean_top3_usage, y1_top3, y2_top3, plt_title, "Training iterations (epochs)", "Mean log usage frequency", ['Top1', 'Top2', 'Top3'])
 assemble_usage()
 plt.show()
 
@@ -218,6 +220,7 @@ def assemble_accuracy():
     fig.suptitle('Precision@k for multiple neural network architectures', size=size_title + 2)
     gs = gridspec.GridSpec(2,2)
     for idx, approach in enumerate(all_approaches_path):
+        print(approach)
         if idx == 0:
             ax = plt.subplot(gs[0,0])
             ax.set_ylabel("Mean precision@k", size=size_label)
@@ -245,9 +248,10 @@ def assemble_accuracy():
                 precision_acc_top1.append(top1_p)
                 precision_acc_top2.append(top2_p)
                 precision_acc_top3.append(top3_p)
+                print(i)
             except Exception:
                 continue
-
+        print()
         mean_top1_acc = np.mean(precision_acc_top1, axis=0)
         mean_top2_acc = np.mean(precision_acc_top2, axis=0)
         mean_top3_acc = np.mean(precision_acc_top3, axis=0)
@@ -256,7 +260,7 @@ def assemble_accuracy():
         y1_top2, y2_top2 = compute_fill_between(precision_acc_top2)
         y1_top3, y2_top3 = compute_fill_between(precision_acc_top3)
         plt_title = titles[idx]
-        plot_accuracy(ax,mean_top1_acc, mean_top1_acc - y1_top1, mean_top1_acc + y2_top1, mean_top2_acc, mean_top2_acc - y1_top2, mean_top2_acc + y2_top2, mean_top3_acc, mean_top3_acc - y1_top3, mean_top3_acc + y2_top3, plt_title, "Training iterations (epochs)", "Mean precision@k", ['Top1', 'Top2', 'Top3'])
+        plot_accuracy(ax, mean_top1_acc, y1_top1, y2_top1, mean_top2_acc, y1_top2, y2_top2, mean_top3_acc, y1_top3, y2_top3, plt_title, "Training iterations (epochs)", "Mean precision@k", ['Top1', 'Top2', 'Top3'])
 assemble_accuracy()
 plt.show()
 
