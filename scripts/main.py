@@ -57,7 +57,6 @@ class PredictTool:
                 epochs=n_epochs,
                 verbose=2,
                 callbacks=callbacks_list,
-                class_weight=class_weights,
                 shuffle="batch",
                 validation_data=(test_data, test_labels)
             )
@@ -70,7 +69,6 @@ class PredictTool:
                 train_labels,
                 batch_size=int(best_params["batch_size"]),
                 epochs=n_epochs,
-                class_weight=class_weights,
                 verbose=2,
                 callbacks=callbacks_list,
                 shuffle="batch"

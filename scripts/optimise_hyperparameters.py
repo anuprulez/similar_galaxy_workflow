@@ -10,6 +10,8 @@ from keras.layers import Dense, Dropout, Flatten, Embedding, SpatialDropout1D
 from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping
 
+import utils
+
 
 class HyperparameterOptimisation:
 
@@ -67,13 +69,12 @@ class HyperparameterOptimisation:
             model.add(Dropout(params["dropout"]))
             model.add(Dense(dimensions, activation=params["activation_output"]))
             optimizer = RMSprop(lr=params["learning_rate"])
-            model.compile(loss='binary_crossentropy', optimizer=optimizer)
+            model.compile(loss=utils.weighted_loss(class_weights), optimizer=optimizer)
             model_fit = model.fit(
                 train_data,
                 train_labels,
                 batch_size=int(params["batch_size"]),
                 epochs=optimize_n_epochs,
-                class_weight=class_weights,
                 shuffle="batch",
                 verbose=2,
                 validation_split=validation_split,
