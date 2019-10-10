@@ -35,7 +35,7 @@ class PredictTool:
     @classmethod
     def find_train_best_network(self, network_config, reverse_dictionary, train_data, train_labels, test_data, test_labels, n_epochs, class_weights, usage_pred, compatible_next_tools):
         """
-        Define recurrent neural network and train sequential data
+        Define convolutional neural network and train sequential data
         """
         print("Start hyperparameter optimisation...")
         hyper_opt = optimise_hyperparameters.HyperparameterOptimisation()
@@ -58,7 +58,6 @@ class PredictTool:
                 verbose=2,
                 callbacks=callbacks_list,
                 shuffle="batch",
-                class_weight=class_weights,
                 validation_data=(test_data, test_labels)
             )
             train_performance["validation_loss"] = np.array(trained_model.history["val_loss"])
@@ -72,7 +71,6 @@ class PredictTool:
                 epochs=n_epochs,
                 verbose=2,
                 callbacks=callbacks_list,
-                class_weight=class_weights,
                 shuffle="batch"
             )
         train_performance["train_loss"] = np.array(trained_model.history["loss"])
