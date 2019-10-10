@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[130]:
-
-
 import numpy as np
 import json
 import warnings
@@ -31,7 +25,12 @@ plt.rc('font', **font)
 size_title = 24
 size_label = 22
 runs = 10
-epochs = 5
+epochs = 10
+
+loss_ylim = (0.0, 1.0)
+usage_ylim = (2.5, 5.0)
+precision_ylim = (0.85, 1.0)
+
 
 def read_file(path):
     with open(path) as f:
@@ -75,9 +74,6 @@ def compute_fill_between(a_list):
     return y1, y2
 
 
-# In[131]:
-
-
 def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2, title, xlabel, ylabel, leg):
     x_val1 = x_val1[:epochs]
     x_val2 = x_val2[:epochs]
@@ -92,6 +88,7 @@ def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2
     ax.fill_between(x_pos, loss_tr_y1, loss_tr_y2, color = 'r', alpha = alpha_fade)
     ax.fill_between(x_pos, loss_te_y1, loss_te_y2, color = 'b', alpha = alpha_fade)
     ax.legend(leg)
+    ax.set_ylim(loss_ylim)
     ax.grid(True)
 
 
@@ -134,10 +131,9 @@ def assemble_loss():
         mean_te_loss = np.mean(test_loss, axis=0)
         plt_title = titles[idx]
         plot_loss(ax, mean_tr_loss, mean_tr_loss - loss_tr_y1, mean_tr_loss + loss_tr_y2, mean_te_loss, mean_te_loss - loss_te_y1, mean_te_loss + loss_te_y2, plt_title + "", "Training iterations (epochs)", "Mean loss", ['Training loss', 'Test (validation) loss'])
-assemble_loss()
+#assemble_loss()
+#plt.show()
 
-
-usage_ylim = (2.0, 6.5)
 
 def plot_usage(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y1_top3, y2_top3, title, xlabel, ylabel, leg):
     x_pos = np.arange(len(x_val1))
@@ -172,7 +168,7 @@ def assemble_usage():
         usage_top1 = list()
         usage_top2 = list()
         usage_top3 = list()
-
+        print(approach)
         for i in range(1, runs+1):
             path = base_path + approach + 'run' + str(i) + '/'
             usage_path = path + 'usage_weights.txt'
@@ -181,6 +177,7 @@ def assemble_usage():
                 usage_top1.append(top1_p)
                 usage_top2.append(top2_p)
                 usage_top3.append(top3_p)
+                print(i)
             except Exception:
                 continue
         mean_top1_usage = np.mean(usage_top1, axis=0)
@@ -196,8 +193,6 @@ def assemble_usage():
 assemble_usage()
 plt.show()
 
-
-precision_ylim = (0.8, 1.0)
 
 def plot_accuracy(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y1_top3, y2_top3, title, xlabel, ylabel, leg):
     x_pos = np.arange(len(x_val1))

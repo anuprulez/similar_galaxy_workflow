@@ -94,6 +94,8 @@ def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2
     ax.fill_between(x_pos, loss_tr_y1, loss_tr_y2, color = 'r', alpha = alpha_fade)
     ax.fill_between(x_pos, loss_te_y1, loss_te_y2, color = 'b', alpha = alpha_fade)
     ax.legend(leg)
+    loss_ylim = (0.0, 1.0)
+    ax.ylim(loss_ylim)
     ax.grid(True)
 
 
@@ -174,7 +176,7 @@ def assemble_usage():
         usage_top1 = list()
         usage_top2 = list()
         usage_top3 = list()
-
+        print(approach)
         for i in range(1, runs+1):
             path = base_path + approach + 'run' + str(i) + '/'
             usage_path = path + 'usage_weights.txt'
@@ -183,12 +185,13 @@ def assemble_usage():
                 usage_top1.append(top1_p)
                 usage_top2.append(top2_p)
                 usage_top3.append(top3_p)
+                print(i)
             except Exception:
                 continue
         mean_top1_usage = np.mean(usage_top1, axis=0)
         mean_top2_usage = np.mean(usage_top2, axis=0)
         mean_top3_usage = np.mean(usage_top3, axis=0)
-
+        print()
         y1_top1, y2_top1 = compute_fill_between(usage_top1)
         y1_top2, y2_top2 = compute_fill_between(usage_top2)
         y1_top3, y2_top3 = compute_fill_between(usage_top3)
@@ -199,7 +202,7 @@ assemble_usage()
 plt.show()
 
 
-precision_ylim = (0.8, 1.0)
+precision_ylim = (0.5, 1.0)
 
 def plot_accuracy(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y1_top3, y2_top3, title, xlabel, ylabel, leg):
     x_pos = np.arange(len(x_val1))
