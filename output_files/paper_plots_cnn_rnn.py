@@ -10,10 +10,9 @@ warnings.filterwarnings("ignore")
 
 base_path = 'data/'
 
-all_approaches_path = ['dense_network/', 'cnn/', 'rnn/', 'rnn_custom_loss/']
+all_approaches_path = ['cnn/', 'cnn_custom_loss/', 'rnn/', 'rnn_custom_loss/']
 
-titles = ['(a) Dense neural network', '(b) CNN', '(c) GRU', '(d) GRU with weighted loss']
-
+titles = ['(a) Convolutional neural network (CNN)', '(b) CNN with weighted loss', '(c) Recurrent neural network (RNN)', '(d) RNN with weighted loss']
 
 font = {'family': 'serif', 'size': 22}
 

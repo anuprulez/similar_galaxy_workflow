@@ -8,12 +8,11 @@ import matplotlib.gridspec as gridspec
 
 warnings.filterwarnings("ignore")
 
-base_path = 'data_top_runs/'
+base_path = 'data/'
 
-all_approaches_path = ['dense_network/', 'cnn/', 'rnn/', 'rnn_custom_loss/']
+all_approaches_path = ['dense_network/', 'dense_network_custom_loss/', 'rnn/', 'rnn_custom_loss/']
 
-titles = ['(a) Dense neural network', '(b) CNN', '(c) GRU', '(d) GRU with weighted loss']
-
+titles = ['(a) Dense neural network (DNN)', '(b) DNN with weighted loss', '(c) Recurrent neural network (RNN)', '(d) RNN with weighted loss']
 
 font = {'family': 'serif', 'size': 22}
 
@@ -29,7 +28,7 @@ epochs = 10
 
 loss_ylim = (0.0, 1.0)
 usage_ylim = (2.5, 5.0)
-precision_ylim = (0.85, 1.0)
+precision_ylim = (0.7, 1.0)
 
 
 def read_file(path):
@@ -59,35 +58,6 @@ def extract_precision(precision_path):
             top2_compatible_precision.append(row[1])
             top3_compatible_precision.append(row[2])
     return top1_compatible_precision, top2_compatible_precision, top3_compatible_precision
-    
-import operator
-
-def find_best_runs():
-    
-    for idx, approach in enumerate(all_approaches_path):
-        best_runs[approach] = dict()
-        scores = dict()
-        for i in range(1, runs+1):
-            path = base_path + approach + 'run' + str(i) + '/'
-            usage_path = path + 'usage_weights.txt'
-            precision_path = path + 'precision.txt'
-            try:
-                top1_u, top2_u, top3_u = extract_precision(usage_path)
-                top1_p, top2_p, top3_p = extract_precision(precision_path)
-                mean_score = np.mean(np.mean(top1_u) + np.mean(top2_u) + np.mean(top3_u) + np.mean(top1_p) + np.mean(top2_p) + np.mean(top3_p))
-                #print(approach, i, mean_score)
-                print()
-                scores[str(i)] = mean_score
-                best_runs[approach] = scores
-            except Exception as exp:
-                continue
-        sorted_x = sorted(scores.items(), key=operator.itemgetter(1))
-        print(approach, sorted_x)
-    #print(best_runs)
-best_runs = dict()
-find_best_runs()
-import sys
-sys.exit()
 
 
 def compute_fill_between(a_list):
