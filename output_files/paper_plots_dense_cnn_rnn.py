@@ -10,9 +10,9 @@ warnings.filterwarnings("ignore")
 
 base_path = 'data/'
 
-all_approaches_path = ['cnn/', 'cnn_custom_loss/', 'rnn/', 'rnn_custom_loss/']
+all_approaches_path = ['dense_network/', 'dense_network_custom_loss/', 'cnn/', 'cnn_custom_loss/', 'rnn/', 'rnn_custom_loss/']
 
-titles = ['(a) Convolutional neural network (CNN)', '(b) CNN with weighted loss', '(c) Recurrent neural network (RNN)', '(d) RNN with weighted loss']
+titles = ['(a) Dense neural network (DNN)', '(b) DNN with weighted loss', '(c) Convolutional neural network (CNN)', '(d) CNN with weighted loss', '(e) Recurrent neural network (GRU)', '(f) GRU with weighted loss']
 
 font = {'family': 'serif', 'size': 22}
 
@@ -28,7 +28,10 @@ epochs = 10
 
 loss_ylim = (0.0, 1.0)
 usage_ylim = (2.5, 5.0)
-precision_ylim = (0.85, 1.0)
+precision_ylim = (0.75, 1.0)
+gs = gridspec.GridSpec(3,2)
+leg_loc = 3
+leg_size = 16
 
 
 def read_file(path):
@@ -86,7 +89,7 @@ def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2
     ax.set_title(title, size=size_title)
     ax.fill_between(x_pos, loss_tr_y1, loss_tr_y2, color = 'r', alpha = alpha_fade)
     ax.fill_between(x_pos, loss_te_y1, loss_te_y2, color = 'b', alpha = alpha_fade)
-    ax.legend(leg)
+    ax.legend(leg, loc=leg_loc, prop={'size': leg_size})
     ax.set_ylim(loss_ylim)
     ax.grid(True)
 
@@ -94,19 +97,23 @@ def plot_loss(ax, x_val1, loss_tr_y1, loss_tr_y2, x_val2, loss_te_y1, loss_te_y2
 def assemble_loss():
     fig = plt.figure(figsize=fig_size)
     fig.suptitle('Cross-entropy loss for multiple neural network architectures', size=size_title + 2)
-    gs = gridspec.GridSpec(2,2)
-    for idx, approach in enumerate(all_approaches_path):
+    for idx, approach in enumerate(all_approaches_path):            
         if idx == 0:
             ax = plt.subplot(gs[0,0])
-            ax.set_ylabel("Mean loss", size=size_label)
+            ax.set_ylabel("Loss", size=size_label)
         elif idx == 1:
             ax = plt.subplot(gs[0,1])
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Training iterations (epochs)", size=size_label)
-            ax.set_ylabel("Mean loss", size=size_label)
-        else:
+            ax.set_ylabel("Loss", size=size_label)
+        elif idx == 3:
             ax = plt.subplot(gs[1,1])
+        elif idx == 4:
+            ax = plt.subplot(gs[2,0])
+            ax.set_xlabel("Training iterations (epochs)", size=size_label)
+            ax.set_ylabel("Loss", size=size_label)
+        else:
+            ax = plt.subplot(gs[2,1])
             ax.set_xlabel("Training iterations (epochs)", size=size_label)
             
         train_loss = list()
@@ -130,8 +137,8 @@ def assemble_loss():
         mean_te_loss = np.mean(test_loss, axis=0)
         plt_title = titles[idx]
         plot_loss(ax, mean_tr_loss, mean_tr_loss - loss_tr_y1, mean_tr_loss + loss_tr_y2, mean_te_loss, mean_te_loss - loss_te_y1, mean_te_loss + loss_te_y2, plt_title + "", "Training iterations (epochs)", "Mean loss", ['Training loss', 'Test (validation) loss'])
-#assemble_loss()
-#plt.show()
+assemble_loss()
+plt.show()
 
 
 def plot_usage(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y1_top3, y2_top3, title, xlabel, ylabel, leg):
@@ -143,27 +150,32 @@ def plot_usage(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3, y
     ax.fill_between(x_pos, y1_top1, y2_top1, color = 'r', alpha = alpha_fade)
     ax.fill_between(x_pos, y1_top2, y2_top2, color = 'b', alpha = alpha_fade)
     ax.fill_between(x_pos, y1_top3, y2_top3, color = 'g', alpha = alpha_fade)
-    ax.legend(leg)
+    ax.legend(leg, loc=leg_loc, prop={'size': leg_size})
     ax.set_ylim(usage_ylim)
     ax.grid(True)
 
 def assemble_usage():
     fig = plt.figure(figsize=fig_size)
-    fig.suptitle('Log usage frequency for multiple neural network architectures', size=size_title + 2)
-    gs = gridspec.GridSpec(2, 2)
-    for idx, approach in enumerate(all_approaches_path):
+    fig.suptitle('Mean log usage frequency for multiple neural network architectures', size=size_title + 2)
+    for idx, approach in enumerate(all_approaches_path):        
         if idx == 0:
             ax = plt.subplot(gs[0,0])
-            ax.set_ylabel("Mean log usage frequency", size=size_label)
+            ax.set_ylabel("Log usage", size=size_label)
         elif idx == 1:
             ax = plt.subplot(gs[0,1])
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Training iterations (epochs)", size=size_label)
-            ax.set_ylabel("Mean log usage frequency", size=size_label)
-        else:
+            ax.set_ylabel("Log usage", size=size_label)
+        elif idx == 3:
             ax = plt.subplot(gs[1,1])
+        elif idx == 4:
+            ax = plt.subplot(gs[2,0])
             ax.set_xlabel("Training iterations (epochs)", size=size_label)
+            ax.set_ylabel("Log usage", size=size_label)
+        else:
+            ax = plt.subplot(gs[2,1])
+            ax.set_xlabel("Training iterations (epochs)", size=size_label)
+
         usage_top1 = list()
         usage_top2 = list()
         usage_top3 = list()
@@ -203,27 +215,30 @@ def plot_accuracy(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3
     ax.fill_between(x_pos, y1_top1, y2_top1, color = 'r', alpha = alpha_fade)
     ax.fill_between(x_pos, y1_top2, y2_top2, color = 'b', alpha = alpha_fade)
     ax.fill_between(x_pos, y1_top3, y2_top3, color = 'g', alpha = alpha_fade)
-    ax.legend(leg)
+    ax.legend(leg, loc=leg_loc, prop={'size': leg_size})
     ax.set_ylim(precision_ylim)
     plt.grid(True)
 
 def assemble_accuracy():
     fig = plt.figure(figsize=fig_size)
     fig.suptitle('Precision@k for multiple neural network architectures', size=size_title + 2)
-    gs = gridspec.GridSpec(2,2)
     for idx, approach in enumerate(all_approaches_path):
         if idx == 0:
             ax = plt.subplot(gs[0,0])
-            ax.set_ylabel("Mean precision@k", size=size_label)
+            ax.set_ylabel("Precision@k", size=size_label)
         elif idx == 1:
             ax = plt.subplot(gs[0,1])
-            
         elif idx == 2:
             ax = plt.subplot(gs[1,0])
-            ax.set_xlabel("Training iterations (epochs)", size=size_label)
-            ax.set_ylabel("Mean precision@k", size=size_label)
-        else:
+            ax.set_ylabel("Precision@k", size=size_label)
+        elif idx == 3:
             ax = plt.subplot(gs[1,1])
+        elif idx == 4:
+            ax = plt.subplot(gs[2,0])
+            ax.set_xlabel("Training iterations (epochs)", size=size_label)
+            ax.set_ylabel("Precision@k", size=size_label)
+        else:
+            ax = plt.subplot(gs[2,1])
             ax.set_xlabel("Training iterations (epochs)", size=size_label)
 
         precision_acc_top1 = list()
