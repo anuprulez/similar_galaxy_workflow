@@ -179,7 +179,6 @@ def assemble_usage():
         usage_top1 = list()
         usage_top2 = list()
         usage_top3 = list()
-        print(approach)
         for i in range(1, runs+1):
             path = base_path + approach + 'run' + str(i) + '/'
             usage_path = path + 'usage_weights.txt'
@@ -188,7 +187,6 @@ def assemble_usage():
                 usage_top1.append(top1_p)
                 usage_top2.append(top2_p)
                 usage_top3.append(top3_p)
-                print(i)
             except Exception:
                 continue
         mean_top1_usage = np.mean(usage_top1, axis=0)
@@ -221,7 +219,7 @@ def plot_accuracy(ax, x_val1, y1_top1, y2_top1, x_val2, y1_top2, y2_top2, x_val3
 
 def assemble_accuracy():
     fig = plt.figure(figsize=fig_size)
-    fig.suptitle('Precision@k for multiple neural network architectures', size=size_title + 2)
+    fig.suptitle('Mean precision@k for multiple neural network architectures', size=size_title + 2)
     for idx, approach in enumerate(all_approaches_path):
         if idx == 0:
             ax = plt.subplot(gs[0,0])
