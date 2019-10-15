@@ -2,17 +2,18 @@
 
 ## How to execute the script
 
-1. Install the dependencies by executing the following lines:
+1. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files. 
+
+2. Install the dependencies by executing the following lines:
     *    `conda env create -f environment.yml`
     *    `conda activate tool_prediction`
-
-2. Execute the script `extract_data.sh` to extract two tabular files - `tool-popularity.tsv` and `wf-connections.tsv`. This script should be executed on a Galaxy instance's database (ideally should be executed by a Galaxy admin). There are two methods in the script one each to generate two tabular files. The first file (`tool-popularity.tsv`) contains information about the usage of tools per month. The second file (`wf-connections.tsv`) contains workflows present as the connections of tools. Save these tabular files.
 
 3. Execute the file `train.sh`. It has some input parameters:
 
     `python <main python script> -wf <path to workflow file> -tu <path to tool usage file> -om <path to the final model file> -cd <cutoff date> -pl <maximum length of tool path> -ep <number of training iterations> -oe <number of iterations to optimise hyperparamters> -me <maximum number of evaluation to optimise hyperparameters> -ts <fraction of test data> -vs <fraction of validation data> -bs <range of batch sizes> -ut <range of hidden units> -es <range of embedding sizes> -dt <range of dropout> -sd <range of spatial dropout> -rd <range of recurrent dropout> -lr <range of learning rates> -ar <name of recurrent activation> -ao <name of output activation> -cpus <number of CPUs>`
+    
+    ### Description of all parameters mentioned in the training script:
 
-    The elements of the command are explained below:
     - `<main python script>`: This script is the entry point of the entire analysis. It is present at `scripts/main.py`.
     - `<path to workflow file>`: It is a path to a tabular file containing Galaxy workflows. E.g. `data/wf-connections.tsv`.
     - `<path to tool popularity file>`: It is a path to a tabular file containing usage frequencies of Galaxy tools. E.g. `data/tool-popularity.tsv`.
