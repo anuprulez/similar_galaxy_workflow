@@ -129,47 +129,17 @@ In the set of training sequences, each one can have many labels (or categories) 
 
 ## Accuracy on test data
 
-### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
+### Precision comparison of different networks (Dense neural network (DNN), Convolutional (CNN) and Recurrent (RNN/GRU) neural networks)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/precision.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/tool_recommendation_release_19_09/plots/precision.png">
 </p>
 
-### Comparison of two different networks (CNN and RNN)
+### Usage frequencies of predicted tools comparison of different networks (DNN, CNN and RNN/GRU)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/precision_cnn_rnn.png">
+  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/tool_recommendation_release_19_09/plots/usage.png">
 </p>
-
-The plot above shows precision computed over training epochs on test data. The test data makes `20%` of the complete dataset (sequences of tools). 
-
-### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/loss.png">
-</p>
-
-### Comparison of two different networks (CNN and RNN)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/loss_cnn_rnn.png">
-</p>
-
-The plot above shows the cross-entropy loss over training epochs.
-
-### Comparison of different networks (Network with deep layers (DNN), Convolutional (CNN) and Recurrent (RNN) networks)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/usage.png">
-</p>
-
-### Comparison of two different networks (CNN and RNN)
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/anuprulez/similar_galaxy_workflow/release_tool_recommendation_v_03_19/images/usage_cnn_rnn.png">
-</p>
-
-The plot above shows the increase of mean usage over training epochs. As the precision improves, tools with higher usage are predicted.
 
 
 ## Literature:

@@ -28,7 +28,7 @@ epochs = 10
 
 loss_ylim = (0.0, 1.0)
 usage_ylim = (2.5, 5.0)
-precision_ylim = (0.75, 1.0)
+precision_ylim = (0.95, 1.0)
 gs = gridspec.GridSpec(3,2)
 leg_loc = 3
 leg_size = 16
@@ -306,19 +306,7 @@ def plot_path_size_distribution(x_val, title, xlabel, ylabel, xlabels):
     plt.grid(True)
     plt.show()
 
-#plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)
-
-all_approaches_path = ['cnn_bc/', 'cnn_custom_loss/', 'rnn_bc/', 'rnn_custom_loss/']
-
-titles = ['(a) CNN', '(b) CNN (weighted loss)', '(c) GRU', '(d) GRU with weighted loss']
-
-
-#assemble_loss()
-#plt.show()
-#assemble_usage()
-#plt.show()
-#assemble_accuracy()
-#plt.show()
+#plot_path_size_distribution(sorted_key_values, 'Data distribution', 'Number of tools in paths', 'Number of paths', sizes)'''
 
 ################################################################ Tool usage
 
@@ -327,10 +315,10 @@ import csv
 import numpy as np
 import collections
 
-import plotly
-import plotly.graph_objs as go
-from plotly import tools
-import plotly.io as pio
+#import plotly
+#import plotly.graph_objs as go
+#from plotly import tools
+#import plotly.io as pio
 from matplotlib import pyplot as plt
 
 def format_tool_id(tool_link):
@@ -338,7 +326,7 @@ def format_tool_id(tool_link):
         tool_id = tool_id_split[ -2 ] if len( tool_id_split ) > 1 else tool_link
         return tool_id
 
-tool_usage_file = "../data/tool_usage/tool-popularity.tsv"
+tool_usage_file = "../data/tool-popularity-19-09.tsv"
 cutoff_date = '2017-12-01'
 tool_usage_dict = dict()
 tool_list = list()
@@ -373,7 +361,7 @@ tool_list = list(set(tool_list))
 colors = ['r', 'b', 'g', 'c']
 tool_names = ['Cut1', 'cufflinks', 'bowtie2', 'DatamashOps']
 legends_tools = ['Tool B', 'Tool C', 'Tool D', 'Tool E']
-xticks = ['Jan, 2018', 'Feb, 2018', 'Mar, 2018', 'Apr, 2018', 'May, 2018', 'Jun, 2018', 'Jul, 2018', 'Aug, 2018', 'Sep, 2018', 'Oct, 2018', 'Nov, 2018', 'Dec, 2018', 'Jan, 2019', 'Feb, 2019' ]
+xticks = ['Jan, 2018', '', 'Mar, 2018', '', 'May, 2018', '', 'Jul, 2018', '', 'Sep, 2018', '', 'Nov, 2018', '', 'Jan, 2019', '', 'Mar, 2019', '', 'May, 2019', '', 'Jul, 2019', '', 'Sep, 2019' ]
 
 def plot_tool_usage(tool_names):
     plt.figure(figsize=(12, 12))
@@ -397,5 +385,5 @@ def plot_tool_usage(tool_names):
     plt.show()
 
 
-plot_tool_usage(tool_names)'''
+plot_tool_usage(tool_names)
 
