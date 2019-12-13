@@ -14,24 +14,24 @@ all_approaches_path = ['dense_network/', 'dense_network_custom_loss/', 'cnn/', '
 
 titles = ['(a) Dense neural network (DNN)', '(b) DNN with weighted loss', '(c) Convolutional neural network (CNN)', '(d) CNN with weighted loss', '(e) Recurrent neural network (GRU)', '(f) GRU with weighted loss']
 
-font = {'family': 'serif', 'size': 22}
+font = {'family': 'serif', 'size': 24}
 
 alpha_fade = 0.1
 fig_size = (12, 12)
 
 plt.rc('font', **font)
 
-size_title = 24
-size_label = 22
+size_title = 28
+size_label = 24
 runs = 10
 epochs = 10
 
 loss_ylim = (0.0, 1.0)
 usage_ylim = (2.5, 5.0)
-precision_ylim = (0.95, 1.0)
+precision_ylim = (0.8, 1.0)
 gs = gridspec.GridSpec(3,2)
 leg_loc = 3
-leg_size = 16
+leg_size = 18
 
 
 def read_file(path):
